@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+
+# Uploads (user-generated content)
+msuka-ip-v7/public/uploads/
+
+# Test artifacts
+msuka-ip-v7/playwright-report/
+msuka-ip-v7/test-results/
+
+# Legacy / backups
+MSUkaIP-legacy-backup.zip
+_zip_inspect/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Claude Code
+.claude/
+memory/
+
+# Logs
+*.log
+npm-debug.log*
