@@ -31,7 +31,11 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors:{ origin:'*' } });
 app.use(express.json());
-app.use(express.static(path.join(__dirname,'public')));
+app.use(express.static(path.join(__dirname,'public'),{
+  setHeaders:(res,filePath)=>{
+    if(filePath.endsWith('.html')) res.setHeader('Cache-Control','no-store, no-cache, must-revalidate, max-age=0');
+  }
+}));
 
 // ── Secrets — read from environment, fall back to dev defaults ───────────────
 // For LAN/production deployment, set JWT_SECRET, AES_SECRET, AES_SALT, and
@@ -617,9 +621,20 @@ io.on('connection', async(socket)=>{
     }
   });
 
-  // Typing
-  socket.on('typing:start',({convKey})=>socket.broadcast.to(convKey||'group_general').emit('typing:update',{name,convKey,typing:true}));
-  socket.on('typing:stop', ({convKey})=>socket.broadcast.to(convKey||'group_general').emit('typing:update',{name,convKey,typing:false}));
+  // Typing — for private chats, send to the recipient's socket using THEIR convKey
+  // (i.e. private_<sender_email>); for groups, broadcast to the room.
+  const sendTyping=(convKey,typing)=>{
+    if(!convKey) convKey='group_general';
+    if(convKey.startsWith('private_')) {
+      const targetEmail=convKey.replace('private_','').toLowerCase();
+      const targetSocket=[...onlineUsers.entries()].find(([,u])=>String(u.email).toLowerCase()===targetEmail)?.[0];
+      if(targetSocket) io.to(targetSocket).emit('typing:update',{name,convKey:'private_'+email,typing});
+    } else {
+      socket.broadcast.to(convKey).emit('typing:update',{name,convKey,typing});
+    }
+  };
+  socket.on('typing:start',({convKey})=>sendTyping(convKey,true));
+  socket.on('typing:stop', ({convKey})=>sendTyping(convKey,false));
 
   // Create group — transactional so a partial-failure leaves no orphaned group
   socket.on('group:create', async({name:gname,members})=>{
