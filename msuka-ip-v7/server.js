@@ -123,13 +123,16 @@ async function setupDatabase() {
     try { await conn.query(`ALTER TABLE messages ADD COLUMN file_type VARCHAR(100) NULL AFTER file_size`); } catch {}
     try { await conn.query(`ALTER TABLE messages MODIFY COLUMN type ENUM('chat','announcement','system','file','image','voice') DEFAULT 'chat'`); } catch {}
 
-    await conn.query(`CREATE TABLE IF NOT EXISTS calls (id INT AUTO_INCREMENT PRIMARY KEY, caller_id INT, receiver_id INT, status ENUM('missed','answered','rejected') DEFAULT 'missed', started_at TIMESTAMP NULL, ended_at TIMESTAMP NULL, duration INT DEFAULT 0, FOREIGN KEY (caller_id) REFERENCES users(id) ON DELETE SET NULL, FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE SET NULL)`);
+    await conn.query(`CREATE TABLE IF NOT EXISTS calls (id INT AUTO_INCREMENT PRIMARY KEY, caller_id INT, receiver_id INT, status ENUM('missed','answered','rejected') DEFAULT 'missed', started_at TIMESTAMP NULL, ended_at TIMESTAMP NULL, duration INT DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (caller_id) REFERENCES users(id) ON DELETE SET NULL, FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE SET NULL)`);
+    try { await conn.query(`ALTER TABLE calls ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`); } catch {}
     await conn.query(`CREATE TABLE IF NOT EXISTS audit_logs (id INT AUTO_INCREMENT PRIMARY KEY, user_id INT, action VARCHAR(100), details TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL)`);
 
     // ── Performance + integrity indexes (idempotent — ignore if already exist) ──
     const safeAlter = async sql => { try { await conn.query(sql); } catch (e) { if (!/Duplicate key|already exists/i.test(e.message)) console.warn('  index note:', e.message); } };
     await safeAlter(`CREATE INDEX idx_messages_conv_created ON messages (conv_key, created_at)`);
     await safeAlter(`CREATE INDEX idx_messages_created ON messages (created_at)`);
+    await safeAlter(`CREATE INDEX idx_calls_created ON calls (created_at)`);
+    await safeAlter(`CREATE INDEX idx_users_created ON users (created_at)`);
     await safeAlter(`CREATE INDEX idx_users_account_status ON users (account_status)`);
     await safeAlter(`CREATE INDEX idx_users_status ON users (status)`);
     await safeAlter(`CREATE INDEX idx_survey_created ON survey_responses (created_at)`);
@@ -357,6 +360,74 @@ app.get('/api/admin/stats',verifyToken,adminOnly,async(req,res)=>{
     res.json({totalUsers, onlineUsers:onlineCount, pendingUsers, totalMessages, totalCalls});
   } catch { res.status(500).json({error:'Server error'}); }
 });
+// Time-bucketed history for the admin sparkline cards.
+// Returns 5 arrays aligned to N buckets ending at "now", for range = day|month|year.
+app.get('/api/admin/stats/trends', verifyToken, adminOnly, async (req, res) => {
+  try {
+    const range = ['day','month','year'].includes(req.query.range) ? req.query.range : 'day';
+    const CFG = {
+      day:   { points: 10, fmt: '%Y-%m-%d', startOf: d => { const x=new Date(d); x.setHours(0,0,0,0); return x; }, step: d => { const x=new Date(d); x.setDate(x.getDate()+1); return x; }, key: d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` },
+      month: { points: 12, fmt: '%Y-%m',    startOf: d => new Date(d.getFullYear(), d.getMonth(), 1), step: d => new Date(d.getFullYear(), d.getMonth()+1, 1), key: d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` },
+      year:  { points: 6,  fmt: '%Y',       startOf: d => new Date(d.getFullYear(), 0, 1), step: d => new Date(d.getFullYear()+1, 0, 1), key: d => `${d.getFullYear()}` },
+    };
+    const cfg = CFG[range];
+    // Build N bucket boundaries [start_i, end_i) ending at the current period.
+    const now = new Date();
+    const lastStart = cfg.startOf(now);
+    const buckets = [];
+    let cur = lastStart;
+    for (let i = 0; i < cfg.points; i++) {
+      buckets.unshift({ start: new Date(cur), end: cfg.step(new Date(cur)), key: cfg.key(cur) });
+      cur = new Date(cur);
+      const prev = new Date(cur); prev.setTime(prev.getTime() - 1);
+      cur = cfg.startOf(prev);
+    }
+    const oldest = buckets[0].start;
+    // One bucketed query per metric. DATE_FORMAT bucket → row count.
+    const qBucketed = (sql, args=[]) => db.query(sql, args).then(([r]) => {
+      const m = new Map();
+      for (const row of r) m.set(String(row.bk), Number(row.cnt) || 0);
+      return m;
+    });
+    const [msgMap, callMap, newUserMap, newPendingMap, activeMap] = await Promise.all([
+      // Messages created in bucket
+      qBucketed(`SELECT DATE_FORMAT(created_at,'${cfg.fmt}') AS bk, COUNT(*) AS cnt FROM messages WHERE created_at >= ? GROUP BY bk`, [oldest]),
+      // Calls created in bucket
+      qBucketed(`SELECT DATE_FORMAT(created_at,'${cfg.fmt}') AS bk, COUNT(*) AS cnt FROM calls WHERE created_at >= ? GROUP BY bk`, [oldest]),
+      // New users registered in bucket (any status)
+      qBucketed(`SELECT DATE_FORMAT(created_at,'${cfg.fmt}') AS bk, COUNT(*) AS cnt FROM users WHERE created_at >= ? GROUP BY bk`, [oldest]),
+      // New pending users registered in bucket
+      qBucketed(`SELECT DATE_FORMAT(created_at,'${cfg.fmt}') AS bk, COUNT(*) AS cnt FROM users WHERE account_status='pending' AND created_at >= ? GROUP BY bk`, [oldest]),
+      // Active users in bucket (distinct senders, proxy for "online" history)
+      qBucketed(`SELECT DATE_FORMAT(created_at,'${cfg.fmt}') AS bk, COUNT(DISTINCT sender_id) AS cnt FROM messages WHERE sender_id IS NOT NULL AND created_at >= ? GROUP BY bk`, [oldest]),
+    ]);
+    // Baseline counts BEFORE the window so cumulative series stay accurate.
+    const [[{baseUsers}]]    = await db.query('SELECT COUNT(*) AS baseUsers    FROM users    WHERE created_at < ?', [oldest]);
+    const [[{baseMessages}]] = await db.query('SELECT COUNT(*) AS baseMessages FROM messages WHERE created_at < ?', [oldest]);
+    const [[{baseCalls}]]    = await db.query('SELECT COUNT(*) AS baseCalls    FROM calls    WHERE created_at < ?', [oldest]);
+    let runUsers = Number(baseUsers)||0, runMessages = Number(baseMessages)||0, runCalls = Number(baseCalls)||0;
+    const out = { range, labels: [], totalUsers: [], onlineUsers: [], pendingUsers: [], totalMessages: [], totalCalls: [] };
+    for (const b of buckets) {
+      runUsers    += newUserMap.get(b.key)    || 0;
+      runMessages += msgMap.get(b.key)        || 0;
+      runCalls    += callMap.get(b.key)       || 0;
+      out.labels.push(b.key);
+      out.totalUsers.push(runUsers);
+      out.totalMessages.push(runMessages);
+      out.totalCalls.push(runCalls);
+      out.onlineUsers.push(activeMap.get(b.key) || 0);
+      out.pendingUsers.push(newPendingMap.get(b.key) || 0);
+    }
+    // Anchor the final point to the current real value (online is real-time, not a bucket count).
+    const liveOnline = onlineUsers.size;
+    if (out.onlineUsers.length) out.onlineUsers[out.onlineUsers.length-1] = liveOnline;
+    res.json(out);
+  } catch (e) {
+    console.error('stats/trends error:', e);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 app.get('/api/admin/pending',verifyToken,adminOnly,async(req,res)=>{
   try { const [r]=await db.query("SELECT id,name,email,role,created_at FROM users WHERE account_status='pending' ORDER BY created_at ASC"); res.json(r); }
   catch { res.status(500).json({error:'Server error'}); }

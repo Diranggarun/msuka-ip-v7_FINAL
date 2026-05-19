@@ -155,11 +155,14 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
 .user-badge-avatar{width:20px;height:20px;border-radius:50%;background:var(--gold);color:var(--maroon-dark);font-size:.6rem;font-weight:900;display:flex;align-items:center;justify-content:center;}
 .user-badge-name{font-size:.7rem;color:rgba(255,255,255,.85);font-weight:700;}
 .user-badge-role{font-size:.6rem;color:var(--gold);font-weight:800;margin-left:auto;}
-.search-box{padding:.45rem .75rem;}
+.search-box{padding:.55rem .8rem;}
 .search-wrap{position:relative;}
-.search-wrap input{width:100%;padding:.48rem .9rem .48rem 1.9rem;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:20px;font-size:.82rem;outline:none;font-family:'Nunito',sans-serif;color:var(--text-dark);transition:all .2s;}
-.search-wrap input:focus{border-color:var(--gold);background:var(--white);box-shadow:0 0 0 3px rgba(212,160,23,.1);}
-.search-wrap::before{content:'🔍';position:absolute;left:.6rem;top:50%;transform:translateY(-50%);font-size:.68rem;pointer-events:none;}
+.search-wrap input{width:100%;padding:.55rem 2.1rem .55rem 2.3rem;background:var(--off-white);border:1px solid var(--gray-200);border-radius:22px;font-size:.83rem;outline:none;font-family:'Nunito',sans-serif;color:var(--text-dark);transition:border-color .2s,background .2s,box-shadow .2s;box-shadow:inset 0 1px 2px rgba(74,0,0,.04);}
+.search-wrap input::placeholder{color:var(--text-light);font-style:normal;}
+.search-wrap input:hover{border-color:var(--gold-dark);background:var(--white);}
+.search-wrap input:focus{border-color:var(--gold);background:var(--white);box-shadow:0 0 0 3px rgba(212,160,23,.18),inset 0 1px 2px rgba(74,0,0,.03);}
+.search-wrap::before{content:'';position:absolute;left:.8rem;top:50%;width:14px;height:14px;transform:translateY(-50%);pointer-events:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B0000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='7'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>");background-repeat:no-repeat;background-position:center;background-size:contain;opacity:.75;transition:opacity .2s;}
+.search-wrap:focus-within::before{opacity:1;}
 
 .nav-btns{display:flex;gap:4px;padding:.45rem .65rem;border-bottom:2px solid var(--gray-200);background:var(--white);}
 .nav-btn{flex:1;padding:.42rem .25rem;border:1.5px solid transparent;border-radius:8px;background:transparent;cursor:pointer;font-size:.7rem;color:var(--text-light);font-family:'Nunito',sans-serif;font-weight:800;display:flex;align-items:center;justify-content:center;gap:3px;transition:all .15s;}
@@ -261,7 +264,10 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
 .img-bubble{padding:.3rem;border-radius:16px;overflow:hidden;max-width:260px;background:transparent!important;border:none!important;box-shadow:0 2px 8px rgba(0,0,0,.08)!important;}
 .img-bubble img{width:100%;border-radius:13px;display:block;cursor:pointer;transition:transform .2s;}
 .img-bubble img:hover{transform:scale(1.01);}
-.img-caption{font-size:.72rem;opacity:.75;padding:.35rem .4rem 0;font-weight:500;}
+.img-caption{font-size:.72rem;padding:.35rem .55rem;margin-top:5px;font-weight:600;border-radius:8px;background:rgba(74,0,0,.78);color:var(--gold-bright);display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:.01em;}
+.msg-row.mine .img-caption{background:rgba(74,0,0,.85);color:var(--gold-bright);}
+.msg-row.theirs .img-caption{background:rgba(74,0,0,.08);color:var(--maroon-dark);border:1px solid rgba(107,0,0,.12);}
+.img-caption::selection{background:var(--gold);color:var(--maroon-dark);}
 
 .file-bubble{display:flex;align-items:center;gap:12px;padding:.7rem .85rem;min-width:230px;border-radius:14px!important;}
 .file-icon{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--gold-soft),#fff5d0);color:var(--maroon);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;border:1px solid rgba(212,160,23,.3);}
@@ -314,7 +320,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
 .emoji-search input{width:100%;padding:.52rem .9rem .52rem 2rem;background:rgba(255,255,255,.55);border:1.5px solid rgba(212,160,23,.25);border-radius:18px;color:var(--maroon-dark);font-size:.84rem;font-weight:600;outline:none;font-family:'Nunito',sans-serif;backdrop-filter:blur(8px);transition:border-color .15s,background .15s,box-shadow .15s;}
 .emoji-search input:focus{border-color:var(--gold);background:#fff;box-shadow:0 0 0 3px rgba(212,160,23,.18);}
 .emoji-search input::placeholder{color:var(--text-light);font-weight:500;}
-.emoji-search::before{content:'🔍';position:absolute;left:22px;top:50%;transform:translateY(-50%);font-size:.78rem;opacity:.55;pointer-events:none;}
+.emoji-search::before{content:'';position:absolute;left:22px;top:50%;width:13px;height:13px;transform:translateY(-50%);opacity:.7;pointer-events:none;background-repeat:no-repeat;background-position:center;background-size:contain;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B0000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='7'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>");}
 .emoji-grid{flex:1;overflow-y:auto;padding:6px 10px 10px;display:grid;grid-template-columns:repeat(8,1fr);gap:2px;position:relative;z-index:1;}
 .emoji-grid button{background:transparent;border:none;color:var(--text-dark);font-size:1.4rem;padding:6px 0;cursor:pointer;border-radius:9px;line-height:1;transition:background .12s,transform .12s;}
 .emoji-grid button:hover{background:rgba(212,160,23,.22);transform:scale(1.18);}
@@ -357,37 +363,47 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
 .notif-count.show{display:flex;}
 
 /* Notifications dropdown panel */
-.notif-panel{position:fixed;top:80px;left:230px;width:340px;max-height:480px;background:#fff;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.25);border:1px solid var(--gray-200);z-index:600;display:none;flex-direction:column;overflow:hidden;}
+.notif-panel{position:fixed;top:80px;left:230px;width:390px;max-height:540px;background:linear-gradient(160deg,rgba(255,253,250,.92),rgba(252,246,236,.88));backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);border-radius:20px;box-shadow:0 20px 50px rgba(74,0,0,.22),0 4px 14px rgba(107,0,0,.10),inset 0 1px 0 rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.55);z-index:600;display:none;flex-direction:column;overflow:hidden;}
 .notif-panel.show{display:flex;}
-.notif-panel-header{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1rem;background:linear-gradient(135deg,var(--maroon-dark),var(--maroon));color:var(--gold-bright);border-bottom:2px solid var(--gold);}
-.notif-panel-header h4{font-family:'Cinzel',serif;font-size:.88rem;letter-spacing:.06em;}
-.notif-panel-header button{background:rgba(255,255,255,.12);color:var(--gold-bright);border:1px solid rgba(212,160,23,.3);padding:.25rem .55rem;border-radius:6px;font-size:.7rem;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;}
-.notif-panel-header button:hover{background:rgba(212,160,23,.25);}
-.notif-list{flex:1;overflow-y:auto;}
-.notif-item{display:flex;gap:10px;padding:.8rem 1rem;border-bottom:1px solid var(--gray-100);cursor:pointer;transition:background .15s;}
-.notif-item:hover{background:var(--maroon-soft);}
-.notif-item.unread{background:#fffbea;border-left:3px solid var(--gold);}
-.notif-item:last-child{border-bottom:none;}
-.notif-item .ni-icon{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--maroon),var(--maroon-light));color:var(--gold-bright);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
-.notif-item .ni-icon svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
-.notif-item .ni-body{flex:1;min-width:0;}
-.notif-item .ni-title{font-size:.84rem;font-weight:800;color:var(--maroon-dark);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.notif-item .ni-msg{font-size:.78rem;color:var(--text-mid);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.notif-item .ni-time{font-size:.68rem;color:var(--text-light);margin-top:3px;}
+.notif-panel-header{display:flex;align-items:center;justify-content:space-between;padding:.95rem 1.1rem;background:linear-gradient(135deg,rgba(74,0,0,.95),rgba(107,0,0,.92));color:var(--gold-bright);border-bottom:1px solid rgba(212,160,23,.35);position:relative;}
+.notif-panel-header::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1.5px;background:linear-gradient(90deg,transparent,var(--gold) 30%,var(--gold-bright) 50%,var(--gold) 70%,transparent);opacity:.6;}
+.notif-panel-header h4{font-family:'Cinzel',serif;font-size:.88rem;letter-spacing:.06em;display:flex;align-items:center;gap:8px;}
+.notif-panel-header button{background:rgba(255,255,255,.12);color:var(--gold-bright);border:1px solid rgba(212,160,23,.3);padding:.3rem .65rem;border-radius:8px;font-size:.7rem;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;transition:background .15s;}
+.notif-panel-header button:hover{background:rgba(212,160,23,.28);}
+.notif-list{flex:1;overflow-y:auto;padding:14px 14px 18px;display:flex;flex-direction:column;gap:8px;}
+.notif-item{display:flex;align-items:center;gap:13px;padding:.8rem 1rem;border-radius:14px;cursor:pointer;transition:background .15s,box-shadow .15s,opacity .15s;background:transparent;border:1px solid transparent;opacity:.62;}
+.notif-item:hover{background:rgba(255,255,255,.75);border-color:rgba(212,160,23,.22);box-shadow:0 2px 8px rgba(107,0,0,.06);opacity:1;}
+.notif-item.unread{opacity:1;background:linear-gradient(135deg,rgba(107,0,0,.10),rgba(212,160,23,.18));border-color:rgba(107,0,0,.25);box-shadow:inset 4px 0 0 var(--maroon),0 2px 8px rgba(107,0,0,.08);}
+.notif-item.unread:hover{background:linear-gradient(135deg,rgba(107,0,0,.14),rgba(212,160,23,.22));}
+.notif-item.unread .ni-title{color:var(--maroon-dark);font-weight:800;}
+.notif-item.unread .ni-msg{color:var(--text-dark);font-weight:600;}
+.notif-item.unread::after{content:'';width:8px;height:8px;border-radius:50%;background:var(--maroon);box-shadow:0 0 0 2px rgba(107,0,0,.15);flex-shrink:0;margin-left:6px;}
+.notif-item .ni-icon{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--maroon-dark),var(--maroon));color:var(--gold-bright);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;box-shadow:0 2px 6px rgba(107,0,0,.2);}
+.notif-item:not(.unread) .ni-icon{filter:grayscale(.35);}
+.notif-item .ni-icon svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+.notif-item .ni-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;}
+.notif-item .ni-title{font-size:.9rem;font-weight:600;color:var(--text-mid);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:-.005em;line-height:1.25;}
+.notif-item .ni-msg{font-size:.8rem;color:var(--text-light);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;line-height:1.3;margin-top:2px;}
+.notif-item .ni-time{font-size:.7rem;color:var(--text-light);font-weight:600;margin-top:2px;line-height:1.2;}
 .notif-empty{padding:2rem 1rem;text-align:center;color:var(--text-light);font-size:.85rem;}
 .notif-empty .nei{font-size:2rem;display:block;margin-bottom:.4rem;opacity:.5;}
 
 #incoming-call{display:none;position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,var(--maroon-dark),var(--maroon));color:#fff;border-radius:16px;padding:1.2rem 1.5rem;z-index:200;min-width:260px;box-shadow:var(--shadow-lg);border:1px solid rgba(212,160,23,.3);}
 #incoming-call.show{display:block;animation:slideUp .3s ease;}
 @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
-#incoming-call h4{margin-bottom:.25rem;color:var(--gold-bright);font-family:'Cinzel',serif;}
+#incoming-call h4{margin-bottom:.25rem;color:var(--gold-bright);font-family:'Cinzel',serif;display:flex;align-items:center;gap:8px;}
+.icn{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;vertical-align:-0.15em;}
+.icn-lg{width:1.15em;height:1.15em;}
+.status-dot{display:inline-block;width:.55em;height:.55em;border-radius:50%;margin-right:6px;vertical-align:1px;box-shadow:0 0 0 2px rgba(255,255,255,.55);}
+.status-dot.online{background:#22c55e;box-shadow:0 0 0 2px rgba(255,255,255,.55),0 0 6px rgba(34,197,94,.55);}
+.status-dot.offline{background:#9ca3af;}
 #incoming-call p{font-size:.82rem;opacity:.7;margin-bottom:1rem;}
 .call-btns{display:flex;gap:10px;}
 .btn-accept{flex:1;padding:.6rem;background:#22c55e;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;}
 .btn-reject{flex:1;padding:.6rem;background:#e74c3c;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;}
 #call-panel{display:none;position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,var(--maroon-dark),var(--maroon));color:#fff;border-radius:16px;padding:1.2rem 1.5rem;z-index:200;min-width:280px;box-shadow:var(--shadow-lg);border:1px solid rgba(212,160,23,.3);}
 #call-panel.show{display:block;}
-#call-panel h4{font-size:1rem;margin-bottom:.25rem;color:var(--gold-bright);font-family:'Cinzel',serif;}
+#call-panel h4{font-size:1rem;margin-bottom:.25rem;color:var(--gold-bright);font-family:'Cinzel',serif;display:flex;align-items:center;gap:8px;}
 #call-panel p{font-size:.82rem;opacity:.7;margin-bottom:.5rem;}
 .call-timer{font-size:1.4rem;font-weight:800;text-align:center;color:var(--gold-bright);letter-spacing:.08em;margin:.5rem 0;font-family:'Cinzel',serif;}
 .call-controls{display:flex;gap:10px;justify-content:center;margin-top:.75rem;}
@@ -398,13 +414,13 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
 
 #group-call-panel{display:none;position:fixed;inset:0;background:rgba(74,0,0,.97);z-index:300;flex-direction:column;align-items:center;justify-content:center;color:#fff;}
 #group-call-panel.show{display:flex;}
-#group-call-panel h3{margin-bottom:1.5rem;font-family:'Cinzel',serif;color:var(--gold-bright);}
+#group-call-panel h3{margin-bottom:1.5rem;font-family:'Cinzel',serif;color:var(--gold-bright);display:flex;align-items:center;gap:10px;}
 #peers-grid{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;max-width:700px;}
 .peer-card{background:rgba(212,160,23,.1);border-radius:12px;padding:1rem 1.5rem;text-align:center;min-width:130px;border:1px solid rgba(212,160,23,.2);}
 .peer-card .pa{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--maroon),var(--gold-dark));margin:0 auto .5rem;display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;border:2px solid var(--gold);}
 .peer-card p{font-size:.83rem;opacity:.8;}
 #group-controls{display:flex;gap:12px;margin-top:2rem;}
-.g-btn{padding:.65rem 1.4rem;border:none;border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:700;font-family:'Nunito',sans-serif;}
+.g-btn{padding:.65rem 1.4rem;border:none;border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:700;font-family:'Nunito',sans-serif;display:inline-flex;align-items:center;gap:7px;}
 .g-btn.mute-g{background:rgba(212,160,23,.2);color:var(--gold-bright);border:1px solid rgba(212,160,23,.3);}
 .g-btn.leave-g{background:#e74c3c;color:#fff;}
 
@@ -650,7 +666,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
         <button class="attach-btn" id="attach-btn" onclick="document.getElementById('file-input').click()" title="Attach file"><svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></button>
         <button class="attach-btn" id="image-btn" onclick="document.getElementById('image-input').click()" title="Send photo"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></button>
         <button class="attach-btn" id="emoji-btn" onclick="insertEmoji()" title="Emoji"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
-        <button id="ptt-btn" title="Hold to talk" onmousedown="startPTT()" onmouseup="stopPTT()" ontouchstart="startPTT(event)" ontouchend="stopPTT(event)"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></button>
+        <button id="ptt-btn" title="Hold to talk" type="button"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></button>
         <button class="send-btn" onclick="sendMessage()" title="Send"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
       </div>
     </div>
@@ -660,7 +676,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
 
 <!-- INCOMING CALL -->
 <div id="incoming-call">
-  <h4>📞 Incoming Call</h4>
+  <h4><svg class="icn" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.34 1.9.65 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.31 1.85.53 2.81.65A2 2 0 0 1 22 16.92z"/></svg> Incoming Call</h4>
   <p id="incoming-caller-name">Someone is calling…</p>
   <div class="call-btns">
     <button class="btn-accept" onclick="acceptCall()">Accept</button>
@@ -670,22 +686,22 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
 
 <!-- ACTIVE CALL -->
 <div id="call-panel">
-  <h4>📞 On Call</h4>
+  <h4><svg class="icn" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.34 1.9.65 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.31 1.85.53 2.81.65A2 2 0 0 1 22 16.92z"/></svg> On Call</h4>
   <p id="call-peer-name">—</p>
   <div class="call-timer" id="call-timer">00:00</div>
   <div class="call-controls">
-    <button class="ctrl-btn mute" id="mute-btn" onclick="toggleMute()">🎤</button>
-    <button class="ctrl-btn hangup" onclick="hangup()">📵</button>
+    <button class="ctrl-btn mute" id="mute-btn" onclick="toggleMute()" title="Mute"><svg class="icn icn-lg" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></button>
+    <button class="ctrl-btn hangup" onclick="hangup()" title="Hang up"><svg class="icn icn-lg" viewBox="0 0 24 24" style="transform:rotate(135deg);"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.34 1.9.65 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.31 1.85.53 2.81.65A2 2 0 0 1 22 16.92z"/></svg></button>
   </div>
 </div>
 
 <!-- GROUP CALL -->
 <div id="group-call-panel">
-  <h3>👥 Group Call — CICS LAN</h3>
+  <h3><svg class="icn" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Group Call — CICS LAN</h3>
   <div id="peers-grid"></div>
   <div id="group-controls">
-    <button class="g-btn mute-g" id="group-mute-btn" onclick="toggleGroupMute()">🎤 Mute</button>
-    <button class="g-btn leave-g" onclick="leaveGroupCall()">📵 Leave</button>
+    <button class="g-btn mute-g" id="group-mute-btn" onclick="toggleGroupMute()"><svg class="icn" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg><span class="g-btn-label">Mute</span></button>
+    <button class="g-btn leave-g" onclick="leaveGroupCall()"><svg class="icn" viewBox="0 0 24 24" style="transform:rotate(135deg);"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.34 1.9.65 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.31 1.85.53 2.81.65A2 2 0 0 1 22 16.92z"/></svg><span>Leave</span></button>
   </div>
 </div>
 
@@ -709,11 +725,11 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
 <!-- Notifications dropdown panel -->
 <div id="notif-panel" class="notif-panel">
   <div class="notif-panel-header">
-    <h4>🔔 Notifications</h4>
+    <h4><svg class="icn" viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg> Notifications</h4>
     <button onclick="markAllReadNotifs()">Mark all read</button>
   </div>
   <div id="notif-list" class="notif-list">
-    <div class="notif-empty"><span class="nei">🔕</span>No notifications yet</div>
+    <div class="notif-empty"><span class="nei"><svg viewBox="0 0 24 24" style="width:2rem;height:2rem;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;opacity:.55;"><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0 1 18 8"/><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.33-5"/><line x1="1" y1="1" x2="23" y2="23"/></svg></span>No notifications yet</div>
   </div>
 </div>
 <script src="/socket.io/socket.io.js"></script>
@@ -880,11 +896,12 @@ function initSocket() {
     renderGlobalOnlineUsers();
     renderContactsPanel();
     if (currentNav==='private') renderPrivateList();
-    // Refresh subtitle for any currently-open private chat so 🟢/⚫ stays live.
+    // Refresh subtitle for any currently-open private chat so status stays live.
     const activeConv = conversations[activeConvKey];
     if (activeConv && activeConv.type === 'private') {
-      document.getElementById('chat-subtitle').textContent =
-        onlineUsers.some(u => u.email === activeConv.email) ? '🟢 Online' : '⚫ Offline';
+      const isOn = onlineUsers.some(u => u.email === activeConv.email);
+      document.getElementById('chat-subtitle').innerHTML =
+        `<span class="status-dot ${isOn?'online':'offline'}"></span>${isOn?'Online':'Offline'}`;
     }
   });
 
@@ -1058,7 +1075,7 @@ function renderContactsPanel() {
       </div>
       <div class="contact-info">
         <div class="contact-name">${u.name}</div>
-        <div class="contact-status">🟢 Active now</div>
+        <div class="contact-status"><span class="status-dot online"></span>Active now</div>
       </div>
     </div>`;
   }).join('');
@@ -1258,7 +1275,12 @@ function openConversation(key) {
   av.style.width='38px'; av.style.height='38px'; av.style.fontSize='.85rem';
   av.textContent=isGlobal?'🌐':isGroup?'👥':initials(conv.name);
   document.getElementById('chat-title').textContent=conv.name;
-  document.getElementById('chat-subtitle').textContent=isGlobal?'Everyone in CICS is here':isGroup?`Group chat · ${conv.memberCount||'multiple'} members`:(onlineUsers.some(u=>u.email===conv.email)?'🟢 Online':'⚫ Offline');
+  {
+    const sub=document.getElementById('chat-subtitle');
+    if(isGlobal){ sub.textContent='Everyone in CICS is here'; }
+    else if(isGroup){ sub.textContent=`Group chat · ${conv.memberCount||'multiple'} members`; }
+    else { const isOn=onlineUsers.some(u=>u.email===conv.email); sub.innerHTML=`<span class="status-dot ${isOn?'online':'offline'}"></span>${isOn?'Online':'Offline'}`; }
+  }
   document.getElementById('call-btn').style.display=isGroup?'none':'flex';
   document.getElementById('group-call-btn').style.display=isGroup?'flex':'none';
   document.getElementById('empty-state').style.display='none';
@@ -1471,7 +1493,9 @@ function endCallUI(){peerConnection?.close();peerConnection=null;localStream?.ge
 function showCallPanel(n){document.getElementById('call-peer-name').textContent=n;document.getElementById('call-timer').textContent='00:00';document.getElementById('call-panel').classList.add('show');}
 function hideCallPanel(){document.getElementById('call-panel').classList.remove('show');}
 function startCallTimer(){callSeconds=0;clearInterval(callTimerInterval);callTimerInterval=setInterval(()=>{callSeconds++;const m=String(Math.floor(callSeconds/60)).padStart(2,'0');const s=String(callSeconds%60).padStart(2,'0');document.getElementById('call-timer').textContent=`${m}:${s}`;},1000);}
-function toggleMute(){if(!localStream)return;isMuted=!isMuted;localStream.getAudioTracks().forEach(t=>t.enabled=!isMuted);const btn=document.getElementById('mute-btn');btn.textContent=isMuted?'🔇':'🎤';btn.classList.toggle('active',isMuted);}
+const MIC_ON_SVG  = '<svg class="icn icn-lg" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>';
+const MIC_OFF_SVG = '<svg class="icn icn-lg" viewBox="0 0 24 24"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>';
+function toggleMute(){if(!localStream)return;isMuted=!isMuted;localStream.getAudioTracks().forEach(t=>t.enabled=!isMuted);const btn=document.getElementById('mute-btn');btn.innerHTML=isMuted?MIC_OFF_SVG:MIC_ON_SVG;btn.title=isMuted?'Unmute':'Mute';btn.classList.toggle('active',isMuted);}
 async function startWebRTC(targetSocketId,isInitiator){
   peerConnection=new RTCPeerConnection(iceConfig);
   localStream?.getTracks().forEach(t=>peerConnection.addTrack(t,localStream));
@@ -1492,7 +1516,7 @@ async function startGroupCall(){
   socket.emit('room:join',{roomId:currentRoomId});
 }
 function leaveGroupCall(){socket.emit('room:leave',{roomId:currentRoomId});Object.values(groupPeers).forEach(pc=>pc.close());groupPeers={};groupStream?.getTracks().forEach(t=>t.stop());groupStream=null;currentRoomId=null;document.getElementById('group-call-panel').classList.remove('show');}
-function toggleGroupMute(){if(!groupStream)return;isGroupMuted=!isGroupMuted;groupStream.getAudioTracks().forEach(t=>t.enabled=!isGroupMuted);document.getElementById('group-mute-btn').textContent=isGroupMuted?'🔇 Unmute':'🎤 Mute';}
+function toggleGroupMute(){if(!groupStream)return;isGroupMuted=!isGroupMuted;groupStream.getAudioTracks().forEach(t=>t.enabled=!isGroupMuted);const btn=document.getElementById('group-mute-btn');btn.innerHTML=(isGroupMuted?MIC_OFF_SVG:MIC_ON_SVG).replace('icn-lg','')+`<span>${isGroupMuted?'Unmute':'Mute'}</span>`;}
 function addPeerCard(sid,name){if(document.getElementById(`peer-${sid}`))return;const c=document.createElement('div');c.className='peer-card';c.id=`peer-${sid}`;c.innerHTML=`<div class="pa">${initials(name)}</div><p>${name}</p>`;document.getElementById('peers-grid').appendChild(c);}
 async function createGroupPeer(targetSocketId,targetName,isInitiator){
   addPeerCard(targetSocketId,targetName);
@@ -1506,38 +1530,99 @@ async function createGroupPeer(targetSocketId,targetName,isInitiator){
 // ══════════════════════════════════════════
 //  PUSH TO TALK (PTT)
 // ══════════════════════════════════════════
+const PTT_IDLE_SVG = '<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>';
+const PTT_REC_SVG  = '<svg viewBox="0 0 24 24" style="fill:#e74c3c;stroke:none;"><circle cx="12" cy="12" r="7"/></svg>';
+const PTT_MAX_MS   = 60_000; // safety cap: stop after 60s
+
 let pttStream = null, pttRecorder = null, pttChunks = [];
+let pttActive = false;       // user is currently holding the button
+let pttStarting = false;     // getUserMedia in flight — prevents double-entry
+let pttMaxTimer = null;
+
+function pttSetUIRecording(on) {
+  const btn = document.getElementById('ptt-btn');
+  if (!btn) return;
+  btn.classList.toggle('recording', on);
+  btn.innerHTML = on ? PTT_REC_SVG : PTT_IDLE_SVG;
+}
+
+function pttCleanupStream() {
+  if (pttStream) {
+    try { pttStream.getTracks().forEach(t => t.stop()); } catch {}
+    pttStream = null;
+  }
+  if (pttMaxTimer) { clearTimeout(pttMaxTimer); pttMaxTimer = null; }
+}
 
 async function startPTT(e) {
   if (e) e.preventDefault();
   if (!activeConvKey) return;
+  if (pttActive || pttStarting) return; // guard against double-fire (touch+mouse)
+  pttActive = true;
+  pttStarting = true;
+  pttSetUIRecording(true);
   try {
-    pttStream  = await navigator.mediaDevices.getUserMedia({ audio:true });
+    const stream = await navigator.mediaDevices.getUserMedia({ audio:true });
+    // User may have released the button while we were awaiting permission.
+    if (!pttActive) {
+      stream.getTracks().forEach(t => t.stop());
+      pttStarting = false;
+      return;
+    }
+    pttStream  = stream;
     pttChunks  = [];
     pttRecorder = new MediaRecorder(pttStream);
-    pttRecorder.ondataavailable = e => { if(e.data.size>0) pttChunks.push(e.data); };
+    pttRecorder.ondataavailable = ev => { if (ev.data && ev.data.size > 0) pttChunks.push(ev.data); };
     pttRecorder.onstop = async () => {
-      const blob = new Blob(pttChunks, { type:'audio/webm' });
-      pttStream.getTracks().forEach(t=>t.stop());
+      const chunks = pttChunks; pttChunks = [];
+      pttCleanupStream();
+      const blob = new Blob(chunks, { type:'audio/webm' });
       if (blob.size < 1000) return; // too short, ignore
       await sendVoiceMessage(blob);
     };
     pttRecorder.start();
-    const btn = document.getElementById('ptt-btn');
-    btn.classList.add('recording');
-    btn.innerHTML = '<svg viewBox="0 0 24 24" style="fill:#e74c3c;stroke:none;"><circle cx="12" cy="12" r="7"/></svg>';
-  } catch { alert('Microphone access denied. Please allow microphone to use Push to Talk.'); }
+    pttMaxTimer = setTimeout(() => { if (pttActive) stopPTT(); }, PTT_MAX_MS);
+  } catch {
+    pttActive = false;
+    pttSetUIRecording(false);
+    pttCleanupStream();
+    alert('Microphone access denied. Please allow microphone to use Push to Talk.');
+  } finally {
+    pttStarting = false;
+  }
 }
 
 function stopPTT(e) {
   if (e) e.preventDefault();
+  if (!pttActive) return;
+  pttActive = false;
+  pttSetUIRecording(false);
+  if (pttMaxTimer) { clearTimeout(pttMaxTimer); pttMaxTimer = null; }
   if (pttRecorder && pttRecorder.state === 'recording') {
-    pttRecorder.stop();
+    try { pttRecorder.stop(); } catch {}
+  } else {
+    // Recorder never started (e.g. released during getUserMedia) — just clean up.
+    pttCleanupStream();
   }
-  const btn = document.getElementById('ptt-btn');
-  btn.classList.remove('recording');
-  btn.innerHTML = '<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>';
 }
+
+// Wire PTT with pointer events so release outside the button still stops it,
+// and so touch+mouse don't both fire on hybrid devices.
+(function wirePTT(){
+  const btn = document.getElementById('ptt-btn');
+  if (!btn) return;
+  btn.addEventListener('pointerdown', e => {
+    try { btn.setPointerCapture(e.pointerId); } catch {}
+    startPTT(e);
+  });
+  const end = e => stopPTT(e);
+  btn.addEventListener('pointerup', end);
+  btn.addEventListener('pointercancel', end);
+  btn.addEventListener('lostpointercapture', end);
+  // Stop on Escape / window blur as last-resort safeties.
+  window.addEventListener('blur', () => { if (pttActive) stopPTT(); });
+  window.addEventListener('keydown', e => { if (e.key === 'Escape' && pttActive) stopPTT(); });
+})();
 
 async function sendVoiceMessage(blob) {
   const fd = new FormData();

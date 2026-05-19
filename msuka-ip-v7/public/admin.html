@@ -18,15 +18,16 @@
   --shadow-lg:0 8px 40px rgba(107,0,0,.25);
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Nunito',sans-serif;min-height:100vh;background:linear-gradient(135deg,#f6e8c8 0%,#ecd5a8 30%,#e8c8b0 55%,#d8a890 80%,#c8907a 100%) fixed;}
-body::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(900px 600px at 10% 0%,rgba(212,160,23,.30),transparent 60%),radial-gradient(700px 500px at 95% 100%,rgba(107,0,0,.22),transparent 60%),radial-gradient(500px 400px at 50% 50%,rgba(255,245,210,.35),transparent 70%);z-index:0;}
-body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.55;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.8 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");}
+body{font-family:'Nunito',sans-serif;min-height:100vh;background:linear-gradient(135deg,#f5ede3 0%,#efe4d4 30%,#ead9c3 60%,#e1c8ad 100%) fixed;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(900px 600px at 8% 0%,rgba(212,160,23,.18),transparent 65%),radial-gradient(700px 500px at 95% 100%,rgba(107,0,0,.12),transparent 65%),radial-gradient(500px 400px at 50% 45%,rgba(255,250,235,.25),transparent 70%);z-index:0;}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.32;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");}
 
-/* ── Glassmorphism for admin surfaces — translucent for visible texture ── */
+/* ── Glassmorphism for admin surfaces — warm cream tint, soft inset highlight ── */
 .admin-main,#app{position:relative;z-index:1;}
-.admin-rail{background:linear-gradient(180deg,rgba(74,0,0,.88),rgba(107,0,0,.82))!important;backdrop-filter:blur(10px) saturate(140%);-webkit-backdrop-filter:blur(10px) saturate(140%);border-right:1px solid rgba(255,255,255,.08);}
-.topbar{background:linear-gradient(135deg,rgba(74,0,0,.88),rgba(107,0,0,.82))!important;backdrop-filter:blur(10px) saturate(140%);-webkit-backdrop-filter:blur(10px) saturate(140%);}
-.card,.stat-card{background:rgba(255,255,255,.55)!important;backdrop-filter:blur(16px) saturate(160%);-webkit-backdrop-filter:blur(16px) saturate(160%);border:1px solid rgba(255,255,255,.5)!important;box-shadow:0 6px 22px rgba(107,0,0,.12)!important;}
+.admin-rail{background:linear-gradient(180deg,rgba(90,15,15,.92),rgba(107,0,0,.88) 50%,rgba(90,15,15,.92))!important;backdrop-filter:blur(12px) saturate(140%);-webkit-backdrop-filter:blur(12px) saturate(140%);border-right:1px solid rgba(212,160,23,.15)!important;box-shadow:2px 0 12px rgba(107,0,0,.25);}
+.topbar{background:linear-gradient(135deg,rgba(74,0,0,.92),rgba(107,0,0,.88))!important;backdrop-filter:blur(12px) saturate(150%);-webkit-backdrop-filter:blur(12px) saturate(150%);}
+.card,.stat-card{background:linear-gradient(160deg,rgba(255,253,250,.78),rgba(252,246,236,.72))!important;backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border:1px solid rgba(255,255,255,.55)!important;box-shadow:0 8px 30px rgba(74,0,0,.10),inset 0 1px 0 rgba(255,255,255,.6)!important;border-radius:18px!important;}
+.tabs{background:linear-gradient(160deg,rgba(255,253,250,.78),rgba(252,246,236,.72))!important;backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);border:1px solid rgba(255,255,255,.55)!important;border-radius:14px!important;box-shadow:0 4px 16px rgba(74,0,0,.08)!important;}
 
 #auth-screen{display:flex;align-items:center;justify-content:center;height:100vh;background:url('/login-bg.png') center center / cover no-repeat fixed;position:relative;overflow:hidden;}
 #auth-screen::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,0,0,.18),rgba(74,0,0,.12));pointer-events:none;}
@@ -101,13 +102,29 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
 
 .container{max-width:1150px;margin:0 auto;padding:1.4rem;}
 
-.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:1.4rem;}
-.stat-card{background:var(--white);border-radius:12px;padding:1rem 1.1rem;border:0.5px solid var(--gray-200);position:relative;overflow:hidden;box-shadow:var(--shadow-sm);transition:transform .15s;}
-.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
-.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--maroon),var(--gold));}
-.stat-card .slabel{font-size:.68rem;font-weight:800;color:var(--text-light);margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em;}
-.stat-card .svalue{font-size:1.7rem;font-weight:800;color:var(--maroon);font-family:'Cinzel',serif;}
-.svalue.green{color:#16a34a;}.svalue.orange{color:#ea580c;}.svalue.yellow{color:var(--gold-dark);}.svalue.red{color:#dc2626;}
+.stats-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;gap:1rem;flex-wrap:wrap;}
+.stats-toolbar h2{font-family:'Cinzel',serif;font-size:.95rem;color:var(--maroon-dark);font-weight:800;letter-spacing:.04em;display:inline-flex;align-items:center;gap:8px;}
+.range-toggle{display:inline-flex;background:var(--white);border:1px solid var(--gray-200);border-radius:10px;padding:3px;box-shadow:var(--shadow-sm);gap:2px;}
+.range-toggle button{appearance:none;border:none;background:transparent;padding:.4rem .95rem;border-radius:7px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:.78rem;font-weight:800;color:var(--text-light);letter-spacing:.04em;transition:background .15s,color .15s,box-shadow .15s;}
+.range-toggle button:hover{color:var(--maroon);}
+.range-toggle button.active{background:linear-gradient(135deg,var(--maroon),var(--maroon-light));color:var(--gold-bright);box-shadow:0 2px 6px rgba(74,0,0,.18);}
+.stats{display:flex;flex-direction:column;gap:12px;margin-bottom:1.4rem;}
+.stat-card{background:var(--white);border-radius:18px;padding:1rem 1.3rem 1rem 1.3rem;border:0.5px solid var(--gray-200);position:relative;overflow:hidden;box-shadow:var(--shadow-sm);transition:transform .15s,box-shadow .15s;display:grid;grid-template-columns:170px 1fr;gap:1.2rem;align-items:center;min-height:120px;}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(74,0,0,.14);}
+.stat-card::before{content:'';position:absolute;top:0;left:0;bottom:0;width:4px;height:auto;background:linear-gradient(180deg,var(--maroon),var(--gold-bright),var(--gold));}
+.stat-card .slabel{font-size:.74rem;font-weight:800;color:var(--text-light);text-transform:uppercase;letter-spacing:.08em;display:flex;flex-direction:column;gap:.35rem;}
+.stat-card .slabel::after{content:attr(data-current);display:block;font-family:'Cinzel',serif;font-size:1.85rem;font-weight:800;color:var(--tone);letter-spacing:.02em;line-height:1;}
+.stat-card .svalue{display:none;}
+.stat-spark{position:relative;height:90px;min-width:0;}
+.stat-spark svg{width:100%;height:100%;display:block;overflow:visible;}
+.stat-spark .spark-badge{position:absolute;top:0;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:.74rem;padding:2px 9px;border-radius:8px;letter-spacing:.02em;box-shadow:0 4px 10px rgba(0,0,0,.18);pointer-events:none;white-space:nowrap;}
+.stat-spark .spark-badge::after{content:'';position:absolute;left:50%;bottom:-4px;transform:translateX(-50%) rotate(45deg);width:7px;height:7px;background:#1f2937;}
+.stat-spark .spark-axis{display:flex;justify-content:space-between;font-size:.55rem;color:var(--text-light);letter-spacing:.04em;margin-top:1px;padding:0 1px;font-family:'Nunito',sans-serif;font-weight:700;}
+.stat-card[data-tone="green"]{--tone:#16a34a;--tone-soft:rgba(22,163,74,.18);}
+.stat-card[data-tone="gold"]{--tone:#B8860B;--tone-soft:rgba(184,134,11,.18);}
+.stat-card[data-tone="orange"]{--tone:#ea580c;--tone-soft:rgba(234,88,12,.18);}
+.stat-card[data-tone="maroon"]{--tone:#8B1A1A;--tone-soft:rgba(139,26,26,.18);}
+.stat-card{--tone:var(--maroon);--tone-soft:rgba(107,0,0,.16);}
 
 .tabs{display:flex;gap:4px;margin-bottom:1.2rem;background:var(--white);padding:.4rem;border-radius:12px;border:0.5px solid var(--gray-200);width:fit-content;flex-wrap:wrap;box-shadow:var(--shadow-sm);}
 .tab-btn{padding:.48rem 1.1rem;border:1.5px solid transparent;background:transparent;border-radius:8px;cursor:pointer;font-size:.82rem;color:var(--text-light);font-family:'Nunito',sans-serif;font-weight:700;position:relative;transition:all .15s;}
@@ -115,7 +132,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
 .tab-btn:hover:not(.active){background:var(--maroon-soft);color:var(--maroon);}
 .badge-count{position:absolute;top:3px;right:4px;background:#dc2626;color:#fff;border-radius:10px;font-size:.6rem;padding:1px 5px;display:none;font-weight:800;}
 
-.card{background:var(--white);border-radius:12px;border:0.5px solid var(--gray-200);padding:1.2rem;margin-bottom:1.2rem;box-shadow:var(--shadow-sm);}
+.card{background:var(--white);border-radius:18px;border:0.5px solid var(--gray-200);padding:1.3rem;margin-bottom:1.2rem;box-shadow:var(--shadow-sm);}
 .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;padding-bottom:.75rem;border-bottom:2px solid var(--gold-soft);}
 .card-header h3{font-size:.92rem;color:var(--maroon-dark);font-weight:800;font-family:'Cinzel',serif;display:inline-flex;align-items:center;gap:8px;}
 .hi{width:18px;height:18px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
@@ -148,7 +165,7 @@ tr:hover td{background:var(--maroon-soft);}
 .btn-warning{background:var(--gold-soft);color:var(--gold-dark);border:1px solid rgba(212,160,23,.3);}
 .btn-warning:hover{background:#fde68a;}
 
-.pending-card{border:1.5px solid var(--gold);border-radius:12px;padding:1rem 1.2rem;margin-bottom:.75rem;background:linear-gradient(135deg,var(--gold-soft),var(--off-white));display:flex;align-items:center;gap:1rem;transition:all .15s;box-shadow:0 2px 8px rgba(212,160,23,.1);}
+.pending-card{border:1.5px solid var(--gold);border-radius:16px;padding:1rem 1.2rem;margin-bottom:.75rem;background:linear-gradient(135deg,var(--gold-soft),var(--off-white));display:flex;align-items:center;gap:1rem;transition:all .15s;box-shadow:0 2px 8px rgba(212,160,23,.1);}
 .pending-card:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(212,160,23,.2);}
 .pending-avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--maroon),var(--maroon-light));color:var(--gold-bright);display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:800;flex-shrink:0;border:2px solid var(--gold);box-shadow:var(--shadow-sm);}
 .pending-info{flex:1;}
@@ -179,9 +196,9 @@ tr:hover td{background:var(--maroon-soft);}
 .search-input{padding:.42rem .85rem;border:1.5px solid var(--gray-200);border-radius:20px;font-size:.82rem;outline:none;font-family:'Nunito',sans-serif;color:var(--text-dark);transition:all .2s;}
 .search-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,160,23,.1);}
 
-#modal-overlay{display:none;position:fixed;inset:0;background:rgba(74,0,0,.5);z-index:100;align-items:center;justify-content:center;}
+#modal-overlay{display:none;position:fixed;inset:0;background:rgba(74,0,0,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:100;align-items:center;justify-content:center;}
 #modal-overlay.open{display:flex;}
-.modal{background:var(--white);border-radius:16px;padding:1.5rem;width:420px;box-shadow:var(--shadow-lg);border-top:4px solid var(--gold);}
+.modal{background:linear-gradient(160deg,rgba(255,253,250,.96),rgba(252,246,236,.92));backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border-radius:20px;padding:1.6rem;width:420px;box-shadow:0 20px 50px rgba(74,0,0,.25),inset 0 1px 0 rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.55);border-top:4px solid var(--gold);}
 .modal h3{margin-bottom:1rem;color:var(--maroon-dark);font-family:'Cinzel',serif;font-size:1rem;}
 .modal input,.modal select{width:100%;padding:.62rem .9rem;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.88rem;margin-bottom:.75rem;outline:none;font-family:'Nunito',sans-serif;color:var(--text-dark);}
 .modal input:focus,.modal select:focus{border-color:var(--gold);}
@@ -285,12 +302,20 @@ tr:hover td{background:var(--maroon-soft);}
   </div>
 
   <div class="container">
+    <div class="stats-toolbar">
+      <h2><svg class="hi" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-6"/></svg> Activity Overview</h2>
+      <div class="range-toggle" id="range-toggle" role="tablist" aria-label="Time range">
+        <button type="button" data-range="day"   class="active">Days</button>
+        <button type="button" data-range="month">Months</button>
+        <button type="button" data-range="year">Year</button>
+      </div>
+    </div>
     <div class="stats">
-      <div class="stat-card"><div class="slabel">Total Users</div><div class="svalue" id="stat-total">—</div></div>
-      <div class="stat-card"><div class="slabel">Online Now</div><div class="svalue green" id="stat-online">—</div></div>
-      <div class="stat-card"><div class="slabel">Pending</div><div class="svalue yellow" id="stat-pending">—</div></div>
-      <div class="stat-card"><div class="slabel">Messages</div><div class="svalue orange" id="stat-messages">—</div></div>
-      <div class="stat-card"><div class="slabel">Calls</div><div class="svalue" id="stat-calls">—</div></div>
+      <div class="stat-card" data-tone="maroon"><div class="slabel" id="lbl-total" data-current="—">Total Users</div><div class="stat-spark" id="spark-total"></div><div class="svalue" id="stat-total">—</div></div>
+      <div class="stat-card" data-tone="green"><div class="slabel" id="lbl-online" data-current="—">Online Now</div><div class="stat-spark" id="spark-online"></div><div class="svalue" id="stat-online">—</div></div>
+      <div class="stat-card" data-tone="gold"><div class="slabel" id="lbl-pending" data-current="—">Pending</div><div class="stat-spark" id="spark-pending"></div><div class="svalue" id="stat-pending">—</div></div>
+      <div class="stat-card" data-tone="orange"><div class="slabel" id="lbl-messages" data-current="—">Messages</div><div class="stat-spark" id="spark-messages"></div><div class="svalue" id="stat-messages">—</div></div>
+      <div class="stat-card" data-tone="maroon"><div class="slabel" id="lbl-calls" data-current="—">Calls</div><div class="stat-spark" id="spark-calls"></div><div class="svalue" id="stat-calls">—</div></div>
     </div>
 
     <div class="tabs" style="display:none;">
@@ -603,15 +628,219 @@ document.addEventListener('click',e=>{
   if(ov && e.target===ov) closeFeedbackDetail();
 });
 
+// ── Sparkline-graph stat cards ──────────────────────────────────────────────
+const SPARK_HISTORY_KEY = 'admin:statsHistory:v3';
+const SPARK_RANGE_KEY   = 'admin:statsRange:v1';
+const MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const RANGE_CFG = {
+  day:   { points: 10, stepMs: 24*60*60*1000,         label: t => String(new Date(t).getDate()).padStart(2,'0') },
+  month: { points: 12, stepMs: 30*24*60*60*1000,      label: t => MONTH_ABBR[new Date(t).getMonth()] },
+  year:  { points: 6,  stepMs: 365*24*60*60*1000,     label: t => String(new Date(t).getFullYear()) }
+};
+let currentRange = (() => { try { const r = localStorage.getItem(SPARK_RANGE_KEY); return RANGE_CFG[r] ? r : 'day'; } catch { return 'day'; } })();
+let lastStats = null;
+async function setStatsRange(range){
+  if (!RANGE_CFG[range] || range === currentRange) return;
+  currentRange = range;
+  try { localStorage.setItem(SPARK_RANGE_KEY, range); } catch {}
+  document.querySelectorAll('#range-toggle button').forEach(b => b.classList.toggle('active', b.dataset.range === range));
+  await refreshSparklines();
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const toggle = document.getElementById('range-toggle');
+  if (toggle) {
+    toggle.addEventListener('click', e => {
+      const btn = e.target.closest('button[data-range]');
+      if (btn) setStatsRange(btn.dataset.range);
+    });
+    toggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.range === currentRange));
+  }
+});
+// Re-render the sparklines on window resize so the viewBox keeps matching
+// the container's pixel width — otherwise stretching returns.
+let _sparkResizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(_sparkResizeTimer);
+  _sparkResizeTimer = setTimeout(() => { if (lastStats) refreshSparklines(); }, 150);
+});
+
+// Parse a server bucket-label ("YYYY-MM-DD", "YYYY-MM", or "YYYY") back to a Date
+// so the rendering pipeline (which expects {t,v} points) can format axis labels.
+function parseBucketLabel(label, range){
+  if (range === 'year') return new Date(Number(label), 0, 1);
+  if (range === 'month'){ const [y,m] = label.split('-').map(Number); return new Date(y, (m||1)-1, 1); }
+  const [y,m,d] = label.split('-').map(Number); return new Date(y||1970, (m||1)-1, d||1);
+}
+function renderSparkFallback() {
+  // Used when /trends is unavailable — draws a seeded curve so each card still
+  // shows a graph rather than blank space. Uses lastStats as the anchor value.
+  const s = lastStats || {};
+  const seeded = [
+    ['spark-total',    'totalUsers',    s.totalUsers    ?? 0],
+    ['spark-online',   'onlineUsers',   s.onlineUsers   ?? 0],
+    ['spark-pending',  'pendingUsers',  s.pendingUsers  ?? 0],
+    ['spark-messages', 'totalMessages', s.totalMessages ?? 0],
+    ['spark-calls',    'totalCalls',    s.totalCalls    ?? 0],
+  ];
+  for (const [sparkId, key, v] of seeded) {
+    const history = seedHistory(key, v, currentRange);
+    renderSpark(sparkId, history, v);
+  }
+}
+async function refreshSparklines(){
+  try {
+    const res = await fetch(`/api/admin/stats/trends?range=${encodeURIComponent(currentRange)}`, { headers:{ Authorization:`Bearer ${authToken}` } });
+    if (!res.ok) {
+      console.warn(`[sparklines] /trends returned ${res.status} — falling back to seeded curves. Restart the server to enable real data.`);
+      renderSparkFallback();
+      return;
+    }
+    const data = await res.json();
+    if (!data || !Array.isArray(data.labels) || data.labels.length === 0) {
+      console.warn('[sparklines] /trends returned no buckets — using fallback.');
+      renderSparkFallback();
+      return;
+    }
+    const mk = arr => data.labels.map((lb, i) => ({ t: parseBucketLabel(lb, data.range).getTime(), v: Number(arr[i])||0 }));
+    const cards = [
+      { lblId:'lbl-total',    sparkId:'spark-total',    valId:'stat-total',    series: mk(data.totalUsers),    current: data.totalUsers.at(-1) ?? 0 },
+      { lblId:'lbl-online',   sparkId:'spark-online',   valId:'stat-online',   series: mk(data.onlineUsers),   current: data.onlineUsers.at(-1) ?? 0 },
+      { lblId:'lbl-pending',  sparkId:'spark-pending',  valId:'stat-pending',  series: mk(data.pendingUsers),  current: (lastStats?.pendingUsers ?? data.pendingUsers.at(-1) ?? 0) },
+      { lblId:'lbl-messages', sparkId:'spark-messages', valId:'stat-messages', series: mk(data.totalMessages), current: data.totalMessages.at(-1) ?? 0 },
+      { lblId:'lbl-calls',    sparkId:'spark-calls',    valId:'stat-calls',    series: mk(data.totalCalls),    current: data.totalCalls.at(-1) ?? 0 },
+    ];
+    for (const c of cards) {
+      const lbl = document.getElementById(c.lblId); if (lbl) lbl.dataset.current = c.current;
+      const val = document.getElementById(c.valId); if (val) val.textContent = c.current;
+      renderSpark(c.sparkId, c.series, c.current);
+    }
+  } catch (e) {
+    console.error('[sparklines] refresh failed:', e);
+    renderSparkFallback();
+  }
+}
+function loadSparkHistory(){
+  try { return JSON.parse(localStorage.getItem(SPARK_HISTORY_KEY)) || {}; } catch { return {}; }
+}
+function saveSparkHistory(h){ try { localStorage.setItem(SPARK_HISTORY_KEY, JSON.stringify(h)); } catch {} }
+// Tiny seeded PRNG so each metric gets a stable but distinct shape on first load.
+function seedRand(seed){
+  let s = 0; for (let i=0;i<seed.length;i++) s = (s*31 + seed.charCodeAt(i)) | 0;
+  return () => { s = (s * 1664525 + 1013904223) | 0; return ((s >>> 0) / 0xFFFFFFFF); };
+}
+function seedHistory(key, value, range){
+  const cfg = RANGE_CFG[range] || RANGE_CFG.day;
+  const v = Math.max(0, Number(value) || 0);
+  const rand = seedRand(key + ':' + range);
+  const now = Date.now();
+  const N = cfg.points;
+  const out = [];
+  for (let i = N - 1; i >= 0; i--){
+    const swing  = Math.max(1.5, v * 0.3);
+    const wave   = Math.sin((N - i) * 0.85 + rand()*2) * swing;
+    const wave2  = Math.cos((N - i) * 0.35 + rand()*2) * swing * 0.5;
+    const jitter = (rand() - 0.5) * swing * 0.35;
+    const pv     = Math.max(0, Math.round(v + wave + wave2 + jitter));
+    out.push({ t: now - i * cfg.stepMs, v: pv });
+  }
+  out[out.length - 1] = { t: now, v };
+  return out;
+}
+function storageKey(metricKey, range){ return `${range}:${metricKey}`; }
+function pushSparkPoint(metricKey, value, range){
+  range = range || currentRange;
+  const cfg = RANGE_CFG[range] || RANGE_CFG.day;
+  const sk = storageKey(metricKey, range);
+  const h = loadSparkHistory();
+  let arr = Array.isArray(h[sk]) ? h[sk] : null;
+  const now = Date.now();
+  if (!arr || arr.length < 2) {
+    arr = seedHistory(metricKey, value, range);
+  } else {
+    const last = arr[arr.length - 1];
+    // Only push a new point when a full step has elapsed, otherwise refresh the last point.
+    if (now - last.t >= cfg.stepMs) {
+      arr.push({ t: now, v: Number(value) || 0 });
+      while (arr.length > cfg.points) arr.shift();
+    } else {
+      arr[arr.length - 1] = { t: now, v: Number(value) || 0 };
+    }
+  }
+  h[sk] = arr;
+  saveSparkHistory(h);
+  return arr;
+}
+function renderSpark(containerId, history, currentValue){
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const pts = history.length ? history : [{t:Date.now(), v:Number(currentValue)||0}];
+  // Pad single-point history so we still draw a flat line, not nothing.
+  const data = pts.length === 1 ? [pts[0], pts[0]] : pts;
+  // Match the viewBox to the container's actual pixel size so circles stay
+  // round and stroke widths stay uniform (no horizontal stretching).
+  const rect = el.getBoundingClientRect();
+  const W = Math.max(180, Math.round(rect.width || 600));
+  const H = Math.max(60,  Math.round(rect.height || 90));
+  const PAD_X = 14, PAD_TOP = 26, PAD_BOTTOM = 16;
+  const vals = data.map(p => p.v);
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const flat = max === min;
+  const range = flat ? 1 : (max - min);
+  const xStep = (W - PAD_X*2) / (data.length - 1 || 1);
+  const chartH = H - PAD_TOP - PAD_BOTTOM;
+  // When all values equal, draw the line centered vertically instead of pinned to bottom.
+  const yFor = v => flat ? (PAD_TOP + chartH/2) : (PAD_TOP + (1 - (v - min) / range) * chartH);
+  const coords = data.map((p,i) => ({ x: PAD_X + i*xStep, y: yFor(p.v) }));
+  // Smooth path with simple monotone-ish cubic
+  let d = `M ${coords[0].x} ${coords[0].y}`;
+  for (let i=1;i<coords.length;i++){
+    const p0 = coords[i-1], p1 = coords[i];
+    const cx = (p0.x + p1.x) / 2;
+    d += ` C ${cx} ${p0.y}, ${cx} ${p1.y}, ${p1.x} ${p1.y}`;
+  }
+  const areaD = `${d} L ${coords[coords.length-1].x} ${H-PAD_BOTTOM+4} L ${coords[0].x} ${H-PAD_BOTTOM+4} Z`;
+  const gradId = `g-${containerId}`;
+  const last = coords[coords.length - 1];
+  const badgeLeftPct = (last.x / W) * 100;
+  const dots = coords.map(c => `<circle cx="${c.x}" cy="${c.y}" r="3.5" fill="#fff" style="stroke:var(--tone);stroke-width:2;"/>`).join('');
+  // X-axis labels follow the active range (day = DD, month = Jan, year = YYYY).
+  const fmt = (RANGE_CFG[currentRange] || RANGE_CFG.day).label;
+  const axis = data.map(p => fmt(p.t)).join('</span><span>');
+  el.innerHTML = `
+    <div class="spark-badge" style="left:${Math.max(12, Math.min(88, badgeLeftPct))}%;">${currentValue}</div>
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" width="100%" height="100%">
+      <defs>
+        <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" style="stop-color:var(--tone);stop-opacity:0.32"/>
+          <stop offset="100%" style="stop-color:var(--tone);stop-opacity:0.02"/>
+        </linearGradient>
+      </defs>
+      <path d="${areaD}" fill="url(#${gradId})" stroke="none"/>
+      <path d="${d}" fill="none" style="stroke:var(--tone);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;"/>
+      ${dots}
+    </svg>
+    <div class="spark-axis"><span>${axis}</span></div>`;
+}
+
 async function loadStats(){
   try{
     const res=await fetch('/api/admin/stats',{headers:{Authorization:`Bearer ${authToken}`}});
     const data=await res.json();
-    document.getElementById('stat-total').textContent=data.totalUsers??'0';
-    document.getElementById('stat-online').textContent=data.onlineUsers??'0';
-    document.getElementById('stat-pending').textContent=data.pendingUsers??'0';
-    document.getElementById('stat-messages').textContent=data.totalMessages??'0';
-    document.getElementById('stat-calls').textContent=data.totalCalls??'0';
+    lastStats = data;
+    // Update the live current values; the sparkline curves come from /trends.
+    const live = [
+      ['stat-total',    'lbl-total',    data.totalUsers],
+      ['stat-online',   'lbl-online',   data.onlineUsers],
+      ['stat-pending',  'lbl-pending',  data.pendingUsers],
+      ['stat-messages', 'lbl-messages', data.totalMessages],
+      ['stat-calls',    'lbl-calls',    data.totalCalls],
+    ];
+    for (const [valId, lblId, raw] of live) {
+      const v = raw ?? 0;
+      const valEl = document.getElementById(valId); if (valEl) valEl.textContent = v;
+      const lbl = document.getElementById(lblId); if (lbl) lbl.dataset.current = v;
+    }
+    await refreshSparklines();
   }catch{}
 }
 
