@@ -629,7 +629,6 @@ document.addEventListener('click',e=>{
 });
 
 // ── Sparkline-graph stat cards ──────────────────────────────────────────────
-const SPARK_HISTORY_KEY = 'admin:statsHistory:v3';
 const SPARK_RANGE_KEY   = 'admin:statsRange:v1';
 const MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const RANGE_CFG = {
@@ -719,10 +718,6 @@ async function refreshSparklines(){
     renderSparkFallback();
   }
 }
-function loadSparkHistory(){
-  try { return JSON.parse(localStorage.getItem(SPARK_HISTORY_KEY)) || {}; } catch { return {}; }
-}
-function saveSparkHistory(h){ try { localStorage.setItem(SPARK_HISTORY_KEY, JSON.stringify(h)); } catch {} }
 // Tiny seeded PRNG so each metric gets a stable but distinct shape on first load.
 function seedRand(seed){
   let s = 0; for (let i=0;i<seed.length;i++) s = (s*31 + seed.charCodeAt(i)) | 0;
@@ -745,30 +740,6 @@ function seedHistory(key, value, range){
   }
   out[out.length - 1] = { t: now, v };
   return out;
-}
-function storageKey(metricKey, range){ return `${range}:${metricKey}`; }
-function pushSparkPoint(metricKey, value, range){
-  range = range || currentRange;
-  const cfg = RANGE_CFG[range] || RANGE_CFG.day;
-  const sk = storageKey(metricKey, range);
-  const h = loadSparkHistory();
-  let arr = Array.isArray(h[sk]) ? h[sk] : null;
-  const now = Date.now();
-  if (!arr || arr.length < 2) {
-    arr = seedHistory(metricKey, value, range);
-  } else {
-    const last = arr[arr.length - 1];
-    // Only push a new point when a full step has elapsed, otherwise refresh the last point.
-    if (now - last.t >= cfg.stepMs) {
-      arr.push({ t: now, v: Number(value) || 0 });
-      while (arr.length > cfg.points) arr.shift();
-    } else {
-      arr[arr.length - 1] = { t: now, v: Number(value) || 0 };
-    }
-  }
-  h[sk] = arr;
-  saveSparkHistory(h);
-  return arr;
 }
 function renderSpark(containerId, history, currentValue){
   const el = document.getElementById(containerId);

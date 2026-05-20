@@ -927,8 +927,7 @@ function initSocket() {
     if (!isFromMe && msg.type !== 'system') {
       if (!isActive) {
         // Show toast popup
-        const convName = conversations[key]?.name || msg.sender;
-        const preview  = msg.type==='image'?'📷 Sent an image':msg.type==='file'?`📎 ${msg.file_name}`:msg.type==='voice'?'🎙️ Voice message':msg.text;
+        const preview  =msg.type==='image'?'📷 Sent an image':msg.type==='file'?`📎 ${msg.file_name}`:msg.type==='voice'?'🎙️ Voice message':msg.text;
         const toastType = msg.type==='announcement' ? 'announce' : msg.type==='image' ? 'image' : msg.type==='file' ? 'file' : msg.type==='voice' ? 'voice' : 'msg';
         const title    = msg.type==='announcement' ? `📢 Announcement from ${msg.sender}` : `${msg.sender}`;
         showToast(toastType, title, preview, () => openConversation(key));

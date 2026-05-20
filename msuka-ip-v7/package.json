@@ -9,6 +9,8 @@
     "test": "npx playwright test",
     "test:headed": "npx playwright test --headed",
     "test:report": "npx playwright show-report",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "preflight": "node scripts/preflight.js",
     "backup": "node scripts/backup.js",
     "db:audit": "node db-audit.js"
@@ -23,6 +25,9 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.40.0",
+    "eslint": "^10.4.0",
+    "eslint-plugin-html": "^8.1.4",
+    "globals": "^17.6.0",
     "nodemon": "^3.0.2"
   }
 }

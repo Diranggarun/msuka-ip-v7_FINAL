@@ -48,6 +48,7 @@
 - 2026-05-14 — Secrets moved to `.env` (JWT, AES, MySQL creds) with inline loader; `.env.example` + `.gitignore` added
 - 2026-05-14 — VoIP signaling audited (1:1 + group), wiring verified end-to-end in code; marked Phase 8 & 13 ✅
 - 2026-05-14 — `DEPLOYMENT.md` written (MySQL, env, firewall, secure-context note, smoke-test checklist); Phase 15 ✅
+- 2026-05-20 — ESLint added (flat config + `eslint-plugin-html` for inline `<script>` blocks); `lint`/`lint:fix` npm scripts; removed dead sparkline code in `admin.html` (`pushSparkPoint` + orphaned `loadSparkHistory`/`saveSparkHistory`/`storageKey`/`SPARK_HISTORY_KEY`); `npm run lint` clean — 0 problems
 
 ## Notes
 
