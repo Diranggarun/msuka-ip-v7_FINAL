@@ -13,7 +13,7 @@ module.exports = defineConfig({
 
   use: {
     baseURL: 'http://localhost:3000',
-    headless: false,        // set true to run without browser window
+    headless: true,         // npm run test:headed to watch in a real window
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     actionTimeout: 8000,

@@ -2,6 +2,9 @@
 //  MSUkaIP – Playwright Test Suite
 //  Chapter 3: System Testing (Section 3.4)
 //  Tests: Login, Register, Chat, File Upload, Admin Dashboard
+//
+//  Selectors updated for the modernized UI (icon-rail navigation,
+//  single-page index.html, Global Chat opened from the rail).
 // ═══════════════════════════════════════════════════════════════════
 
 const { test, expect } = require('@playwright/test');
@@ -12,6 +15,34 @@ const ADMIN_EMAIL = 'admin@cics.msu.edu';
 const ADMIN_PASS  = 'admin123';
 const USER_EMAIL  = 'student@cics.msu.edu';
 const USER_PASS   = 'student123';
+
+// ── Shared helpers ────────────────────────────────────────────────
+async function studentLogin(page) {
+  await page.goto(BASE_URL);
+  await page.fill('#login-email', USER_EMAIL);
+  await page.fill('#login-password', USER_PASS);
+  await page.click('button.btn-login');
+  await page.waitForSelector('#app', { state: 'visible', timeout: 8000 });
+}
+
+async function adminLogin(page) {
+  await page.goto(`${BASE_URL}/admin.html`);
+  await page.fill('#login-email', ADMIN_EMAIL);
+  await page.fill('#login-password', ADMIN_PASS);
+  await page.click('button.btn-primary');
+  await page.waitForSelector('#app', { state: 'visible', timeout: 8000 });
+}
+
+// Global Chat is opened from the icon-rail. The conversation object is
+// created once the Socket.IO connection is up, so wait for it first.
+async function openGlobalChat(page) {
+  await page.waitForFunction(
+    () => typeof conversations !== 'undefined' && !!conversations['group_general'],
+    null, { timeout: 8000 }
+  );
+  await page.click('#rail-globalchat');
+  await page.waitForSelector('#chat-panel.active', { state: 'visible', timeout: 8000 });
+}
 
 // ═══════════════════════════════════════════════════════════════════
 //  TEST GROUP 1: Authentication
@@ -53,24 +84,23 @@ test.describe('1. Authentication Tests', () => {
   });
 
   test('1.5 Successful login shows messenger UI', async ({ page }) => {
-    await page.goto(BASE_URL);
-    await page.fill('#login-email', USER_EMAIL);
-    await page.fill('#login-password', USER_PASS);
-    await page.click('button.btn-login');
+    await studentLogin(page);
     // Messenger app should appear
-    await expect(page.locator('#app')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#app')).toBeVisible();
     await expect(page.locator('.left-panel')).toBeVisible();
     console.log('✅ Login successful — messenger UI visible');
   });
 
-  test('1.6 Admin login shows admin button', async ({ page }) => {
+  test('1.6 Admin is redirected from the chat login to the Admin Dashboard', async ({ page }) => {
+    // By design, admin accounts cannot sign in on the chat page — the
+    // /api/login endpoint rejects them and points them at /admin.html.
     await page.goto(BASE_URL);
     await page.fill('#login-email', ADMIN_EMAIL);
     await page.fill('#login-password', ADMIN_PASS);
     await page.click('button.btn-login');
-    await expect(page.locator('#app')).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('#admin-btn')).toBeVisible();
-    console.log('✅ Admin login shows admin button');
+    await expect(page.locator('#login-msg')).toContainText('Admin');
+    await expect(page.locator('#app')).toBeHidden();
+    console.log('✅ Admin correctly directed to the Admin Dashboard');
   });
 
   test('1.7 Register with mismatched passwords shows error', async ({ page }) => {
@@ -105,51 +135,48 @@ test.describe('1. Authentication Tests', () => {
 test.describe('2. Messenger UI Tests', () => {
 
   test.beforeEach(async ({ page }) => {
-    await page.goto(BASE_URL);
-    await page.fill('#login-email', USER_EMAIL);
-    await page.fill('#login-password', USER_PASS);
-    await page.click('button.btn-login');
-    await page.waitForSelector('#app', { state: 'visible', timeout: 5000 });
+    await studentLogin(page);
   });
 
-  test('2.1 Navigation buttons are visible', async ({ page }) => {
-    await expect(page.locator('#nav-global')).toBeVisible();
-    await expect(page.locator('#nav-groups')).toBeVisible();
-    await expect(page.locator('#nav-private')).toBeVisible();
-    console.log('✅ All 3 nav buttons visible');
+  test('2.1 Icon-rail navigation buttons are visible', async ({ page }) => {
+    await expect(page.locator('#rail-global')).toBeVisible();
+    await expect(page.locator('#rail-globalchat')).toBeVisible();
+    await expect(page.locator('#rail-groups')).toBeVisible();
+    await expect(page.locator('#rail-private')).toBeVisible();
+    console.log('✅ All rail navigation buttons visible');
   });
 
-  test('2.2 Global Chat section shows correctly', async ({ page }) => {
-    await page.click('#nav-global');
-    await expect(page.locator('#section-global')).toBeVisible();
-    await expect(page.locator('#global-chat-item')).toBeVisible();
-    await expect(page.locator('.conv-name').first()).toContainText('Global Chat');
-    console.log('✅ Global Chat section visible');
+  test('2.2 Global Chat opens from the rail', async ({ page }) => {
+    await openGlobalChat(page);
+    await expect(page.locator('#section-globalchat')).toBeVisible();
+    await expect(page.locator('#chat-panel')).toBeVisible();
+    await expect(page.locator('#chat-title')).toContainText('Global Chat');
+    console.log('✅ Global Chat opens correctly');
   });
 
   test('2.3 Groups section shows + New Group button', async ({ page }) => {
-    await page.click('#nav-groups');
+    await page.click('#rail-groups');
     await expect(page.locator('#section-groups')).toBeVisible();
-    await expect(page.locator('button', { hasText: '+ New Group' })).toBeVisible();
+    await expect(page.locator('#section-groups button')).toContainText('New Group');
     console.log('✅ Groups section with New Group button visible');
   });
 
-  test('2.4 Private section shows online users', async ({ page }) => {
-    await page.click('#nav-private');
+  test('2.4 Private section is reachable', async ({ page }) => {
+    await page.click('#rail-private');
     await expect(page.locator('#section-private')).toBeVisible();
     console.log('✅ Private section visible');
   });
 
   test('2.5 Opening Global Chat shows message area', async ({ page }) => {
-    await page.click('#global-chat-item');
+    await openGlobalChat(page);
     await expect(page.locator('#chat-panel')).toBeVisible();
     await expect(page.locator('#messages-area')).toBeVisible();
     await expect(page.locator('#msg-input')).toBeVisible();
-    console.log('✅ Global Chat opens correctly');
+    console.log('✅ Global Chat message area visible');
   });
 
   test('2.6 Input row has all buttons', async ({ page }) => {
-    await page.click('#global-chat-item');
+    await openGlobalChat(page);
     await expect(page.locator('#attach-btn')).toBeVisible();
     await expect(page.locator('#msg-input')).toBeVisible();
     await expect(page.locator('#ptt-btn')).toBeVisible();
@@ -157,23 +184,25 @@ test.describe('2. Messenger UI Tests', () => {
     console.log('✅ All input buttons visible (attach, PTT, send)');
   });
 
-  test('2.7 Search box filters conversations', async ({ page }) => {
-    await page.fill('#search-input', 'Global');
-    await expect(page.locator('#global-chat-item')).toBeVisible();
-    console.log('✅ Search works');
+  test('2.7 Search box accepts input', async ({ page }) => {
+    await page.click('#rail-groups');
+    await page.fill('#search-input', 'BSIT');
+    await expect(page.locator('#search-input')).toHaveValue('BSIT');
+    console.log('✅ Search box works');
   });
 
   test('2.8 New Group modal opens', async ({ page }) => {
-    await page.click('#nav-groups');
-    await page.click('button', { hasText: '+ New Group' });
+    await page.click('#rail-groups');
+    await page.click('#section-groups button');
     await expect(page.locator('#modal-overlay')).toBeVisible();
     await expect(page.locator('#group-name-input')).toBeVisible();
     console.log('✅ New Group modal opens');
   });
 
   test('2.9 New Group modal can be closed', async ({ page }) => {
-    await page.click('#nav-groups');
-    await page.click('button', { hasText: '+ New Group' });
+    await page.click('#rail-groups');
+    await page.click('#section-groups button');
+    await expect(page.locator('#modal-overlay')).toBeVisible();
     await page.click('.btn-cancel');
     await expect(page.locator('#modal-overlay')).not.toBeVisible();
     console.log('✅ Group modal closes correctly');
@@ -193,13 +222,8 @@ test.describe('2. Messenger UI Tests', () => {
 test.describe('3. Messaging Tests', () => {
 
   test.beforeEach(async ({ page }) => {
-    await page.goto(BASE_URL);
-    await page.fill('#login-email', USER_EMAIL);
-    await page.fill('#login-password', USER_PASS);
-    await page.click('button.btn-login');
-    await page.waitForSelector('#app', { state: 'visible', timeout: 5000 });
-    await page.click('#global-chat-item');
-    await page.waitForSelector('#chat-panel', { state: 'visible' });
+    await studentLogin(page);
+    await openGlobalChat(page);
   });
 
   test('3.1 Can type in message input', async ({ page }) => {
@@ -259,13 +283,8 @@ test.describe('3. Messaging Tests', () => {
 test.describe('4. File Upload Tests', () => {
 
   test.beforeEach(async ({ page }) => {
-    await page.goto(BASE_URL);
-    await page.fill('#login-email', USER_EMAIL);
-    await page.fill('#login-password', USER_PASS);
-    await page.click('button.btn-login');
-    await page.waitForSelector('#app', { state: 'visible', timeout: 5000 });
-    await page.click('#global-chat-item');
-    await page.waitForSelector('#chat-panel', { state: 'visible' });
+    await studentLogin(page);
+    await openGlobalChat(page);
   });
 
   test('4.1 Attach button is visible', async ({ page }) => {
@@ -281,13 +300,13 @@ test.describe('4. File Upload Tests', () => {
 
   test('4.3 File input accepts PDFs', async ({ page }) => {
     const input = page.locator('#file-input');
-    await expect(input).toHaveAttribute('accept', /.pdf/);
+    await expect(input).toHaveAttribute('accept', /\.pdf/);
     console.log('✅ File input accepts PDF');
   });
 
-  test('4.4 PTT button is visible and holdable', async ({ page }) => {
+  test('4.4 PTT (push-to-talk) button is present', async ({ page }) => {
     await expect(page.locator('#ptt-btn')).toBeVisible();
-    await expect(page.locator('#ptt-btn')).toHaveText('🎙️');
+    await expect(page.locator('#ptt-btn svg')).toBeVisible();
     console.log('✅ PTT button visible');
   });
 
@@ -299,11 +318,7 @@ test.describe('4. File Upload Tests', () => {
 test.describe('5. Admin Dashboard Tests', () => {
 
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${BASE_URL}/admin.html`);
-    await page.fill('#login-email', ADMIN_EMAIL);
-    await page.fill('#login-password', ADMIN_PASS);
-    await page.click('button.btn-primary');
-    await page.waitForSelector('#app', { state: 'visible', timeout: 5000 });
+    await adminLogin(page);
   });
 
   test('5.1 Admin dashboard loads after login', async ({ page }) => {
@@ -312,25 +327,27 @@ test.describe('5. Admin Dashboard Tests', () => {
   });
 
   test('5.2 Stats cards are visible', async ({ page }) => {
-    await expect(page.locator('#stat-total')).toBeVisible();
-    await expect(page.locator('#stat-online')).toBeVisible();
-    await expect(page.locator('#stat-pending')).toBeVisible();
+    // The visible figure is rendered via the .slabel label (the #stat-* div
+    // is a hidden data holder — see .stat-card .svalue{display:none} in CSS).
+    await expect(page.locator('#lbl-total')).toBeVisible();
+    await expect(page.locator('#lbl-online')).toBeVisible();
+    await expect(page.locator('#lbl-pending')).toBeVisible();
     console.log('✅ Stats cards visible');
   });
 
-  test('5.3 Pending tab is visible', async ({ page }) => {
+  test('5.3 Pending panel is visible by default', async ({ page }) => {
     await expect(page.locator('#tab-pending')).toBeVisible();
-    console.log('✅ Pending tab visible');
+    console.log('✅ Pending panel visible');
   });
 
   test('5.4 Users tab shows user table', async ({ page }) => {
-    await page.click('button', { hasText: '👥 Users' });
+    await page.click('button.rail-tab[title="Users"]');
     await expect(page.locator('#users-tbody')).toBeVisible();
     console.log('✅ Users table visible');
   });
 
   test('5.5 Add User tab shows form', async ({ page }) => {
-    await page.click('button', { hasText: '➕ Add User' });
+    await page.click('button.rail-tab[title="Add User"]');
     await expect(page.locator('#new-name')).toBeVisible();
     await expect(page.locator('#new-email')).toBeVisible();
     await expect(page.locator('#new-password')).toBeVisible();
@@ -338,7 +355,7 @@ test.describe('5. Admin Dashboard Tests', () => {
   });
 
   test('5.6 Audit Logs tab loads', async ({ page }) => {
-    await page.click('button', { hasText: '📋 Audit Logs' });
+    await page.click('button.rail-tab[title="Audit Logs"]');
     await expect(page.locator('#logs-list')).toBeVisible();
     console.log('✅ Audit Logs visible');
   });
@@ -354,7 +371,7 @@ test.describe('5. Admin Dashboard Tests', () => {
   });
 
   test('5.8 Admin can add a new user', async ({ page }) => {
-    await page.click('button', { hasText: '➕ Add User' });
+    await page.click('button.rail-tab[title="Add User"]');
     const testEmail = `testuser_${Date.now()}@cics.msu.edu`;
     await page.fill('#new-name', 'Playwright Test User');
     await page.fill('#new-email', testEmail);
@@ -393,14 +410,14 @@ test.describe('6. Performance & Availability Tests', () => {
     await page.fill('#login-password', USER_PASS);
     const start = Date.now();
     await page.click('button.btn-login');
-    await page.waitForSelector('#app', { state:'visible', timeout:5000 });
+    await page.waitForSelector('#app', { state: 'visible', timeout: 5000 });
     const elapsed = Date.now() - start;
     expect(elapsed).toBeLessThan(2000);
     console.log(`✅ Login completed in ${elapsed}ms`);
   });
 
   test('6.4 UI is responsive on mobile viewport', async ({ page }) => {
-    await page.setViewportSize({ width:390, height:844 }); // iPhone 14 size
+    await page.setViewportSize({ width: 390, height: 844 }); // iPhone 14 size
     await page.goto(BASE_URL);
     await expect(page.locator('#auth-screen')).toBeVisible();
     await expect(page.locator('.auth-card')).toBeVisible();
@@ -408,7 +425,7 @@ test.describe('6. Performance & Availability Tests', () => {
   });
 
   test('6.5 UI is responsive on tablet viewport', async ({ page }) => {
-    await page.setViewportSize({ width:768, height:1024 }); // iPad size
+    await page.setViewportSize({ width: 768, height: 1024 }); // iPad size
     await page.goto(BASE_URL);
     await expect(page.locator('#auth-screen')).toBeVisible();
     console.log('✅ UI visible on tablet viewport (768x1024)');

@@ -767,7 +767,7 @@ async function login() {
 function launchApp(u){
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
-  if(u.role==="admin"){document.getElementById("admin-btn").style.display="flex";document.getElementById("rail-admin").style.display="flex";}
+  if(u.role==="admin"){document.getElementById("rail-admin").style.display="flex";}
   document.getElementById("user-badge-av").textContent=u.name.charAt(0).toUpperCase();
   document.getElementById("user-badge-name").textContent=u.name;
   document.getElementById("user-badge-role").textContent=u.role.toUpperCase();

@@ -32,7 +32,7 @@ test.describe('Smoke — system reachable & auth working', () => {
     await page.goto(BASE_URL);
     await page.fill('#login-email', USER_EMAIL);
     await page.fill('#login-password', USER_PASS);
-    await page.click('button:has-text("Sign In"), button[onclick="login()"]');
+    await page.click('button.btn-login');
     await expect(page.locator('#app')).toBeVisible({ timeout: 8000 });
     // Rail buttons we recently added should be visible after login
     await expect(page.locator('#rail-notif')).toBeVisible();
@@ -43,7 +43,7 @@ test.describe('Smoke — system reachable & auth working', () => {
     await page.goto(`${BASE_URL}/admin.html`);
     await page.fill('#login-email', ADMIN_EMAIL);
     await page.fill('#login-password', ADMIN_PASS);
-    await page.click('button:has-text("Sign In"), button[onclick="login()"]');
+    await page.click('button.btn-primary');
     // Admin rail buttons
     await expect(page.locator('.rail-tab', { hasText: 'Pending' })).toBeVisible({ timeout: 8000 });
     await expect(page.locator('.rail-tab', { hasText: 'Feedback' })).toBeVisible();
@@ -57,7 +57,7 @@ test.describe('Smoke — notifications panel', () => {
     await page.goto(BASE_URL);
     await page.fill('#login-email', USER_EMAIL);
     await page.fill('#login-password', USER_PASS);
-    await page.click('button:has-text("Sign In"), button[onclick="login()"]');
+    await page.click('button.btn-login');
     await expect(page.locator('#app')).toBeVisible({ timeout: 8000 });
 
     await page.click('#rail-notif');
@@ -114,7 +114,7 @@ test.describe('Smoke — feedback form renders', () => {
 
   test('feedback page loads with all four sections + submit', async ({ page }) => {
     await page.goto(`${BASE_URL}/feedback.html`);
-    await expect(page.locator('h2')).toContainText('Feedback');
+    await expect(page.locator('h2').first()).toContainText('Feedback');
     // Four section panels
     for (const sec of ['a','b','c','d']) {
       await expect(page.locator(`#section-${sec}`)).toBeVisible();
