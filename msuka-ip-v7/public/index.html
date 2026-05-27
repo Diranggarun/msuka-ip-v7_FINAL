@@ -1010,6 +1010,8 @@ function initSocket() {
   });
 
   socket.on('message:deleted', ({ id, convKey }) => {
+    // Confirm the optimistic remove succeeded — drop the rollback entry.
+    pendingDeletes.delete(id);
     const conv = conversations[convKey];
     if (conv && Array.isArray(conv.messages)) {
       conv.messages = conv.messages.filter(m => m.id !== id);
@@ -1026,7 +1028,9 @@ function initSocket() {
     else { if (currentNav==='private') renderPrivateList(); }
   });
 
-  socket.on('message:error', ({ reason }) => {
+  socket.on('message:error', ({ msgId, reason }) => {
+    // If this error is for a pending optimistic delete, put the message back.
+    if (msgId != null) restorePendingDelete(msgId);
     if (reason) showToast('msg', 'Message error', reason);
   });
 
@@ -1416,12 +1420,40 @@ function appendMessage(msg,key) {
   area.scrollTop=area.scrollHeight;
 }
 
+const pendingDeletes = new Map(); // msgId -> { convKey, original, originalIndex }
+
 function deleteMessage(msgId, btn) {
   if (!msgId || !socket) return;
   if (!confirm('Delete this message? This cannot be undone.')) return;
   if (btn) btn.disabled = true;
   const key = activeConvKey;
+  const conv = conversations[key];
+  // Optimistic remove — disappear immediately, restore later if server rejects
+  if (conv && Array.isArray(conv.messages)) {
+    const idx = conv.messages.findIndex(m => m.id === msgId);
+    if (idx >= 0) {
+      pendingDeletes.set(msgId, { convKey: key, original: conv.messages[idx], originalIndex: idx });
+      conv.messages.splice(idx, 1);
+    }
+  }
+  if (activeConvKey === key) {
+    const row = document.querySelector(`#messages-area .msg-row[data-msg-id="${msgId}"]`);
+    if (row) row.remove();
+  }
   socket.emit('message:delete', { id: msgId, convKey: key });
+}
+
+function restorePendingDelete(msgId) {
+  const pending = pendingDeletes.get(msgId);
+  if (!pending) return false;
+  pendingDeletes.delete(msgId);
+  const conv = conversations[pending.convKey];
+  if (conv && Array.isArray(conv.messages)) {
+    const insertAt = Math.min(pending.originalIndex, conv.messages.length);
+    conv.messages.splice(insertAt, 0, pending.original);
+    if (activeConvKey === pending.convKey) renderMessages(pending.convKey);
+  }
+  return true;
 }
 
 // ══════════════════════════════════════════

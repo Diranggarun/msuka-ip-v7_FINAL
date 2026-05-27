@@ -683,11 +683,11 @@ io.on('connection', async(socket)=>{
     if(!msgId||!convKey) return;
     try {
       const [rows]=await db.query('SELECT id,sender_id,conv_key,file_url FROM messages WHERE id=?',[msgId]);
-      if(!rows.length) return socket.emit('message:error',{convKey,reason:'Message not found'});
+      if(!rows.length) return socket.emit('message:error',{msgId,convKey,reason:'Message not found'});
       const m=rows[0];
       // Permission: sender or admin
       if(m.sender_id!==id && role!=='admin'){
-        return socket.emit('message:error',{convKey,reason:'You can only delete your own messages'});
+        return socket.emit('message:error',{msgId,convKey,reason:'You can only delete your own messages'});
       }
       await db.query('DELETE FROM messages WHERE id=?',[msgId]);
       // Best-effort: remove orphaned upload from disk
@@ -714,7 +714,7 @@ io.on('connection', async(socket)=>{
       console.log(`🗑️   ${name} deleted message ${msgId}`);
     } catch(err){
       console.error('Delete message error:',err.message);
-      socket.emit('message:error',{convKey,reason:'Failed to delete — please try again.'});
+      socket.emit('message:error',{msgId,convKey,reason:'Failed to delete — please try again.'});
     }
   });
 
