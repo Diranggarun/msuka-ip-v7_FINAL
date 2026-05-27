@@ -678,6 +678,46 @@ io.on('connection', async(socket)=>{
     }
   });
 
+  // Delete a message — sender or admin only
+  socket.on('message:delete', async({id:msgId,convKey})=>{
+    if(!msgId||!convKey) return;
+    try {
+      const [rows]=await db.query('SELECT id,sender_id,conv_key,file_url FROM messages WHERE id=?',[msgId]);
+      if(!rows.length) return socket.emit('message:error',{convKey,reason:'Message not found'});
+      const m=rows[0];
+      // Permission: sender or admin
+      if(m.sender_id!==id && role!=='admin'){
+        return socket.emit('message:error',{convKey,reason:'You can only delete your own messages'});
+      }
+      await db.query('DELETE FROM messages WHERE id=?',[msgId]);
+      // Best-effort: remove orphaned upload from disk
+      if(m.file_url && m.file_url.startsWith('/uploads/')){
+        const filePath=path.join(UPLOAD_DIR,path.basename(m.file_url));
+        fs.unlink(filePath,()=>{}); // ignore errors — file may already be gone
+      }
+      await db.query('INSERT INTO audit_logs (user_id,action,details) VALUES (?,?,?)',[id,'DELETE_MESSAGE',`Deleted msg ${msgId} from ${m.conv_key}`]);
+
+      // Broadcast deletion. For private chats the canonical conv_key is sorted,
+      // but each client uses `private_<other_email>` locally — so emit per recipient.
+      if(m.conv_key.startsWith('private_')){
+        const parts=m.conv_key.replace('private_','').split('__');
+        const [emailA,emailB]=parts;
+        for(const [sid,u] of onlineUsers.entries()){
+          if(u.email===emailA||u.email===emailB){
+            const otherEmail = u.email===emailA ? emailB : emailA;
+            io.to(sid).emit('message:deleted',{id:msgId,convKey:'private_'+otherEmail});
+          }
+        }
+      } else {
+        io.to(m.conv_key).emit('message:deleted',{id:msgId,convKey:m.conv_key});
+      }
+      console.log(`🗑️   ${name} deleted message ${msgId}`);
+    } catch(err){
+      console.error('Delete message error:',err.message);
+      socket.emit('message:error',{convKey,reason:'Failed to delete — please try again.'});
+    }
+  });
+
   // Broadcast (admin) — also encrypted
   socket.on('broadcast:send', async({text})=>{
     if(role!=='admin') return;
