@@ -854,7 +854,7 @@ async function register() {
   const role     = document.getElementById('reg-role').value;
   if (!name||!email||!password||!confirm) return showAuthMsg('reg-msg','error','Please fill in all fields.');
   if (password!==confirm)    return showAuthMsg('reg-msg','error','Passwords do not match.');
-  if (password.length<6)     return showAuthMsg('reg-msg','error','Password must be at least 6 characters.');
+  if (password.length<8)     return showAuthMsg('reg-msg','error','Password must be at least 8 characters.');
   try {
     const res  = await fetch('/api/register',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name,email,password,role}) });
     const data = await res.json();
@@ -883,6 +883,9 @@ const COLORS=['blue','green','orange','purple','red'];
 function colorFor(s){let h=0;for(let c of s)h=(h<<5)-h+c.charCodeAt(0);return COLORS[Math.abs(h)%COLORS.length];}
 function initials(n){return n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);}
 function formatTime(ts){return new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
+// Uploads are auth-protected server-side; <img>/<audio>/<a> can't send an
+// Authorization header, so the token rides along as a query parameter.
+function fileSrc(u){return u&&u.startsWith('/uploads/')?`${u}?token=${encodeURIComponent(currentUser?.token||'')}`:u;}
 
 /* ── Sound notifications (Web Audio API — no external files) ─────────── */
 let _audioCtx = null;
@@ -1403,12 +1406,13 @@ function appendMessage(msg,key) {
     const nameHtml=(!isMine&&isGroup)?`<div class="msg-sender-name">${msg.sender}</div>`:'';
     let bubbleHtml='';
     if(msg.type==='image') {
-      bubbleHtml=`<div class="bubble img-bubble"><img src="${msg.file_url}" alt="${msg.file_name}" onclick="window.open('${msg.file_url}','_blank')"/><div class="img-caption"><span class="img-caption-text">${msg.file_name} · ${formatFileSize(msg.file_size)}</span><a href="${msg.file_url}" download="${msg.file_name}" class="img-dl" title="Download image" aria-label="Download image"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a></div></div>`;
+      const src=fileSrc(msg.file_url);
+      bubbleHtml=`<div class="bubble img-bubble"><img src="${src}" alt="${msg.file_name}" onclick="window.open('${src}','_blank')"/><div class="img-caption"><span class="img-caption-text">${msg.file_name} · ${formatFileSize(msg.file_size)}</span><a href="${src}" download="${msg.file_name}" class="img-dl" title="Download image" aria-label="Download image"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a></div></div>`;
     } else if(msg.type==='voice') {
-      bubbleHtml=`<div class="bubble voice-bubble"><span class="voice-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></span><div class="voice-body"><audio controls src="${msg.file_url}"></audio><div class="voice-size">${formatFileSize(msg.file_size)}</div></div></div>`;
+      bubbleHtml=`<div class="bubble voice-bubble"><span class="voice-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></span><div class="voice-body"><audio controls src="${fileSrc(msg.file_url)}"></audio><div class="voice-size">${formatFileSize(msg.file_size)}</div></div></div>`;
     } else if(msg.type==='file') {
       const icon=msg.file_type?.includes('pdf')?'📄':'📝';
-      bubbleHtml=`<div class="bubble file-bubble"><span class="file-icon">${icon}</span><div class="file-info"><div class="fname">${msg.file_name}</div><div class="fsize">${formatFileSize(msg.file_size)}</div></div><a href="${msg.file_url}" download="${msg.file_name}" class="file-dl" title="Download" aria-label="Download file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a></div>`;
+      bubbleHtml=`<div class="bubble file-bubble"><span class="file-icon">${icon}</span><div class="file-info"><div class="fname">${msg.file_name}</div><div class="fsize">${formatFileSize(msg.file_size)}</div></div><a href="${fileSrc(msg.file_url)}" download="${msg.file_name}" class="file-dl" title="Download" aria-label="Download file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a></div>`;
     } else {
       bubbleHtml=`<div class="bubble">${msg.text}</div>`;
     }

@@ -37,6 +37,7 @@ async function adminLogin(page) {
 // created once the Socket.IO connection is up, so wait for it first.
 async function openGlobalChat(page) {
   await page.waitForFunction(
+    // eslint-disable-next-line no-undef -- evaluated in the browser page context
     () => typeof conversations !== 'undefined' && !!conversations['group_general'],
     null, { timeout: 8000 }
   );
@@ -123,7 +124,7 @@ test.describe('1. Authentication Tests', () => {
     await page.fill('#reg-password', '123');
     await page.fill('#reg-confirm', '123');
     await page.click('button.btn-register');
-    await expect(page.locator('#reg-msg')).toContainText('6 characters');
+    await expect(page.locator('#reg-msg')).toContainText('8 characters');
     console.log('✅ Short password validation works');
   });
 

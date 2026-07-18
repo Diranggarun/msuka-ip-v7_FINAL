@@ -127,22 +127,27 @@ http://<server-lan-ip>:3000/admin.html ← admin dashboard
 
 ## 6. Browser requirements for VoIP
 
-WebRTC's microphone access (`getUserMedia`) only works in a **secure context**:
+WebRTC's microphone access (`getUserMedia`) only works in a **secure context**.
+The server now handles this itself: alongside HTTP on port 3000 it serves
+**HTTPS on port 3443** (configurable via `HTTPS_PORT`) with a self-signed
+certificate auto-generated into `certs/` on first run.
 
-- `http://localhost` and `http://127.0.0.1` are exempt — fine on the server host.
-- For client laptops hitting `http://<lan-ip>:3000`, Chromium-based browsers
-  also treat private-network HTTP origins as secure for media when the flag
-  `chrome://flags/#unsafely-treat-insecure-origin-as-secure` includes the LAN
-  URL, **or** you front the server with TLS.
+**Demo-day setup:** client laptops open `https://<server-lan-ip>:3443` and
+accept the browser's certificate warning once (Advanced → Proceed). That's it —
+mic access, calls, group calls and push-to-talk all work. The startup log
+prints the exact URL to share.
 
-Simplest demo-day options, in order of effort:
+Fallbacks if HTTPS is somehow unavailable:
 
-1. **Run all participants on the same host** — works out of the box.
-2. **Enable the Chrome flag** on each client laptop before the demo:
+1. **Run all participants on the same host** — `http://localhost:3000` is
+   exempt from the secure-context rule.
+2. **Enable the Chrome flag** on each client laptop:
    `chrome://flags/#unsafely-treat-insecure-origin-as-secure` →
    add `http://<server-lan-ip>:3000` → relaunch.
-3. **Front with HTTPS** using a self-signed cert and a reverse proxy (Caddy,
-   nginx, IIS) — bulletproof but more setup.
+
+If a client lands on the plain-HTTP LAN URL and taps a voice feature, the app
+now shows an alert pointing them at the HTTPS URL instead of a misleading
+"microphone denied" error.
 
 The Google STUN server is referenced for ICE; on a fully offline LAN it isn't
 strictly required since both peers are on the same subnet and exchange host

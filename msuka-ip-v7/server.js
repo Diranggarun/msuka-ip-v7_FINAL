@@ -71,12 +71,19 @@ app.use(express.static(path.join(__dirname,'public'),{
 // ── Secrets — read from environment, fall back to dev defaults ───────────────
 // For LAN/production deployment, set JWT_SECRET, AES_SECRET, AES_SALT, and
 // optionally SQLITE_PATH in a .env file or the OS environment. See .env.example.
+const IS_PROD    = process.env.NODE_ENV === 'production';
 const JWT_SECRET = process.env.JWT_SECRET || 'msuka-ip-secret-2025';
 const AES_SECRET = process.env.AES_SECRET || 'MSUkaIP-CICS-AES256-SecureKey-2025!';
 const AES_SALT   = process.env.AES_SALT   || 'msukaip-salt';
 const AES_KEY    = crypto.scryptSync(AES_SECRET, AES_SALT, 32); // 256-bit key
 
 if (JWT_SECRET === 'msuka-ip-secret-2025' || AES_SECRET === 'MSUkaIP-CICS-AES256-SecureKey-2025!') {
+  // RA 10173 §20: dev secrets in production would let anyone with repo access
+  // forge admin tokens and decrypt stored messages — refuse to boot.
+  if (IS_PROD) {
+    console.error('❌  NODE_ENV=production but JWT_SECRET/AES_SECRET are the built-in dev defaults. Set real secrets in .env (see .env.example) and restart.');
+    process.exit(1);
+  }
   console.warn('⚠️   Using built-in dev secrets — set JWT_SECRET and AES_SECRET in environment for LAN/production deployment.');
 }
 
@@ -85,18 +92,17 @@ if (JWT_SECRET === 'msuka-ip-secret-2025' || AES_SECRET === 'MSUkaIP-CICS-AES256
 // — never reuse an IV with the same key. The capstone defense talking point
 // is "confidentiality + integrity in one operation, FIPS 140 approved cipher."
 //
-// The catch{return text} is a soft-fail: if scrypt or createCipheriv ever
-// throws (e.g. corrupted AES_KEY), the message is still stored in plaintext
-// rather than dropped. The trade-off is documented in DECISIONS.md.
+// Fail-closed (RA 10173 §20): if encryption ever throws, the error propagates
+// and the message is NOT stored — callers catch it and tell the sender to
+// retry. Silently storing plaintext (the old soft-fail) would defeat
+// encryption-at-rest without anyone noticing.
 function encryptMessage(text) {
-  try {
-    const iv         = crypto.randomBytes(12);              // 96-bit IV for GCM
-    const cipher     = crypto.createCipheriv('aes-256-gcm', AES_KEY, iv);
-    const encrypted  = Buffer.concat([cipher.update(text, 'utf8'), cipher.final()]);
-    const authTag    = cipher.getAuthTag();                 // 128-bit auth tag
-    // Store as: iv(hex):authTag(hex):ciphertext(hex)
-    return iv.toString('hex') + ':' + authTag.toString('hex') + ':' + encrypted.toString('hex');
-  } catch { return text; } // fallback: store plain if encryption fails
+  const iv         = crypto.randomBytes(12);              // 96-bit IV for GCM
+  const cipher     = crypto.createCipheriv('aes-256-gcm', AES_KEY, iv);
+  const encrypted  = Buffer.concat([cipher.update(text, 'utf8'), cipher.final()]);
+  const authTag    = cipher.getAuthTag();                 // 128-bit auth tag
+  // Store as: iv(hex):authTag(hex):ciphertext(hex)
+  return iv.toString('hex') + ':' + authTag.toString('hex') + ':' + encrypted.toString('hex');
 }
 
 function decryptMessage(stored) {
@@ -115,8 +121,44 @@ function decryptMessage(stored) {
 
 console.log('🔐  AES-256-GCM encryption initialized');
 
-const UPLOAD_DIR = path.join(__dirname,'public','uploads');
+// Uploads live OUTSIDE public/ so express.static can never serve them without
+// auth — they're delivered only through the authenticated GET /uploads/:name
+// route below. Files are encrypted at rest with the same AES-256-GCM key as
+// messages (RA 10173 §20 — images, documents and voice notes are message
+// content too).
+const UPLOAD_DIR = path.join(__dirname,'uploads');
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR,{recursive:true});
+
+// One-time migration: move any legacy files out of the world-readable
+// public/uploads/ into the private dir (they stay plaintext until re-uploaded;
+// readFileDecrypted handles both formats).
+const LEGACY_UPLOAD_DIR = path.join(__dirname,'public','uploads');
+if (fs.existsSync(LEGACY_UPLOAD_DIR)) {
+  for (const f of fs.readdirSync(LEGACY_UPLOAD_DIR)) {
+    if (f === '.gitkeep') continue;
+    try { fs.renameSync(path.join(LEGACY_UPLOAD_DIR, f), path.join(UPLOAD_DIR, f)); } catch {}
+  }
+}
+
+// At-rest file format: 'MSKAENC1' magic + 12-byte IV + 16-byte GCM tag + ciphertext.
+// Files without the magic are legacy plaintext and are served as-is.
+const FILE_MAGIC = Buffer.from('MSKAENC1');
+function encryptFileAtRest(filePath) {
+  const data = fs.readFileSync(filePath);
+  if (data.subarray(0, 8).equals(FILE_MAGIC)) return; // already encrypted
+  const iv     = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', AES_KEY, iv);
+  const enc    = Buffer.concat([cipher.update(data), cipher.final()]);
+  fs.writeFileSync(filePath, Buffer.concat([FILE_MAGIC, iv, cipher.getAuthTag(), enc]));
+}
+function readFileDecrypted(filePath) {
+  const data = fs.readFileSync(filePath);
+  if (!data.subarray(0, 8).equals(FILE_MAGIC)) return data; // legacy plaintext
+  const iv = data.subarray(8, 20), tag = data.subarray(20, 36), enc = data.subarray(36);
+  const decipher = crypto.createDecipheriv('aes-256-gcm', AES_KEY, iv);
+  decipher.setAuthTag(tag);
+  return Buffer.concat([decipher.update(enc), decipher.final()]);
+}
 
 const storage = multer.diskStorage({
   destination: (req,file,cb) => cb(null,UPLOAD_DIR),
@@ -134,20 +176,28 @@ async function setupDatabase() {
     console.log(`✅  SQLite ready: ${db.DB_PATH}`);
     console.log('✅  Tables, indexes & integrity constraints ensured');
 
-    const accounts = [
-      { name:'Admin', email:'admin@cics.msu.edu', password:'admin123', role:'admin', status:'approved' },
-      { name:'Student Demo', email:'student@cics.msu.edu', password:'student123', role:'student', status:'approved' },
-    ];
-    for (const acc of accounts) {
-      const hash = await bcrypt.hash(acc.password, 10);
-      const [rows] = await db.query('SELECT id FROM users WHERE email=?',[acc.email]);
-      if (rows.length===0) { await db.query('INSERT INTO users (name,email,password_hash,role,account_status) VALUES (?,?,?,?,?)',[acc.name,acc.email,hash,acc.role,acc.status]); console.log(`✅  Created: ${acc.email} / ${acc.password}`); }
-      else { await db.query('UPDATE users SET password_hash=?,name=?,role=?,account_status=? WHERE email=?',[hash,acc.name,acc.role,acc.status,acc.email]); console.log(`🔄  Reset:   ${acc.email} / ${acc.password}`); }
+    // Demo accounts with known passwords are a dev/demo convenience only —
+    // in production they'd be a standing backdoor (and the boot-time password
+    // reset would undo any credential rotation). Seed only outside production,
+    // or when SEED_DEMO=1 is set explicitly.
+    if (!IS_PROD || process.env.SEED_DEMO === '1') {
+      const accounts = [
+        { name:'Admin', email:'admin@cics.msu.edu', password:'admin123', role:'admin', status:'approved' },
+        { name:'Student Demo', email:'student@cics.msu.edu', password:'student123', role:'student', status:'approved' },
+      ];
+      for (const acc of accounts) {
+        const hash = await bcrypt.hash(acc.password, 12);
+        const [rows] = await db.query('SELECT id FROM users WHERE email=?',[acc.email]);
+        if (rows.length===0) { await db.query('INSERT INTO users (name,email,password_hash,role,account_status) VALUES (?,?,?,?,?)',[acc.name,acc.email,hash,acc.role,acc.status]); console.log(`✅  Created: ${acc.email} / ${acc.password}`); }
+        else { await db.query('UPDATE users SET password_hash=?,name=?,role=?,account_status=? WHERE email=?',[hash,acc.name,acc.role,acc.status,acc.email]); console.log(`🔄  Reset:   ${acc.email} / ${acc.password}`); }
+      }
+      console.log('\n🎉  Login:\n    student@cics.msu.edu / student123\n    admin@cics.msu.edu   / admin123\n');
+    } else {
+      console.log('ℹ️   Demo account seeding skipped (NODE_ENV=production)');
     }
     // Reset ALL users to offline on server start (in case of crash/restart)
     await db.query("UPDATE users SET status = 'offline'");
     console.log('✅  All users reset to offline');
-    console.log('\n🎉  Login:\n    student@cics.msu.edu / student123\n    admin@cics.msu.edu   / admin123\n');
   } catch (err) { console.error('❌  DB failed:', err.message); process.exit(1); }
 }
 
@@ -159,11 +209,63 @@ function verifyToken(req,res,next) {
 }
 function adminOnly(req,res,next) { if(req.user?.role!=='admin') return res.status(403).json({error:'Admin only'}); next(); }
 
+// Like verifyToken, but also accepts ?token= — needed because <img>/<audio>/<a>
+// tags can't send an Authorization header. Only used for the uploads route.
+function verifyTokenAllowQuery(req,res,next) {
+  const auth = req.headers.authorization;
+  const token = auth ? auth.replace('Bearer ','') : req.query.token;
+  if(!token) return res.status(401).json({error:'No token'});
+  try { req.user = jwt.verify(token, JWT_SECRET); next(); }
+  catch { res.status(401).json({error:'Invalid token'}); }
+}
+
+// Authenticated + decrypting delivery of uploaded files (replaces the old
+// unauthenticated express.static exposure of public/uploads).
+const UPLOAD_MIME = {
+  '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.png':'image/png', '.gif':'image/gif', '.webp':'image/webp',
+  '.pdf':'application/pdf', '.doc':'application/msword',
+  '.docx':'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  '.webm':'audio/webm', '.ogg':'audio/ogg', '.mp3':'audio/mpeg', '.wav':'audio/wav', '.m4a':'audio/mp4'
+};
+app.get('/uploads/:name', verifyTokenAllowQuery, (req,res) => {
+  const name = path.basename(req.params.name); // strips any ../ traversal
+  const fp = path.join(UPLOAD_DIR, name);
+  if (!fs.existsSync(fp)) return res.status(404).json({error:'Not found'});
+  try {
+    const buf = readFileDecrypted(fp);
+    res.setHeader('Content-Type', UPLOAD_MIME[path.extname(name).toLowerCase()] || 'application/octet-stream');
+    res.setHeader('Content-Disposition','inline');
+    res.setHeader('Cache-Control','private, no-store');
+    res.send(buf);
+  } catch { res.status(500).json({error:'File unreadable'}); }
+});
+
+// ── Login rate limiting (in-memory, per IP+email) ─────────────────────────────
+// 10 failed attempts within 15 minutes locks that IP+email pair for 15 minutes.
+// Counters clear on successful login; the map is pruned to avoid growth.
+const loginFailures = new Map(); // key -> { count, firstAt }
+const RATE_MAX = 10, RATE_WINDOW_MS = 15*60*1000;
+const rateKey = (req,email) => `${req.ip || req.socket.remoteAddress || '?'}|${String(email||'').trim().toLowerCase()}`;
+function loginLocked(key) {
+  const e = loginFailures.get(key);
+  if (!e) return false;
+  if (Date.now() - e.firstAt > RATE_WINDOW_MS) { loginFailures.delete(key); return false; }
+  return e.count >= RATE_MAX;
+}
+function recordLoginFailure(key) {
+  const e = loginFailures.get(key);
+  if (!e || Date.now() - e.firstAt > RATE_WINDOW_MS) loginFailures.set(key, { count: 1, firstAt: Date.now() });
+  else e.count++;
+}
+setInterval(() => {
+  for (const [k, e] of loginFailures.entries()) if (Date.now() - e.firstAt > RATE_WINDOW_MS) loginFailures.delete(k);
+}, 5*60*1000).unref();
+
 const ALLOWED_EMAIL_DOMAINS = ['cics.msu.edu','s.msumain.edu.ph','msumain.edu.ph'];
 app.post('/api/register', async (req,res) => {
   const {name,email,password,role='student'}=req.body;
   if(!name||!email||!password) return res.status(400).json({error:'All fields required'});
-  if(password.length<6) return res.status(400).json({error:'Password must be at least 6 characters'});
+  if(password.length<8) return res.status(400).json({error:'Password must be at least 8 characters'});
   if(!['student','faculty'].includes(role)) return res.status(400).json({error:'Invalid role'});
   const emailLower = String(email).trim().toLowerCase();
   const domain = emailLower.split('@')[1] || '';
@@ -171,7 +273,7 @@ app.post('/api/register', async (req,res) => {
   try {
     const [ex]=await db.query('SELECT id FROM users WHERE email=?',[email.trim()]);
     if(ex.length>0) return res.status(409).json({error:'Email already registered'});
-    const hash=await bcrypt.hash(password,10);
+    const hash=await bcrypt.hash(password,12);
     const [r]=await db.query('INSERT INTO users (name,email,password_hash,role,account_status) VALUES (?,?,?,?,?)',[name,email.trim(),hash,role,'pending']);
     await db.query('INSERT INTO audit_logs (user_id,action,details) VALUES (?,?,?)',[r.insertId,'REGISTER',`${name} registered`]);
     res.json({message:'Account created! Wait for admin approval.'});
@@ -182,11 +284,14 @@ app.post('/api/register', async (req,res) => {
 app.post('/api/login', async (req,res) => {
   const {email,password}=req.body;
   if(!email||!password) return res.status(400).json({error:'Email and password required'});
+  const rk = rateKey(req,email);
+  if(loginLocked(rk)) return res.status(429).json({error:'Too many failed attempts. Try again in 15 minutes.'});
   try {
     const [rows]=await db.query('SELECT * FROM users WHERE email=?',[email.trim()]);
-    if(!rows.length) return res.status(401).json({error:'Invalid credentials'});
+    if(!rows.length) { recordLoginFailure(rk); return res.status(401).json({error:'Invalid credentials'}); }
     const user=rows[0];
-    if(!await bcrypt.compare(password,user.password_hash)) return res.status(401).json({error:'Invalid credentials'});
+    if(!await bcrypt.compare(password,user.password_hash)) { recordLoginFailure(rk); return res.status(401).json({error:'Invalid credentials'}); }
+    loginFailures.delete(rk);
     if(user.account_status==='pending')  return res.status(403).json({error:'Account pending admin approval.'});
     if(user.account_status==='rejected') return res.status(403).json({error:'Account rejected. Contact admin.'});
     // ADMIN accounts must use the Admin Dashboard — not the chat app
@@ -202,11 +307,14 @@ app.post('/api/login', async (req,res) => {
 app.post('/api/admin/login', async (req,res) => {
   const {email,password}=req.body;
   if(!email||!password) return res.status(400).json({error:'Email and password required'});
+  const rk = rateKey(req,email);
+  if(loginLocked(rk)) return res.status(429).json({error:'Too many failed attempts. Try again in 15 minutes.'});
   try {
     const [rows]=await db.query('SELECT * FROM users WHERE email=?',[email.trim()]);
-    if(!rows.length) return res.status(401).json({error:'Invalid credentials'});
+    if(!rows.length) { recordLoginFailure(rk); return res.status(401).json({error:'Invalid credentials'}); }
     const user=rows[0];
-    if(!await bcrypt.compare(password,user.password_hash)) return res.status(401).json({error:'Invalid credentials'});
+    if(!await bcrypt.compare(password,user.password_hash)) { recordLoginFailure(rk); return res.status(401).json({error:'Invalid credentials'}); }
+    loginFailures.delete(rk);
     if(user.role!=='admin') return res.status(403).json({error:'Access denied. This portal is for Admin accounts only.'});
     if(user.account_status!=='approved') return res.status(403).json({error:'Account not approved.'});
     const token=jwt.sign({id:user.id,email:user.email,name:user.name,role:user.role},JWT_SECRET,{expiresIn:'8h'});
@@ -221,6 +329,9 @@ app.post('/api/upload', verifyToken, (req,res) => {
     if(err instanceof multer.MulterError) return res.status(400).json({error: err.code==='LIMIT_FILE_SIZE'?'Max 5MB allowed':err.message});
     if(err) return res.status(400).json({error:err.message});
     if(!req.file) return res.status(400).json({error:'No file'});
+    // Encrypt at rest before anything references the file (fail-closed)
+    try { encryptFileAtRest(req.file.path); }
+    catch { fs.unlink(req.file.path,()=>{}); return res.status(500).json({error:'Could not secure file — upload cancelled'}); }
     const isImage=req.file.mimetype.startsWith('image/');
     const fileUrl=`/uploads/${req.file.filename}`;
     const msgType=isImage?'image':'file';
@@ -278,6 +389,9 @@ app.post('/api/upload/voice', verifyToken, (req,res) => {
   voiceUpload.single('file')(req,res,async(err)=>{
     if(err) return res.status(400).json({error:err.message});
     if(!req.file) return res.status(400).json({error:'No file'});
+    // Encrypt at rest before anything references the file (fail-closed)
+    try { encryptFileAtRest(req.file.path); }
+    catch { fs.unlink(req.file.path,()=>{}); return res.status(500).json({error:'Could not secure file — upload cancelled'}); }
     const fileUrl=`/uploads/${req.file.filename}`;
     const convKey=req.body.convKey||'group_general';
     try {
@@ -445,10 +559,11 @@ app.get('/api/admin/users',verifyToken,adminOnly,async(req,res)=>{
 app.post('/api/admin/users',verifyToken,adminOnly,async(req,res)=>{
   const {name,email,password,role='student'}=req.body;
   if(!name||!email||!password) return res.status(400).json({error:'All fields required'});
+  if(password.length<8) return res.status(400).json({error:'Password must be at least 8 characters'});
   try {
     const [ex]=await db.query('SELECT id FROM users WHERE email=?',[email]);
     if(ex.length>0) return res.status(409).json({error:'Email exists'});
-    const hash=await bcrypt.hash(password,10);
+    const hash=await bcrypt.hash(password,12);
     const [r]=await db.query('INSERT INTO users (name,email,password_hash,role,account_status) VALUES (?,?,?,?,?)',[name,email,hash,role,'approved']);
     await db.query('INSERT INTO audit_logs (user_id,action,details) VALUES (?,?,?)',[req.user.id,'ADD_USER',`Added: ${email}`]);
     res.json({message:'User added',id:r.insertId});
@@ -456,8 +571,9 @@ app.post('/api/admin/users',verifyToken,adminOnly,async(req,res)=>{
 });
 app.put('/api/admin/users/:id',verifyToken,adminOnly,async(req,res)=>{
   const {name,email,password,role}=req.body;
+  if(password&&password.trim()!==''&&password.length<8) return res.status(400).json({error:'Password must be at least 8 characters'});
   try {
-    if(password&&password.trim()!=='') { const h=await bcrypt.hash(password,10); await db.query('UPDATE users SET name=?,email=?,password_hash=?,role=? WHERE id=?',[name,email,h,role,req.params.id]); }
+    if(password&&password.trim()!=='') { const h=await bcrypt.hash(password,12); await db.query('UPDATE users SET name=?,email=?,password_hash=?,role=? WHERE id=?',[name,email,h,role,req.params.id]); }
     else await db.query('UPDATE users SET name=?,email=?,role=? WHERE id=?',[name,email,role,req.params.id]);
     await db.query('INSERT INTO audit_logs (user_id,action,details) VALUES (?,?,?)',[req.user.id,'EDIT_USER',`Edited ID ${req.params.id}`]);
     res.json({message:'Updated'});

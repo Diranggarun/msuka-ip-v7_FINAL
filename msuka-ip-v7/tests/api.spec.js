@@ -39,12 +39,12 @@ test.describe('7. Registration API', () => {
     console.log('✅ Missing fields rejected (400)');
   });
 
-  test('7.2 rejects password shorter than 6 characters', async () => {
+  test('7.2 rejects password shorter than 8 characters', async () => {
     const r = await ctx.post('/api/register', {
       data: { name: 'Short Pass', email: `short_${Date.now()}@cics.msu.edu`, password: '123' },
     });
     expect(r.status()).toBe(400);
-    expect((await r.json()).error).toMatch(/6 characters/i);
+    expect((await r.json()).error).toMatch(/8 characters/i);
     console.log('✅ Short password rejected (400)');
   });
 

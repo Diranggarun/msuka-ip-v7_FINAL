@@ -57,11 +57,13 @@ Or change `PORT=3001` in `.env`.
 
 ## WebRTC (VoIP)
 
-### `Microphone access denied`
-**Cause:** Browser blocks `getUserMedia` on non-secure origins.
-**Fix:**
-- On the server host itself: use `http://localhost:3000` (localhost is exempt).
-- On other LAN clients: launch Chrome with the secure-origin flag (see `DEPLOYMENT.md` §6) or front the server with HTTPS.
+### `Voice features are blocked on this address…` alert
+**Cause:** Browser blocks `getUserMedia` on non-secure origins — the page was opened via plain `http://<lan-ip>:3000`.
+**Fix:** Open the app at `https://<server-ip>:3443` and accept the self-signed-certificate warning once. The server generates the cert into `certs/` automatically and prints the URL at startup (see `DEPLOYMENT.md` §6). On the server host itself, `http://localhost:3000` also works.
+
+### `Microphone permission denied` alert
+**Cause:** The user (or a site setting) actually denied mic permission.
+**Fix:** Click the lock/mic icon in the address bar, allow the microphone, retry.
 
 ### Call connects but no audio
 **Checklist:**
