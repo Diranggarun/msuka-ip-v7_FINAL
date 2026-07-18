@@ -31,3 +31,12 @@ memory/
 # Logs
 *.log
 npm-debug.log*
+
+# TLS certs (self-signed, generated on first run)
+msuka-ip-v7/certs/
+
+# SQLite database (live data — never commit)
+msuka-ip-v7/msukaip.db
+msuka-ip-v7/msukaip.db-shm
+msuka-ip-v7/msukaip.db-wal
+msuka-ip-v7/backups/

@@ -1,18 +1,33 @@
-const m = require('mysql2/promise');
-(async () => {
-  const p = m.createPool({ host:'localhost', user:'root', password:'', database:'msukaip' });
+// MSUkaIP — DB integrity audit (npm run db:audit) — SQLite edition.
+// Safe to run while the server is up: WAL mode + busy_timeout in db.js.
+const db = require('./db');
 
-  console.log('--- FOREIGN KEYS ---');
-  const [fk] = await p.query(`SELECT TABLE_NAME, COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA='msukaip' AND REFERENCED_TABLE_NAME IS NOT NULL`);
-  console.table(fk);
+(async () => {
+  console.log('--- DATABASE ---');
+  console.log('file:', db.DB_PATH);
+  console.log('journal_mode:', db.raw.prepare('PRAGMA journal_mode').get().journal_mode);
+  console.log('foreign_keys:', Object.values(db.raw.prepare('PRAGMA foreign_keys').get())[0]);
+
+  const tables = ['users','messages','groups_table','group_members','calls','audit_logs','survey_responses'];
+
+  console.log('\n--- FOREIGN KEYS ---');
+  for (const t of tables) {
+    const fks = db.raw.prepare(`PRAGMA foreign_key_list(${t})`).all();
+    for (const fk of fks) console.log(`${t}.${fk.from} → ${fk.table}.${fk.to} (on delete ${fk.on_delete})`);
+  }
+
+  console.log('\n--- FK VIOLATIONS (should be empty) ---');
+  const viol = db.raw.prepare('PRAGMA foreign_key_check').all();
+  if (viol.length === 0) console.log('(none)');
+  else console.table(viol);
 
   console.log('\n--- INDEXES ---');
-  const [idx] = await p.query(`SELECT TABLE_NAME, INDEX_NAME, COLUMN_NAME, NON_UNIQUE FROM information_schema.STATISTICS WHERE TABLE_SCHEMA='msukaip' ORDER BY TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX`);
+  const [idx] = await db.query(`SELECT tbl_name, name FROM sqlite_master WHERE type='index' AND name NOT LIKE 'sqlite_%' ORDER BY tbl_name, name`);
   console.table(idx);
 
   console.log('\n--- ROW COUNTS ---');
-  for (const t of ['users','messages','groups_table','group_members','calls','audit_logs','survey_responses']) {
-    const [r] = await p.query('SELECT COUNT(*) AS n FROM ' + t);
+  for (const t of tables) {
+    const [r] = await db.query('SELECT COUNT(*) AS n FROM ' + t);
     console.log(t.padEnd(20) + r[0].n);
   }
 
@@ -32,13 +47,10 @@ const m = require('mysql2/promise');
     ['users with NULL account_status', `SELECT COUNT(*) AS n FROM users WHERE account_status IS NULL`],
   ];
   for (const [label, sql] of checks) {
-    const [r] = await p.query(sql);
+    const [r] = await db.query(sql);
     console.log(label.padEnd(50), r[0].n);
   }
 
-  console.log('\n--- CHARSET / COLLATION ---');
-  const [cs] = await p.query(`SELECT TABLE_NAME, TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA='msukaip'`);
-  console.table(cs);
-
-  await p.end();
+  console.log('\n--- INTEGRITY CHECK ---');
+  console.log(db.raw.prepare('PRAGMA integrity_check').get().integrity_check);
 })().catch(e => { console.error(e); process.exit(1); });

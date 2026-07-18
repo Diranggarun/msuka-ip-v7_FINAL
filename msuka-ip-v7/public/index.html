@@ -1588,12 +1588,30 @@ function createGroup(){
 // ══════════════════════════════════════════
 //  VOIP 1-ON-1
 // ══════════════════════════════════════════
+// On plain http:// from a LAN IP the browser hides navigator.mediaDevices
+// entirely, which used to surface as a bogus "access denied" alert — detect
+// that case and point the user at the HTTPS URL instead.
+async function getMic(){
+  if(!window.isSecureContext||!navigator.mediaDevices?.getUserMedia){
+    alert(`Voice features are blocked on this address because the browser requires a secure origin for microphone access.\n\nOpen the app at:\n  https://${location.hostname}:3443\n(accept the certificate warning once)\n\nOr use http://localhost:3000 on the server machine itself.`);
+    return null;
+  }
+  try{
+    return await navigator.mediaDevices.getUserMedia({audio:true});
+  }catch(err){
+    if(err.name==='NotAllowedError'||err.name==='SecurityError') alert('Microphone permission denied — click the lock/mic icon in the address bar, allow the microphone, then try again.');
+    else if(err.name==='NotFoundError') alert('No microphone was found on this device.');
+    else alert(`Could not access the microphone (${err.name}).`);
+    return null;
+  }
+}
 async function startCall(){
   const conv=conversations[activeConvKey];
   if(!conv||conv.type!=='private')return;
   const target=onlineUsers.find(u=>u.email===conv.email);
   if(!target)return alert('User is offline');
-  try{localStream=await navigator.mediaDevices.getUserMedia({audio:true});}catch{return alert('Microphone access denied');}
+  localStream=await getMic();
+  if(!localStream)return;
   currentCallTarget = target.socketId; // remember target so cancel-while-ringing works
   socket.emit('call:initiate',{targetSocketId:target.socketId});
 }
@@ -1601,7 +1619,8 @@ async function acceptCall(){
   stopRingtone();
   document.getElementById('incoming-call').classList.remove('show');
   showCallPanel('Connecting…'); startCallTimer();
-  try{localStream=await navigator.mediaDevices.getUserMedia({audio:true});}catch{return alert('Microphone denied');}
+  localStream=await getMic();
+  if(!localStream){rejectCall();endCallUI();return;}
   socket.emit('call:accept',{callId:currentCallId,callerSocketId:currentCallTarget});
 }
 function rejectCall(){stopRingtone();document.getElementById('incoming-call').classList.remove('show');socket.emit('call:reject',{callId:currentCallId,callerSocketId:currentCallTarget});currentCallId=null;currentCallTarget=null;}
@@ -1625,7 +1644,8 @@ async function startWebRTC(targetSocketId,isInitiator){
 //  GROUP CALL
 // ══════════════════════════════════════════
 async function startGroupCall(){
-  try{groupStream=await navigator.mediaDevices.getUserMedia({audio:true});}catch{return alert('Microphone denied');}
+  groupStream=await getMic();
+  if(!groupStream)return;
   currentRoomId='room-'+Date.now();
   document.getElementById('peers-grid').innerHTML='';
   document.getElementById('group-call-panel').classList.add('show');
@@ -1679,7 +1699,13 @@ async function startPTT(e) {
   pttStarting = true;
   pttSetUIRecording(true);
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio:true });
+    const stream = await getMic();
+    if (!stream) {
+      pttActive = false;
+      pttSetUIRecording(false);
+      pttStarting = false;
+      return;
+    }
     // User may have released the button while we were awaiting permission.
     if (!pttActive) {
       stream.getTracks().forEach(t => t.stop());
@@ -1703,7 +1729,7 @@ async function startPTT(e) {
     pttActive = false;
     pttSetUIRecording(false);
     pttCleanupStream();
-    alert('Microphone access denied. Please allow microphone to use Push to Talk.');
+    alert('Could not start voice recording.');
   } finally {
     pttStarting = false;
   }

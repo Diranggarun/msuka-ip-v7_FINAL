@@ -3,8 +3,8 @@
 //
 //  Run with:  npm run preflight
 //
-//  Verifies the demo host is actually ready: .env populated, MySQL
-//  reachable, all 7 tables present, no stale "online" rows, demo
+//  Verifies the demo host is actually ready: .env populated, SQLite
+//  file readable, all 7 tables present, no stale "online" rows, demo
 //  accounts exist. Prints LAN IP + the firewall command so you can
 //  copy-paste it during setup.
 //
@@ -75,50 +75,45 @@ const warn  = msg => console.log(`  ${C.warn} ${msg}`);
     ok('uploads dir writable');
   } catch (e) { issue('uploads dir NOT writable: ' + e.message); }
 
-  // ── Database ───────────────────────────────────────────────────────────
+  // ── Database (SQLite) ──────────────────────────────────────────────────
   console.log('\n🗄️   Database');
-  let pool;
   try {
-    const mysql = require('mysql2/promise');
-    pool = mysql.createPool({
-      host:     process.env.MYSQL_HOST     || 'localhost',
-      user:     process.env.MYSQL_USER     || 'root',
-      password: process.env.MYSQL_PASSWORD || '',
-      database: process.env.MYSQL_DATABASE || 'msukaip',
-      connectionLimit: 2,
-      connectTimeout:  5000
-    });
-    const conn = await pool.getConnection();
-    ok(`Connected to MySQL: ${process.env.MYSQL_USER||'root'}@${process.env.MYSQL_HOST||'localhost'}/${process.env.MYSQL_DATABASE||'msukaip'}`);
+    const db = require('../db');
+    ok(`SQLite file: ${db.DB_PATH}`);
+
+    const wal = db.raw.prepare('PRAGMA journal_mode').get().journal_mode;
+    if (String(wal).toLowerCase() === 'wal') ok('WAL journal mode active');
+    else warn(`journal_mode is "${wal}" — expected WAL`);
+    const fkOn = db.raw.prepare('PRAGMA foreign_keys').get();
+    if (Object.values(fkOn)[0] === 1) ok('foreign_keys pragma ON');
+    else issue('foreign_keys pragma is OFF');
 
     const expected = ['users','groups_table','group_members','messages','calls','audit_logs','survey_responses'];
-    const [tables] = await conn.query('SHOW TABLES');
-    const names = tables.map(r => Object.values(r)[0]);
+    const [tables] = await db.query("SELECT name FROM sqlite_master WHERE type='table'");
+    const names = tables.map(r => r.name);
     for (const t of expected) {
       if (names.includes(t)) {
-        const [[{ n }]] = await conn.query(`SELECT COUNT(*) AS n FROM ${t}`);
+        const [[{ n }]] = await db.query(`SELECT COUNT(*) AS n FROM ${t}`);
         ok(`Table \`${t}\` exists (${n} rows)`);
       } else {
         issue(`Table \`${t}\` MISSING — start the server once to auto-create`);
       }
     }
 
-    // Demo accounts
-    const [demoAdmin]   = await conn.query("SELECT id FROM users WHERE email='admin@cics.msu.edu'");
-    const [demoStudent] = await conn.query("SELECT id FROM users WHERE email='student@cics.msu.edu'");
-    if (demoAdmin.length)   ok('Demo admin   account present');     else issue('Demo admin account MISSING');
-    if (demoStudent.length) ok('Demo student account present'); else issue('Demo student account MISSING');
+    if (names.includes('users')) {
+      // Demo accounts
+      const [demoAdmin]   = await db.query("SELECT id FROM users WHERE email='admin@cics.msu.edu'");
+      const [demoStudent] = await db.query("SELECT id FROM users WHERE email='student@cics.msu.edu'");
+      if (demoAdmin.length)   ok('Demo admin   account present');     else issue('Demo admin account MISSING');
+      if (demoStudent.length) ok('Demo student account present'); else issue('Demo student account MISSING');
 
-    // Stale online state
-    const [[{ stale }]] = await conn.query("SELECT COUNT(*) AS stale FROM users WHERE status='online'");
-    if (stale > 0) warn(`${stale} user(s) currently marked online — server resets these on next boot`);
-    else ok('No stale "online" rows');
-
-    conn.release();
-    await pool.end();
+      // Stale online state
+      const [[{ stale }]] = await db.query("SELECT COUNT(*) AS stale FROM users WHERE status='online'");
+      if (stale > 0) warn(`${stale} user(s) currently marked online — server resets these on next boot`);
+      else ok('No stale "online" rows');
+    }
   } catch (e) {
-    issue('MySQL: ' + e.message);
-    if (pool) try { await pool.end(); } catch {}
+    issue('SQLite: ' + e.message);
   }
 
   // ── Network ────────────────────────────────────────────────────────────

@@ -1,9 +1,10 @@
 const express = require('express');
 const http = require('http');
+const https = require('https');
+const os = require('os');
 const { Server } = require('socket.io');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const mysql = require('mysql2/promise');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -30,6 +31,36 @@ const crypto = require('crypto'); // Built-in Node.js — no install needed
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors:{ origin:'*' } });
+
+// ── HTTPS — required for voice features from LAN clients ─────────────────────
+// Browsers only expose getUserMedia on secure origins (https:// or localhost),
+// so calls/PTT from any machine other than the server host need this endpoint.
+// A self-signed cert is generated into certs/ on first run; each client
+// accepts the browser warning once.
+const HTTPS_PORT = process.env.HTTPS_PORT || 3443;
+let httpsServer = null;
+async function setupHttps() {
+  try {
+    const certDir  = path.join(__dirname, 'certs');
+    const keyPath  = path.join(certDir, 'key.pem');
+    const certPath = path.join(certDir, 'cert.pem');
+    if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
+      const selfsigned = require('selfsigned');
+      const pems = await selfsigned.generate(
+        [{ name: 'commonName', value: 'msukaip.lan' }],
+        { days: 3650, keySize: 2048 }
+      );
+      fs.mkdirSync(certDir, { recursive: true });
+      fs.writeFileSync(keyPath, pems.private);
+      fs.writeFileSync(certPath, pems.cert);
+      console.log('🔐  Generated self-signed TLS certificate in certs/');
+    }
+    httpsServer = https.createServer({ key: fs.readFileSync(keyPath), cert: fs.readFileSync(certPath) }, app);
+    io.attach(httpsServer);
+  } catch (e) {
+    console.warn(`⚠️   HTTPS disabled (${e.message}) — voice calls will only work on http://localhost:${process.env.PORT || 3000}.`);
+  }
+}
 app.use(express.json());
 app.use(express.static(path.join(__dirname,'public'),{
   setHeaders:(res,filePath)=>{
@@ -39,7 +70,7 @@ app.use(express.static(path.join(__dirname,'public'),{
 
 // ── Secrets — read from environment, fall back to dev defaults ───────────────
 // For LAN/production deployment, set JWT_SECRET, AES_SECRET, AES_SALT, and
-// the MYSQL_* vars in a .env file or the OS environment. See .env.example.
+// optionally SQLITE_PATH in a .env file or the OS environment. See .env.example.
 const JWT_SECRET = process.env.JWT_SECRET || 'msuka-ip-secret-2025';
 const AES_SECRET = process.env.AES_SECRET || 'MSUkaIP-CICS-AES256-SecureKey-2025!';
 const AES_SALT   = process.env.AES_SALT   || 'msukaip-salt';
@@ -94,68 +125,14 @@ const storage = multer.diskStorage({
 const ALLOWED = ['image/jpeg','image/jpg','image/png','image/gif','image/webp','application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
 const upload = multer({ storage, limits:{fileSize:5*1024*1024}, fileFilter:(req,file,cb)=>{ if(ALLOWED.includes(file.mimetype)) cb(null,true); else cb(new Error('File type not allowed')); } });
 
-const db = mysql.createPool({
-  host:     process.env.MYSQL_HOST     || 'localhost',
-  user:     process.env.MYSQL_USER     || 'root',
-  password: process.env.MYSQL_PASSWORD || '',
-  database: process.env.MYSQL_DATABASE || 'msukaip',
-  waitForConnections: true,
-  connectionLimit:    10
-});
+// SQLite (node:sqlite) — WAL mode, foreign_keys ON. See db.js.
+const db = require('./db');
 
 async function setupDatabase() {
   try {
-    const conn = await db.getConnection();
-    console.log('✅  MySQL connected');
-
-    await conn.query(`CREATE TABLE IF NOT EXISTS users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100) NOT NULL, email VARCHAR(150) NOT NULL UNIQUE, password_hash VARCHAR(255) NOT NULL, role ENUM('student','faculty','admin') DEFAULT 'student', account_status ENUM('pending','approved','rejected') DEFAULT 'pending', status ENUM('online','offline') DEFAULT 'offline', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
-    try { await conn.query(`ALTER TABLE users ADD COLUMN account_status ENUM('pending','approved','rejected') DEFAULT 'pending' AFTER role`); } catch {}
-
-    await conn.query(`CREATE TABLE IF NOT EXISTS groups_table (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100) NOT NULL, created_by INT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL)`);
-
-    await conn.query(`CREATE TABLE IF NOT EXISTS group_members (id INT AUTO_INCREMENT PRIMARY KEY, group_id INT NOT NULL, user_id INT NOT NULL, FOREIGN KEY (group_id) REFERENCES groups_table(id) ON DELETE CASCADE, FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE)`);
-
-    await conn.query(`CREATE TABLE IF NOT EXISTS messages (id INT AUTO_INCREMENT PRIMARY KEY, sender_id INT, conv_key VARCHAR(200) NOT NULL, type ENUM('chat','announcement','system','file','image','voice') DEFAULT 'chat', text TEXT NOT NULL, file_name VARCHAR(255) NULL, file_url VARCHAR(500) NULL, file_size INT NULL, file_type VARCHAR(100) NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE SET NULL)`);
-    try { await conn.query(`ALTER TABLE messages ADD COLUMN conv_key VARCHAR(200) NOT NULL DEFAULT 'group_general' AFTER sender_id`); } catch {}
-    try { await conn.query(`ALTER TABLE messages ADD COLUMN file_name VARCHAR(255) NULL AFTER text`); } catch {}
-    try { await conn.query(`ALTER TABLE messages ADD COLUMN file_url  VARCHAR(500) NULL AFTER file_name`); } catch {}
-    try { await conn.query(`ALTER TABLE messages ADD COLUMN file_size INT NULL AFTER file_url`); } catch {}
-    try { await conn.query(`ALTER TABLE messages ADD COLUMN file_type VARCHAR(100) NULL AFTER file_size`); } catch {}
-    try { await conn.query(`ALTER TABLE messages MODIFY COLUMN type ENUM('chat','announcement','system','file','image','voice') DEFAULT 'chat'`); } catch {}
-
-    await conn.query(`CREATE TABLE IF NOT EXISTS calls (id INT AUTO_INCREMENT PRIMARY KEY, caller_id INT, receiver_id INT, status ENUM('missed','answered','rejected') DEFAULT 'missed', started_at TIMESTAMP NULL, ended_at TIMESTAMP NULL, duration INT DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (caller_id) REFERENCES users(id) ON DELETE SET NULL, FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE SET NULL)`);
-    try { await conn.query(`ALTER TABLE calls ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`); } catch {}
-    await conn.query(`CREATE TABLE IF NOT EXISTS audit_logs (id INT AUTO_INCREMENT PRIMARY KEY, user_id INT, action VARCHAR(100), details TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL)`);
-
-    // ── Performance + integrity indexes (idempotent — ignore if already exist) ──
-    const safeAlter = async sql => { try { await conn.query(sql); } catch (e) { if (!/Duplicate key|already exists/i.test(e.message)) console.warn('  index note:', e.message); } };
-    await safeAlter(`CREATE INDEX idx_messages_conv_created ON messages (conv_key, created_at)`);
-    await safeAlter(`CREATE INDEX idx_messages_created ON messages (created_at)`);
-    await safeAlter(`CREATE INDEX idx_calls_created ON calls (created_at)`);
-    await safeAlter(`CREATE INDEX idx_users_created ON users (created_at)`);
-    await safeAlter(`CREATE INDEX idx_users_account_status ON users (account_status)`);
-    await safeAlter(`CREATE INDEX idx_users_status ON users (status)`);
-    await safeAlter(`CREATE INDEX idx_survey_created ON survey_responses (created_at)`);
-    await safeAlter(`CREATE INDEX idx_audit_created ON audit_logs (created_at)`);
-    await safeAlter(`CREATE UNIQUE INDEX uq_group_members ON group_members (group_id, user_id)`);
-    console.log('✅  Indexes & integrity constraints ensured');
-
-    await conn.query(`CREATE TABLE IF NOT EXISTS survey_responses (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      respondent_name VARCHAR(150) NULL,
-      respondent_type VARCHAR(100) NOT NULL,
-      device VARCHAR(100) NOT NULL,
-      response_date DATE NULL,
-      scores_json TEXT NOT NULL,
-      mean_a DECIMAL(4,2) NOT NULL,
-      mean_b DECIMAL(4,2) NOT NULL,
-      mean_c DECIMAL(4,2) NOT NULL,
-      mean_d DECIMAL(4,2) NOT NULL,
-      overall DECIMAL(4,2) NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`);
-
-    console.log('✅  Tables ready');
+    db.ensureSchema();
+    console.log(`✅  SQLite ready: ${db.DB_PATH}`);
+    console.log('✅  Tables, indexes & integrity constraints ensured');
 
     const accounts = [
       { name:'Admin', email:'admin@cics.msu.edu', password:'admin123', role:'admin', status:'approved' },
@@ -163,11 +140,10 @@ async function setupDatabase() {
     ];
     for (const acc of accounts) {
       const hash = await bcrypt.hash(acc.password, 10);
-      const [rows] = await conn.query('SELECT id FROM users WHERE email=?',[acc.email]);
-      if (rows.length===0) { await conn.query('INSERT INTO users (name,email,password_hash,role,account_status) VALUES (?,?,?,?,?)',[acc.name,acc.email,hash,acc.role,acc.status]); console.log(`✅  Created: ${acc.email} / ${acc.password}`); }
-      else { await conn.query('UPDATE users SET password_hash=?,name=?,role=?,account_status=? WHERE email=?',[hash,acc.name,acc.role,acc.status,acc.email]); console.log(`🔄  Reset:   ${acc.email} / ${acc.password}`); }
+      const [rows] = await db.query('SELECT id FROM users WHERE email=?',[acc.email]);
+      if (rows.length===0) { await db.query('INSERT INTO users (name,email,password_hash,role,account_status) VALUES (?,?,?,?,?)',[acc.name,acc.email,hash,acc.role,acc.status]); console.log(`✅  Created: ${acc.email} / ${acc.password}`); }
+      else { await db.query('UPDATE users SET password_hash=?,name=?,role=?,account_status=? WHERE email=?',[hash,acc.name,acc.role,acc.status,acc.email]); console.log(`🔄  Reset:   ${acc.email} / ${acc.password}`); }
     }
-    conn.release();
     // Reset ALL users to offline on server start (in case of crash/restart)
     await db.query("UPDATE users SET status = 'offline'");
     console.log('✅  All users reset to offline');
@@ -383,7 +359,7 @@ app.get('/api/admin/stats/trends', verifyToken, adminOnly, async (req, res) => {
       cur = cfg.startOf(prev);
     }
     const oldest = buckets[0].start;
-    // One bucketed query per metric. DATE_FORMAT bucket → row count.
+    // One bucketed query per metric. strftime bucket → row count.
     const qBucketed = (sql, args=[]) => db.query(sql, args).then(([r]) => {
       const m = new Map();
       for (const row of r) m.set(String(row.bk), Number(row.cnt) || 0);
@@ -391,15 +367,15 @@ app.get('/api/admin/stats/trends', verifyToken, adminOnly, async (req, res) => {
     });
     const [msgMap, callMap, newUserMap, newPendingMap, activeMap] = await Promise.all([
       // Messages created in bucket
-      qBucketed(`SELECT DATE_FORMAT(created_at,'${cfg.fmt}') AS bk, COUNT(*) AS cnt FROM messages WHERE created_at >= ? GROUP BY bk`, [oldest]),
+      qBucketed(`SELECT strftime('${cfg.fmt}',created_at) AS bk, COUNT(*) AS cnt FROM messages WHERE created_at >= ? GROUP BY bk`, [oldest]),
       // Calls created in bucket
-      qBucketed(`SELECT DATE_FORMAT(created_at,'${cfg.fmt}') AS bk, COUNT(*) AS cnt FROM calls WHERE created_at >= ? GROUP BY bk`, [oldest]),
+      qBucketed(`SELECT strftime('${cfg.fmt}',created_at) AS bk, COUNT(*) AS cnt FROM calls WHERE created_at >= ? GROUP BY bk`, [oldest]),
       // New users registered in bucket (any status)
-      qBucketed(`SELECT DATE_FORMAT(created_at,'${cfg.fmt}') AS bk, COUNT(*) AS cnt FROM users WHERE created_at >= ? GROUP BY bk`, [oldest]),
+      qBucketed(`SELECT strftime('${cfg.fmt}',created_at) AS bk, COUNT(*) AS cnt FROM users WHERE created_at >= ? GROUP BY bk`, [oldest]),
       // New pending users registered in bucket
-      qBucketed(`SELECT DATE_FORMAT(created_at,'${cfg.fmt}') AS bk, COUNT(*) AS cnt FROM users WHERE account_status='pending' AND created_at >= ? GROUP BY bk`, [oldest]),
+      qBucketed(`SELECT strftime('${cfg.fmt}',created_at) AS bk, COUNT(*) AS cnt FROM users WHERE account_status='pending' AND created_at >= ? GROUP BY bk`, [oldest]),
       // Active users in bucket (distinct senders, proxy for "online" history)
-      qBucketed(`SELECT DATE_FORMAT(created_at,'${cfg.fmt}') AS bk, COUNT(DISTINCT sender_id) AS cnt FROM messages WHERE sender_id IS NOT NULL AND created_at >= ? GROUP BY bk`, [oldest]),
+      qBucketed(`SELECT strftime('${cfg.fmt}',created_at) AS bk, COUNT(DISTINCT sender_id) AS cnt FROM messages WHERE sender_id IS NOT NULL AND created_at >= ? GROUP BY bk`, [oldest]),
     ]);
     // Baseline counts BEFORE the window so cumulative series stay accurate.
     const [[{baseUsers}]]    = await db.query('SELECT COUNT(*) AS baseUsers    FROM users    WHERE created_at < ?', [oldest]);
@@ -756,11 +732,11 @@ io.on('connection', async(socket)=>{
       await conn.beginTransaction();
       const [result] = await conn.query('INSERT INTO groups_table (name,created_by) VALUES (?,?)',[trimmed,id]);
       const gid = result.insertId;
-      // Use INSERT IGNORE so the unique (group_id,user_id) index protects against dupes
-      await conn.query('INSERT IGNORE INTO group_members (group_id,user_id) VALUES (?,?)',[gid,id]);
+      // Use INSERT OR IGNORE so the unique (group_id,user_id) index protects against dupes
+      await conn.query('INSERT OR IGNORE INTO group_members (group_id,user_id) VALUES (?,?)',[gid,id]);
       for (const m of (members || [])) {
         const [u] = await conn.query('SELECT id FROM users WHERE email=?',[m.email]);
-        if (u.length) await conn.query('INSERT IGNORE INTO group_members (group_id,user_id) VALUES (?,?)',[gid,u[0].id]);
+        if (u.length) await conn.query('INSERT OR IGNORE INTO group_members (group_id,user_id) VALUES (?,?)',[gid,u[0].id]);
       }
       await conn.commit();
 
@@ -789,7 +765,7 @@ io.on('connection', async(socket)=>{
     io.to(targetSocketId).emit('call:incoming',{callId:r.insertId,from:{socketId:socket.id,name,role}});
     socket.emit('call:ringing',{callId:r.insertId,targetName:target.name});
   });
-  socket.on('call:accept',async({callId,callerSocketId})=>{ await db.query('UPDATE calls SET status=?,started_at=NOW() WHERE id=?',['answered',callId]); io.to(callerSocketId).emit('call:accepted',{callId,answererSocketId:socket.id,answererName:name}); });
+  socket.on('call:accept',async({callId,callerSocketId})=>{ await db.query("UPDATE calls SET status=?,started_at=datetime('now','localtime') WHERE id=?",['answered',callId]); io.to(callerSocketId).emit('call:accepted',{callId,answererSocketId:socket.id,answererName:name}); });
   socket.on('call:reject',async({callId,callerSocketId})=>{ await db.query('UPDATE calls SET status=? WHERE id=?',['rejected',callId]); io.to(callerSocketId).emit('call:rejected',{rejectedBy:name}); });
   socket.on('call:end',async({callId,targetSocketId})=>{
     let wasAnswered = false;
@@ -797,7 +773,9 @@ io.on('connection', async(socket)=>{
       const [rows] = await db.query('SELECT started_at FROM calls WHERE id=?',[callId]);
       wasAnswered = !!(rows[0] && rows[0].started_at);
     } catch {}
-    await db.query('UPDATE calls SET ended_at=NOW(),duration=TIMESTAMPDIFF(SECOND,COALESCE(started_at,NOW()),NOW()) WHERE id=?',[callId]);
+    await db.query(`UPDATE calls SET ended_at=datetime('now','localtime'),
+      duration=CAST(strftime('%s',datetime('now','localtime')) AS INTEGER)-CAST(strftime('%s',COALESCE(started_at,datetime('now','localtime'))) AS INTEGER)
+      WHERE id=?`,[callId]);
     if(targetSocketId){
       io.to(targetSocketId).emit(wasAnswered ? 'call:ended' : 'call:cancelled', {endedBy:name, cancelledBy:name});
     }
@@ -833,9 +811,14 @@ function buildPrivateKey(email1,email2) {
 }
 
 const PORT=process.env.PORT||3000;
-setupDatabase().then(()=>{
+setupDatabase().then(async ()=>{
+  await setupHttps();
   server.listen(PORT,'0.0.0.0',()=>{
     console.log(`🚀  MSUkaIP: http://localhost:${PORT}`);
     console.log(`🛡️   Admin:   http://localhost:${PORT}/admin.html`);
+  });
+  if (httpsServer) httpsServer.listen(HTTPS_PORT,'0.0.0.0',()=>{
+    const lan = Object.values(os.networkInterfaces()).flat().find(i=>i && i.family==='IPv4' && !i.internal);
+    console.log(`🔐  Voice calls from LAN clients: https://${lan?lan.address:'<this-machine-ip>'}:${HTTPS_PORT}`);
   });
 });

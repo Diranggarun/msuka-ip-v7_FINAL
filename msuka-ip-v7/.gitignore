@@ -6,3 +6,11 @@ public/uploads/*
 playwright-report/
 test-results/
 *.log
+certs/
+
+# SQLite database + backups
+msukaip.db
+msukaip.db-shm
+msukaip.db-wal
+backups/
+uploads/

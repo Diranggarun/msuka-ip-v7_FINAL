@@ -2,8 +2,8 @@
 //  MSUkaIP — Backup helper (npm run backup)
 //
 //  Creates a timestamped snapshot of:
-//    1. The full MySQL database (via mysqldump) → backups/db-<ts>.sql
-//    2. The uploads folder                     → backups/uploads-<ts>.zip
+//    1. The full SQLite database (via VACUUM INTO) → backups/db-<ts>.db
+//    2. The uploads folder                         → backups/uploads-<ts>.zip
 //
 //  Use before any risky operation, before LAN deploy, and right
 //  before the defense itself for insurance.
@@ -32,24 +32,19 @@ const backupDir = path.join(__dirname, '..', 'backups');
 const uploads   = path.join(__dirname, '..', 'public', 'uploads');
 fs.mkdirSync(backupDir, { recursive: true });
 
-const dbHost = process.env.MYSQL_HOST     || 'localhost';
-const dbUser = process.env.MYSQL_USER     || 'root';
-const dbPass = process.env.MYSQL_PASSWORD || '';
-const dbName = process.env.MYSQL_DATABASE || 'msukaip';
-
 console.log(`\n📦  MSUkaIP backup — ${stamp}\n`);
 
-// 1. mysqldump
-const sqlFile = path.join(backupDir, `db-${stamp}.sql`);
+// 1. SQLite snapshot — VACUUM INTO is an online, consistent copy (safe while
+//    the server is running thanks to WAL mode).
+const dbFile = path.join(backupDir, `db-${stamp}.db`);
 try {
-  const passArg = dbPass ? `--password=${dbPass}` : '';
-  console.log(`  → ${sqlFile}`);
-  execSync(`mysqldump --host=${dbHost} --user=${dbUser} ${passArg} --single-transaction --routines --triggers ${dbName} > "${sqlFile}"`, { stdio: ['ignore', 'inherit', 'inherit'], shell: true });
-  const size = fs.statSync(sqlFile).size;
+  const db = require('../db');
+  console.log(`  → ${dbFile}`);
+  db.raw.exec(`VACUUM INTO '${dbFile.replace(/'/g, "''")}'`);
+  const size = fs.statSync(dbFile).size;
   console.log(`     ${(size/1024).toFixed(1)} KB ✓`);
 } catch (e) {
-  console.error(`     ✗ mysqldump failed: ${e.message}`);
-  console.error(`     Make sure mysqldump is on PATH (comes with MySQL Server install).`);
+  console.error(`     ✗ SQLite backup failed: ${e.message}`);
   process.exit(1);
 }
 
@@ -70,6 +65,6 @@ try {
 }
 
 console.log(`\n✓ Backup complete in ${backupDir}\n`);
-console.log(`Restore later with:`);
-console.log(`  mysql --host=${dbHost} --user=${dbUser} ${dbPass ? '--password=…' : ''} ${dbName} < "${sqlFile}"`);
+console.log(`Restore later with (server stopped):`);
+console.log(`  Copy-Item "${dbFile}" "${require('../db').DB_PATH}" -Force`);
 console.log(`  Expand-Archive "${zipFile}" -DestinationPath "${path.dirname(uploads)}" -Force\n`);

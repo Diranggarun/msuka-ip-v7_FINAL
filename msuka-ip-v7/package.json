@@ -13,14 +13,15 @@
     "lint:fix": "eslint . --fix",
     "preflight": "node scripts/preflight.js",
     "backup": "node scripts/backup.js",
-    "db:audit": "node db-audit.js"
+    "db:audit": "node db-audit.js",
+    "db:migrate-from-mysql": "node scripts/migrate-mysql-to-sqlite.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
-    "mysql2": "^3.6.5",
+    "selfsigned": "^5.5.0",
     "socket.io": "^4.7.2"
   },
   "devDependencies": {
@@ -28,6 +29,7 @@
     "eslint": "^10.4.0",
     "eslint-plugin-html": "^8.1.4",
     "globals": "^17.6.0",
+    "mysql2": "^3.6.5",
     "nodemon": "^3.0.2"
   }
 }
