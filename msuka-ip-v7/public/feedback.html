@@ -35,8 +35,10 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
     scroll-behavior:auto!important;
   }
 }
-button,label,.scale-option{touch-action:manipulation;}
-@media (max-width:768px){ button,.scale-option{min-height:44px;} }
+button,label{touch-action:manipulation;}
+/* The radio input itself is display:none — the <label> is the real hit area,
+   so that is what has to meet the 44px minimum. */
+@media (max-width:768px){ button,.likert-option label{min-height:44px;justify-content:center;} }
 .info-card,.section-card,.submit-section{background:linear-gradient(160deg,rgba(255,253,250,.78),rgba(252,246,236,.72))!important;backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border:1px solid rgba(255,255,255,.55)!important;box-shadow:0 8px 30px rgba(74,0,0,.10),inset 0 1px 0 rgba(255,255,255,.6)!important;border-radius:18px!important;}
 .legend{background:linear-gradient(135deg,rgba(255,251,234,.85),rgba(255,247,220,.78))!important;backdrop-filter:blur(14px) saturate(150%);-webkit-backdrop-filter:blur(14px) saturate(150%);border:1px solid rgba(212,160,23,.4)!important;border-radius:16px!important;box-shadow:0 4px 14px rgba(212,160,23,.10),inset 0 1px 0 rgba(255,255,255,.5)!important;}
 .result-card{background:linear-gradient(160deg,rgba(255,253,250,.96),rgba(252,246,236,.92))!important;backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);border:1px solid rgba(255,255,255,.55)!important;box-shadow:0 20px 50px rgba(74,0,0,.25),inset 0 1px 0 rgba(255,255,255,.6)!important;}
