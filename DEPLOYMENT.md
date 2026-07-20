@@ -53,6 +53,13 @@ Copy-Item .env.example .env
 notepad .env
 ```
 
+> **Offline machine?** `npm install` is the only step that needs internet.
+> Run it once on any connected machine, then copy the entire `msuka-ip-v7`
+> folder (including `node_modules/`) to the server via USB. Nothing else is
+> downloaded at runtime: the database is Node's built-in SQLite (no native
+> modules), socket.io serves its own client script, all fonts/images are
+> local, and the TLS certificate is generated locally on first start.
+
 Fill in `.env`:
 
 ```
@@ -149,9 +156,9 @@ If a client lands on the plain-HTTP LAN URL and taps a voice feature, the app
 now shows an alert pointing them at the HTTPS URL instead of a misleading
 "microphone denied" error.
 
-The Google STUN server is referenced for ICE; on a fully offline LAN it isn't
-strictly required since both peers are on the same subnet and exchange host
-candidates directly.
+No STUN/TURN server is configured (`iceServers` is empty) — WebRTC peers on
+the same LAN exchange host candidates directly, so calls work on a fully
+offline network.
 
 ---
 

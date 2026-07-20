@@ -69,7 +69,7 @@ Or change `PORT=3001` in `.env`.
 **Checklist:**
 1. Both participants must have granted mic permission — check the address bar 🎤 icon.
 2. Inspect `peerConnection.iceConnectionState` in DevTools — should reach `connected` or `completed`. Stuck on `checking` means ICE failure.
-3. On a truly offline LAN, the Google STUN server is unreachable. Host candidates usually still negotiate on the same subnet; if not, both clients must be on the same `/24`.
+3. No STUN server is configured (`iceServers` is empty) — peers rely on host candidates, so both clients must be on the same subnet (same `/24`).
 4. Check `peerConnection.getSenders()` — both should have an audio track.
 
 ### Audio works one direction only

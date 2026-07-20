@@ -77,6 +77,7 @@ function ensureSchema() {
       role TEXT CHECK(role IN ('student','faculty','admin')) DEFAULT 'student',
       account_status TEXT CHECK(account_status IN ('pending','approved','rejected')) DEFAULT 'pending',
       status TEXT CHECK(status IN ('online','offline')) DEFAULT 'offline',
+      token_version INTEGER NOT NULL DEFAULT 0,
       created_at TEXT DEFAULT (datetime('now','localtime'))
     );
 
@@ -128,6 +129,8 @@ function ensureSchema() {
       user_id INTEGER,
       action TEXT,
       details TEXT,
+      ip TEXT,
+      user_agent TEXT,
       created_at TEXT DEFAULT (datetime('now','localtime')),
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
     );
@@ -157,6 +160,13 @@ function ensureSchema() {
     CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_logs (created_at);
     CREATE UNIQUE INDEX IF NOT EXISTS uq_group_members ON group_members (group_id, user_id);
   `);
+
+  // Guarded column migrations for databases created before these columns
+  // existed (SQLite has no ADD COLUMN IF NOT EXISTS).
+  const addCol = (table, ddl) => { try { raw.exec(`ALTER TABLE ${table} ADD COLUMN ${ddl}`); } catch { /* already exists */ } };
+  addCol('users',      'token_version INTEGER NOT NULL DEFAULT 0'); // session revocation (RA 10173 Tier 2)
+  addCol('audit_logs', 'ip TEXT');                                  // accountability (§21)
+  addCol('audit_logs', 'user_agent TEXT');
 }
 
 module.exports = { query, getConnection, ensureSchema, raw, DB_PATH };

@@ -201,22 +201,61 @@ async function setupDatabase() {
   } catch (err) { console.error('❌  DB failed:', err.message); process.exit(1); }
 }
 
-function verifyToken(req,res,next) {
+// Tokens carry a `tv` (token_version) claim checked against the users table on
+// every request — bumping the DB value instantly revokes all of a user's
+// outstanding JWTs (logout, password change, reject, delete). RA 10173 Tier 2.
+async function tokenStillValid(payload) {
+  try {
+    const [rows] = await db.query('SELECT token_version FROM users WHERE id=?',[payload.id]);
+    return rows.length > 0 && (rows[0].token_version||0) === (payload.tv||0);
+  } catch { return false; }
+}
+async function bumpTokenVersion(userId) {
+  await db.query('UPDATE users SET token_version=token_version+1 WHERE id=?',[userId]);
+  disconnectUserSockets(userId);
+}
+function disconnectUserSockets(userId) {
+  for (const [sid,u] of onlineUsers.entries()) {
+    if (u.id === userId) io.sockets.sockets.get(sid)?.disconnect(true);
+  }
+}
+
+async function verifyToken(req,res,next) {
   const auth=req.headers.authorization;
   if(!auth) return res.status(401).json({error:'No token'});
-  try { req.user=jwt.verify(auth.replace('Bearer ',''),JWT_SECRET); next(); }
+  try {
+    const payload=jwt.verify(auth.replace('Bearer ',''),JWT_SECRET);
+    if(!await tokenStillValid(payload)) return res.status(401).json({error:'Session expired or revoked'});
+    req.user=payload; next();
+  }
   catch { res.status(401).json({error:'Invalid token'}); }
 }
 function adminOnly(req,res,next) { if(req.user?.role!=='admin') return res.status(403).json({error:'Admin only'}); next(); }
 
 // Like verifyToken, but also accepts ?token= — needed because <img>/<audio>/<a>
 // tags can't send an Authorization header. Only used for the uploads route.
-function verifyTokenAllowQuery(req,res,next) {
+async function verifyTokenAllowQuery(req,res,next) {
   const auth = req.headers.authorization;
   const token = auth ? auth.replace('Bearer ','') : req.query.token;
   if(!token) return res.status(401).json({error:'No token'});
-  try { req.user = jwt.verify(token, JWT_SECRET); next(); }
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    if(!await tokenStillValid(payload)) return res.status(401).json({error:'Session expired or revoked'});
+    req.user = payload; next();
+  }
   catch { res.status(401).json({error:'Invalid token'}); }
+}
+
+// ── Audit logging (RA 10173 §21 accountability) ──────────────────────────────
+// Central helper: every security-relevant event lands in audit_logs with actor,
+// source IP and user agent. `req` may be an Express request or a Socket.IO
+// socket. Failures are logged to console — never silently swallowed.
+async function logAudit(userId, action, details, req) {
+  try {
+    const ip = req?.ip || req?.handshake?.address || req?.socket?.remoteAddress || null;
+    const ua = req?.headers?.['user-agent'] || req?.handshake?.headers?.['user-agent'] || null;
+    await db.query('INSERT INTO audit_logs (user_id,action,details,ip,user_agent) VALUES (?,?,?,?,?)',[userId,action,details,ip,ua]);
+  } catch (e) { console.warn('audit log failed:', e.message); }
 }
 
 // Authenticated + decrypting delivery of uploaded files (replaces the old
@@ -275,7 +314,7 @@ app.post('/api/register', async (req,res) => {
     if(ex.length>0) return res.status(409).json({error:'Email already registered'});
     const hash=await bcrypt.hash(password,12);
     const [r]=await db.query('INSERT INTO users (name,email,password_hash,role,account_status) VALUES (?,?,?,?,?)',[name,email.trim(),hash,role,'pending']);
-    await db.query('INSERT INTO audit_logs (user_id,action,details) VALUES (?,?,?)',[r.insertId,'REGISTER',`${name} registered`]);
+    await logAudit(r.insertId,'REGISTER',`${name} registered`,req);
     res.json({message:'Account created! Wait for admin approval.'});
   } catch(err){ res.status(500).json({error:'Server error'}); }
 });
@@ -288,16 +327,16 @@ app.post('/api/login', async (req,res) => {
   if(loginLocked(rk)) return res.status(429).json({error:'Too many failed attempts. Try again in 15 minutes.'});
   try {
     const [rows]=await db.query('SELECT * FROM users WHERE email=?',[email.trim()]);
-    if(!rows.length) { recordLoginFailure(rk); return res.status(401).json({error:'Invalid credentials'}); }
+    if(!rows.length) { recordLoginFailure(rk); await logAudit(null,'LOGIN_FAILED',`Unknown email at Chat login: ${String(email).trim()}`,req); return res.status(401).json({error:'Invalid credentials'}); }
     const user=rows[0];
-    if(!await bcrypt.compare(password,user.password_hash)) { recordLoginFailure(rk); return res.status(401).json({error:'Invalid credentials'}); }
+    if(!await bcrypt.compare(password,user.password_hash)) { recordLoginFailure(rk); await logAudit(user.id,'LOGIN_FAILED',`Wrong password at Chat login: ${user.email}`,req); return res.status(401).json({error:'Invalid credentials'}); }
     loginFailures.delete(rk);
     if(user.account_status==='pending')  return res.status(403).json({error:'Account pending admin approval.'});
     if(user.account_status==='rejected') return res.status(403).json({error:'Account rejected. Contact admin.'});
     // ADMIN accounts must use the Admin Dashboard — not the chat app
     if(user.role==='admin') return res.status(403).json({error:'Admin accounts must login at the Admin Dashboard. Please go to /admin.html'});
-    const token=jwt.sign({id:user.id,email:user.email,name:user.name,role:user.role},JWT_SECRET,{expiresIn:'8h'});
-    await db.query('INSERT INTO audit_logs (user_id,action,details) VALUES (?,?,?)',[user.id,'LOGIN',`${user.name} logged in via Chat`]);
+    const token=jwt.sign({id:user.id,email:user.email,name:user.name,role:user.role,tv:user.token_version||0},JWT_SECRET,{expiresIn:'8h'});
+    await logAudit(user.id,'LOGIN',`${user.name} logged in via Chat`,req);
     console.log(`✅  Chat Login: ${user.name} (${user.role})`);
     res.json({token,name:user.name,role:user.role});
   } catch(err){ res.status(500).json({error:'Server error'}); }
@@ -311,17 +350,29 @@ app.post('/api/admin/login', async (req,res) => {
   if(loginLocked(rk)) return res.status(429).json({error:'Too many failed attempts. Try again in 15 minutes.'});
   try {
     const [rows]=await db.query('SELECT * FROM users WHERE email=?',[email.trim()]);
-    if(!rows.length) { recordLoginFailure(rk); return res.status(401).json({error:'Invalid credentials'}); }
+    if(!rows.length) { recordLoginFailure(rk); await logAudit(null,'LOGIN_FAILED',`Unknown email at Admin login: ${String(email).trim()}`,req); return res.status(401).json({error:'Invalid credentials'}); }
     const user=rows[0];
-    if(!await bcrypt.compare(password,user.password_hash)) { recordLoginFailure(rk); return res.status(401).json({error:'Invalid credentials'}); }
+    if(!await bcrypt.compare(password,user.password_hash)) { recordLoginFailure(rk); await logAudit(user.id,'LOGIN_FAILED',`Wrong password at Admin login: ${user.email}`,req); return res.status(401).json({error:'Invalid credentials'}); }
     loginFailures.delete(rk);
-    if(user.role!=='admin') return res.status(403).json({error:'Access denied. This portal is for Admin accounts only.'});
+    if(user.role!=='admin') { await logAudit(user.id,'LOGIN_FAILED',`Non-admin attempted Admin portal: ${user.email}`,req); return res.status(403).json({error:'Access denied. This portal is for Admin accounts only.'}); }
     if(user.account_status!=='approved') return res.status(403).json({error:'Account not approved.'});
-    const token=jwt.sign({id:user.id,email:user.email,name:user.name,role:user.role},JWT_SECRET,{expiresIn:'8h'});
-    await db.query('INSERT INTO audit_logs (user_id,action,details) VALUES (?,?,?)',[user.id,'LOGIN',`${user.name} logged in via Admin Dashboard`]);
+    const token=jwt.sign({id:user.id,email:user.email,name:user.name,role:user.role,tv:user.token_version||0},JWT_SECRET,{expiresIn:'8h'});
+    await logAudit(user.id,'LOGIN',`${user.name} logged in via Admin Dashboard`,req);
     console.log(`🛡️   Admin Login: ${user.name}`);
     res.json({token,name:user.name,role:user.role});
   } catch(err){ res.status(500).json({error:'Server error'}); }
+});
+
+// ── Logout — revokes ALL of the user's outstanding tokens ─────────────────────
+// Bumping token_version invalidates every JWT issued before this call (all
+// tabs/devices) and disconnects live sockets. Client-side token discard alone
+// is not real session termination.
+app.post('/api/logout', verifyToken, async(req,res)=>{
+  try {
+    await bumpTokenVersion(req.user.id);
+    await logAudit(req.user.id,'LOGOUT',`${req.user.name} logged out`,req);
+    res.json({message:'Logged out'});
+  } catch { res.status(500).json({error:'Server error'}); }
 });
 
 app.post('/api/upload', verifyToken, (req,res) => {
@@ -430,7 +481,7 @@ app.delete('/api/groups/:id', verifyToken, async(req,res)=>{
     await db.query('UPDATE messages SET sender_id=NULL WHERE conv_key=?',['group_'+id]);
     await db.query('DELETE FROM group_members WHERE group_id=?',[id]);
     await db.query('DELETE FROM groups_table WHERE id=?',[id]);
-    await db.query('INSERT INTO audit_logs (user_id,action,details) VALUES (?,?,?)',[req.user.id,'DELETE_GROUP',`Deleted group ID ${id}: ${rows[0].name}`]);
+    await logAudit(req.user.id,'DELETE_GROUP',`Deleted group ID ${id}: ${rows[0].name}`,req);
     // Notify all connected users
     io.emit('group:deleted',{groupId:id,key:'group_'+id});
     console.log(`🗑️  Group deleted: ${rows[0].name}`);
@@ -519,7 +570,11 @@ app.get('/api/admin/stats/trends', verifyToken, adminOnly, async (req, res) => {
 });
 
 app.get('/api/admin/pending',verifyToken,adminOnly,async(req,res)=>{
-  try { const [r]=await db.query("SELECT id,name,email,role,created_at FROM users WHERE account_status='pending' ORDER BY created_at ASC"); res.json(r); }
+  try {
+    const [r]=await db.query("SELECT id,name,email,role,created_at FROM users WHERE account_status='pending' ORDER BY created_at ASC");
+    await logAudit(req.user.id,'VIEW_PENDING',`Viewed pending registrations (${r.length})`,req);
+    res.json(r);
+  }
   catch { res.status(500).json({error:'Server error'}); }
 });
 app.put('/api/admin/users/:id/approve',verifyToken,adminOnly,async(req,res)=>{
@@ -527,7 +582,7 @@ app.put('/api/admin/users/:id/approve',verifyToken,adminOnly,async(req,res)=>{
     const [r]=await db.query('SELECT name,email FROM users WHERE id=?',[req.params.id]);
     if(!r.length) return res.status(404).json({error:'User not found'});
     await db.query("UPDATE users SET account_status='approved' WHERE id=?",[req.params.id]);
-    await db.query('INSERT INTO audit_logs (user_id,action,details) VALUES (?,?,?)',[req.user.id,'APPROVE',`Approved: ${r[0].email}`]);
+    await logAudit(req.user.id,'APPROVE',`Approved: ${r[0].email}`,req);
     res.json({message:'Approved'});
   } catch { res.status(500).json({error:'Server error'}); }
 });
@@ -540,7 +595,8 @@ app.delete('/api/admin/users/:id/reject',verifyToken,adminOnly,async(req,res)=>{
     await db.query('UPDATE calls      SET receiver_id=NULL WHERE receiver_id=?',[req.params.id]);
     await db.query('UPDATE audit_logs SET user_id=NULL WHERE user_id=?',[req.params.id]);
     await db.query('DELETE FROM users WHERE id=?',[req.params.id]);
-    await db.query('INSERT INTO audit_logs (user_id,action,details) VALUES (?,?,?)',[req.user.id,'REJECT',`Rejected: ${r[0].email}`]);
+    disconnectUserSockets(parseInt(req.params.id)); // row gone -> tokens auto-revoked; drop live sockets too
+    await logAudit(req.user.id,'REJECT',`Rejected: ${r[0].email}`,req);
     res.json({message:'Rejected'});
   } catch(err){ res.status(500).json({error:'Server error: '+err.message}); }
 });
@@ -553,6 +609,7 @@ app.get('/api/admin/users',verifyToken,adminOnly,async(req,res)=>{
       ...u,
       status: onlineEmails.has(u.email) ? 'online' : 'offline'
     }));
+    await logAudit(req.user.id,'VIEW_USERS',`Viewed user list (${rows.length})`,req);
     res.json(enriched);
   } catch { res.status(500).json({error:'Server error'}); }
 });
@@ -565,17 +622,28 @@ app.post('/api/admin/users',verifyToken,adminOnly,async(req,res)=>{
     if(ex.length>0) return res.status(409).json({error:'Email exists'});
     const hash=await bcrypt.hash(password,12);
     const [r]=await db.query('INSERT INTO users (name,email,password_hash,role,account_status) VALUES (?,?,?,?,?)',[name,email,hash,role,'approved']);
-    await db.query('INSERT INTO audit_logs (user_id,action,details) VALUES (?,?,?)',[req.user.id,'ADD_USER',`Added: ${email}`]);
+    await logAudit(req.user.id,'ADD_USER',`Added: ${email}`,req);
     res.json({message:'User added',id:r.insertId});
   } catch(err){ res.status(500).json({error:'Server error'}); }
 });
 app.put('/api/admin/users/:id',verifyToken,adminOnly,async(req,res)=>{
   const {name,email,password,role}=req.body;
   if(password&&password.trim()!==''&&password.length<8) return res.status(400).json({error:'Password must be at least 8 characters'});
+  if(role!==undefined&&!['student','faculty','admin'].includes(role)) return res.status(400).json({error:'Invalid role'});
+  // Prevent an admin from demoting their own account and locking everyone out
+  if(parseInt(req.params.id)===req.user.id&&role&&role!=='admin') return res.status(400).json({error:'Cannot change your own role'});
   try {
-    if(password&&password.trim()!=='') { const h=await bcrypt.hash(password,12); await db.query('UPDATE users SET name=?,email=?,password_hash=?,role=? WHERE id=?',[name,email,h,role,req.params.id]); }
+    const [before]=await db.query('SELECT role,email FROM users WHERE id=?',[req.params.id]);
+    if(!before.length) return res.status(404).json({error:'User not found'});
+    const passwordChanged=!!(password&&password.trim()!=='');
+    if(passwordChanged) { const h=await bcrypt.hash(password,12); await db.query('UPDATE users SET name=?,email=?,password_hash=?,role=? WHERE id=?',[name,email,h,role,req.params.id]); }
     else await db.query('UPDATE users SET name=?,email=?,role=? WHERE id=?',[name,email,role,req.params.id]);
-    await db.query('INSERT INTO audit_logs (user_id,action,details) VALUES (?,?,?)',[req.user.id,'EDIT_USER',`Edited ID ${req.params.id}`]);
+    // Password or role change revokes the user's existing sessions
+    if(passwordChanged||(role&&role!==before[0].role)) await bumpTokenVersion(parseInt(req.params.id));
+    const detail=`Edited ID ${req.params.id} (${before[0].email})`+
+      (role&&role!==before[0].role?`, role: ${before[0].role} -> ${role}`:'')+
+      (passwordChanged?', password changed':'');
+    await logAudit(req.user.id,'EDIT_USER',detail,req);
     res.json({message:'Updated'});
   } catch(err){ res.status(500).json({error:'Server error'}); }
 });
@@ -589,12 +657,17 @@ app.delete('/api/admin/users/:id',verifyToken,adminOnly,async(req,res)=>{
     await db.query('UPDATE calls      SET receiver_id=NULL WHERE receiver_id=?',[req.params.id]);
     await db.query('UPDATE audit_logs SET user_id=NULL WHERE user_id=?',[req.params.id]);
     await db.query('DELETE FROM users WHERE id=?',[req.params.id]);
-    await db.query('INSERT INTO audit_logs (user_id,action,details) VALUES (?,?,?)',[req.user.id,'DELETE_USER',`Deleted: ${r[0].email}`]);
+    disconnectUserSockets(parseInt(req.params.id)); // row gone -> tokens auto-revoked; drop live sockets too
+    await logAudit(req.user.id,'DELETE_USER',`Deleted: ${r[0].email}`,req);
     res.json({message:'Deleted'});
   } catch(err){ res.status(500).json({error:'Server error: '+err.message}); }
 });
 app.get('/api/admin/logs',verifyToken,adminOnly,async(req,res)=>{
-  try { const [r]=await db.query('SELECT l.*,u.name AS user_name FROM audit_logs l LEFT JOIN users u ON l.user_id=u.id ORDER BY l.created_at DESC LIMIT 100'); res.json(r); }
+  try {
+    const [r]=await db.query('SELECT l.*,u.name AS user_name FROM audit_logs l LEFT JOIN users u ON l.user_id=u.id ORDER BY l.created_at DESC LIMIT 100');
+    await logAudit(req.user.id,'VIEW_LOGS','Viewed audit logs',req);
+    res.json(r);
+  }
   catch { res.status(500).json({error:'Server error'}); }
 });
 app.get('/api/admin/messages',verifyToken,adminOnly,async(req,res)=>{
@@ -633,6 +706,7 @@ app.get('/api/admin/survey', verifyToken, adminOnly, async (req, res) => {
   try {
     const [rows] = await db.query('SELECT id,respondent_name,respondent_type,device,response_date,mean_a,mean_b,mean_c,mean_d,overall,created_at FROM survey_responses ORDER BY created_at DESC');
     const [[agg]] = await db.query('SELECT COUNT(*) AS total, AVG(mean_a) AS avg_a, AVG(mean_b) AS avg_b, AVG(mean_c) AS avg_c, AVG(mean_d) AS avg_d, AVG(overall) AS avg_overall FROM survey_responses');
+    await logAudit(req.user.id,'VIEW_SURVEY',`Viewed survey responses (${rows.length})`,req);
     res.json({ responses: rows, summary: agg });
   } catch { res.status(500).json({ error: 'Server error' }); }
 });
@@ -661,6 +735,7 @@ app.get('/api/admin/survey.csv', verifyToken, adminOnly, async (req, res) => {
     for (const r of rows) {
       lines.push([r.id, r.respondent_name, r.respondent_type, r.device, r.response_date, r.mean_a, r.mean_b, r.mean_c, r.mean_d, r.overall, r.scores_json, r.created_at].map(csvEsc).join(','));
     }
+    await logAudit(req.user.id,'EXPORT_SURVEY_CSV',`Exported survey CSV (${rows.length} rows)`,req);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="msukaip-survey.csv"');
     res.send(lines.join('\r\n'));
@@ -671,10 +746,14 @@ app.get('/api/admin/survey.csv', verifyToken, adminOnly, async (req, res) => {
 const onlineUsers=new Map();
 const activeRooms=new Map();
 
-io.use((socket,next)=>{
+io.use(async (socket,next)=>{
   const token=socket.handshake.auth?.token;
   if(!token) return next(new Error('Auth required'));
-  try { socket.user=jwt.verify(token,JWT_SECRET); next(); }
+  try {
+    const payload=jwt.verify(token,JWT_SECRET);
+    if(!await tokenStillValid(payload)) return next(new Error('Session expired or revoked'));
+    socket.user=payload; next();
+  }
   catch { next(new Error('Invalid token')); }
 });
 
@@ -787,7 +866,7 @@ io.on('connection', async(socket)=>{
         const filePath=path.join(UPLOAD_DIR,path.basename(m.file_url));
         fs.unlink(filePath,()=>{}); // ignore errors — file may already be gone
       }
-      await db.query('INSERT INTO audit_logs (user_id,action,details) VALUES (?,?,?)',[id,'DELETE_MESSAGE',`Deleted msg ${msgId} from ${m.conv_key}`]);
+      await logAudit(id,'DELETE_MESSAGE',`Deleted msg ${msgId} from ${m.conv_key}`,socket);
 
       // Broadcast deletion. For private chats the canonical conv_key is sorted,
       // but each client uses `private_<other_email>` locally — so emit per recipient.
