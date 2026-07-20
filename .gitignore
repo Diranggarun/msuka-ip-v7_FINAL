@@ -7,7 +7,8 @@ node_modules/
 .env.local
 .env.*.local
 
-# Uploads (user-generated content)
+# Uploads (user-generated content — private dir since the auth-route change; legacy path kept for old checkouts)
+msuka-ip-v7/uploads/
 msuka-ip-v7/public/uploads/
 
 # Test artifacts
@@ -24,8 +25,9 @@ _zip_inspect/
 .DS_Store
 Thumbs.db
 
-# Claude Code
-.claude/
+# Claude Code — local state stays ignored; project agents are shared config
+.claude/*
+!.claude/agents/
 memory/
 
 # Logs

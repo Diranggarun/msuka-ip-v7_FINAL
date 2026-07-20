@@ -7,7 +7,7 @@ LAN-first chat, file sharing, and voice-calling system for the College of Inform
 - **Backend:** Node.js + Express
 - **Real-time:** Socket.IO
 - **Voice calls:** WebRTC peer-to-peer (server only signals)
-- **Database:** MySQL 8 (`mysql2/promise`)
+- **Database:** SQLite (Node built-in `node:sqlite`, Node 22.5+ — no native deps, no separate DB server; migrated from XAMPP/MySQL)
 - **Auth:** JWT (`jsonwebtoken`) + bcryptjs
 - **Encryption:** AES-256-GCM for chat message text
 - **Frontend:** Vanilla HTML/JS (no build step) — `public/index.html`, `public/admin.html`, `public/feedback.html`
@@ -18,7 +18,7 @@ LAN-first chat, file sharing, and voice-calling system for the College of Inform
 cd msuka-ip-v7
 npm install
 Copy-Item .env.example .env
-notepad .env                  # set JWT_SECRET, AES_SECRET, MYSQL_PASSWORD
+notepad .env                  # set JWT_SECRET, AES_SECRET
 npm start
 ```
 
@@ -42,12 +42,13 @@ Default seeded accounts (rotated on every server start, so demos can't drift):
 msuka-ip-v7_Final/
 ├── msuka-ip-v7/                  # Application code
 │   ├── server.js                 # Express + Socket.IO + all REST routes
-│   ├── public/                   # Static frontend (4 HTML pages + fonts + uploads)
+│   ├── db.js                     # SQLite adapter (node:sqlite, mysql2-compatible surface)
+│   ├── uploads/                  # User uploads — encrypted at rest, served via auth route (gitignored)
+│   ├── public/                   # Static frontend (3 HTML pages + fonts)
 │   │   ├── index.html            # Login + Chat SPA
 │   │   ├── admin.html            # Admin dashboard
 │   │   ├── feedback.html         # Anonymous Likert capstone survey
 │   │   ├── fonts/                # Self-hosted Cinzel + Nunito woff2
-│   │   ├── uploads/              # User-uploaded files (gitignored)
 │   │   └── msukaip-logo.png      # Brand logo
 │   ├── tests/                    # Playwright specs
 │   ├── db-audit.js               # Standalone schema + integrity audit script
@@ -87,7 +88,7 @@ msuka-ip-v7_Final/
 - **1:1 + group VoIP calls:** WebRTC with Socket.IO for signaling. Caller, callee, and group rooms.
 - **Admin dashboard:** Pending approvals, user CRUD, audit log, recent messages, feedback dashboard with per-section bars, CSV export.
 - **Anonymous capstone survey:** Likert form persists to `survey_responses` so 20–30 respondents can be aggregated for Chapter 4 analysis.
-- **Offline-LAN ready:** Self-hosted fonts, local STUN-fallback for VoIP, all features (except internet-only icons for VoIP STUN) work without internet.
+- **Offline-LAN ready:** Self-hosted fonts, no STUN/TURN needed (WebRTC peers exchange host candidates directly on the LAN) — every feature works without internet.
 
 ## Environment variables
 
@@ -97,10 +98,7 @@ See `msuka-ip-v7/.env.example`. The minimum required for production deployment:
 JWT_SECRET=<48+ random characters>
 AES_SECRET=<48+ random characters>     # never rotate after messages exist
 AES_SALT=<16+ random characters>       # never rotate
-MYSQL_HOST=localhost
-MYSQL_USER=root
-MYSQL_PASSWORD=<your MySQL password>
-MYSQL_DATABASE=msukaip
+# SQLITE_PATH=./msukaip.db             # optional — defaults to msuka-ip-v7/msukaip.db
 PORT=3000
 ```
 
@@ -112,7 +110,7 @@ Generate strong secrets in PowerShell:
 
 ## Database
 
-Schema is auto-created at boot by `setupDatabase()`. 7 tables: `users`, `groups_table`, `group_members`, `messages`, `calls`, `audit_logs`, `survey_responses`. Detailed in `ERD.md`.
+SQLite file at `msuka-ip-v7/msukaip.db` (WAL mode, foreign keys ON). Schema is auto-created at boot by `setupDatabase()`. 7 tables: `users`, `groups_table`, `group_members`, `messages`, `calls`, `audit_logs`, `survey_responses`. Detailed in `ERD.md`. A one-time migration script from the old XAMPP/MySQL install exists: `npm run db:migrate-from-mysql`.
 
 Audit the DB at any time:
 
