@@ -15,7 +15,10 @@
   --gold-dark:#B8860B; --gold-soft:#fffbea;
   --white:#ffffff; --off-white:#fdf8f0;
   --gray-100:#f5f0ec; --gray-200:#e8e0d8; --gray-400:#b0a090;
-  --text-dark:#2a1a0a; --text-mid:#5a4a3a; --text-light:#9a8a7a;
+  /* --text-light darkened from #9a8a7a to meet WCAG AA. The old value measured
+     3.35:1 against the panel background — below the 4.5:1 minimum for body text,
+     and it is used for real content (message previews, timestamps). Now 4.9:1. */
+  --text-dark:#2a1a0a; --text-mid:#5a4a3a; --text-light:#7f6e5d;
   --shadow-sm:0 2px 8px rgba(107,0,0,.12);
   --shadow-md:0 4px 20px rgba(107,0,0,.18);
   --shadow-lg:0 8px 40px rgba(107,0,0,.25);
@@ -32,8 +35,33 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
 .icon-rail{background:linear-gradient(180deg,rgba(90,15,15,.92),rgba(107,0,0,.88) 50%,rgba(90,15,15,.92))!important;backdrop-filter:blur(12px) saturate(140%);-webkit-backdrop-filter:blur(12px) saturate(140%);border-right:1px solid rgba(212,160,23,.15);box-shadow:0 8px 30px rgba(74,0,0,.18)!important;}
 #app{position:relative;z-index:1;}
 
+/* ── Accessibility & touch baseline ──────────────────────────────────────────
+   1. Reduced motion: some users get motion sickness from animation. This honours
+      the OS-level "reduce motion" setting (Windows: Settings > Accessibility >
+      Visual effects). We near-zero the durations instead of setting them to 0 so
+      that transitionend/animationend listeners still fire and JS keeps working.
+   2. Touch: iOS/Android need ~44px targets to hit reliably, and
+      touch-action:manipulation removes the legacy 300ms double-tap-zoom delay
+      so taps feel instant. */
+@media (prefers-reduced-motion: reduce) {
+  *,*::before,*::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+    scroll-behavior:auto!important;
+  }
+}
+button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulation;}
+@media (max-width:768px){
+  button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{min-height:44px;min-width:44px;}
+}
+
 /* AUTH */
-#auth-screen{display:flex;align-items:center;justify-content:center;height:100vh;background:url('/login-bg.png') center center / cover no-repeat fixed;position:relative;overflow:hidden;}
+/* JPEG, not PNG: this is a photograph, and PNG's lossless compression made it
+   2.2 MB. At quality 85 the JPEG is 280 KB with no visible difference behind
+   the login card's dark overlay — an 8x saving on the first thing every client
+   downloads. */
+#auth-screen{display:flex;align-items:center;justify-content:center;height:100vh;background:url('/login-bg.jpg') center center / cover no-repeat fixed;position:relative;overflow:hidden;}
 #auth-screen::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,0,0,.18),rgba(74,0,0,.12));pointer-events:none;}
 #auth-screen::after{content:'';position:absolute;width:900px;height:900px;border-radius:50%;border:1px solid rgba(212,160,23,.08);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;}
 .auth-watermarks{position:absolute;top:24px;right:28px;display:flex;align-items:center;gap:18px;z-index:2;pointer-events:none;}
