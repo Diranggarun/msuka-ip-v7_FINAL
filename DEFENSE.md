@@ -8,7 +8,7 @@ Read top-to-bottom once. The panel almost certainly will not ask about every sec
 
 ## 1. The 30-second elevator pitch
 
-> MSUkaIP is a LAN-first academic messenger for CICS that keeps text, file, image, voice, and VoIP communication working during internet outages. The backend is a single Node.js Express process with Socket.IO for real-time events and WebRTC for peer-to-peer voice. Data lives in a local MySQL instance; chat messages are encrypted at rest with AES-256-GCM. Front end is vanilla HTML/JS — no build step — so it deploys by copying a folder. Authentication uses JWT with bcrypt password hashing. There are separate login flows for the chat app and the admin dashboard.
+> MSUkaIP is a LAN-first academic messenger for CICS that keeps text, file, image, voice, and VoIP communication working during internet outages. The backend is a single Node.js Express process with Socket.IO for real-time events and WebRTC for peer-to-peer voice. Data lives in a local SQLite database (Node's built-in `node:sqlite` — a single file, no separate DB server); chat messages and uploaded files are encrypted at rest with AES-256-GCM. Front end is vanilla HTML/JS — no build step — so it deploys by copying a folder. Authentication uses JWT with bcrypt password hashing, login rate limiting, and an audit log — the RA 10173 (Data Privacy Act) hardening. There are separate login flows for the chat app and the admin dashboard.
 
 If they ask "why those choices?" → quote `DECISIONS.md`. Each decision has a why-and-trade-off paragraph.
 
@@ -75,11 +75,13 @@ const upload = multer({ storage, limits:{fileSize:5*1024*1024}, fileFilter:… }
 - Mimetype allowlist (not blocklist): JPEG, PNG, GIF, WebP, PDF, DOC, DOCX. Allowlist is safer than blocklist (rejects anything we didn't anticipate).
 - Voice upload uses a separate multer with `audio/*` only and a 10 MB cap.
 
-### 3.6 MySQL pool
+### 3.6 SQLite adapter (`db.js`)
 ```js
-const db = mysql.createPool({ host, user, password, database, connectionLimit:10 });
+const [rows] = await db.query('SELECT * FROM users WHERE email=?', [email]);
 ```
-Connection pool, not single connection — handles concurrent Socket.IO + REST traffic. `connectionLimit:10` because the demo target is ≤100 LAN users and each Socket.IO event borrows a connection for the duration of one query.
+The DB is a single file (`msukaip.db`) driven by Node's built-in `node:sqlite` — no separate database server, no XAMPP, no native modules to compile. `db.js` wraps it in a thin **mysql2-compatible surface** so every call site in `server.js` keeps the familiar `const [rows] = await db.query(sql, params)` shape (this is why the codebase migrated from MySQL without rewriting every query). Opened with `journal_mode=WAL` (readers don't block the writer — right for a multi-user LAN app), `foreign_keys=ON`, and `busy_timeout=5000`. Writes are serialized on Node's event loop, so there's no connection pool to manage.
+
+**Panel hook:** "Why SQLite over MySQL for a multi-user app?" → For a ≤100-user single-server LAN deployment, an embedded DB removes an entire moving part (no DB service to install, secure, or keep running on the demo machine) while WAL mode still gives concurrent reads during a write. If it ever outgrew one host, the mysql2-compatible adapter means swapping back is a `db.js` change, not a codebase change.
 
 ### 3.7 `setupDatabase()` — schema bootstrap
 - All seven tables are created via `CREATE TABLE IF NOT EXISTS …`.
@@ -101,8 +103,8 @@ function adminOnly(req,res,next) { if (req.user?.role !== 'admin') return res.st
 - `adminOnly` chains after `verifyToken` for admin-only endpoints.
 
 ### 3.9 `/api/register`
-- Validates name + email + password presence, password length ≥6.
-- `bcrypt.hash(password, 10)` — bcrypt with 10 rounds. 10 is the sane default; ~100 ms per hash on commodity hardware, which is slow enough to defeat brute force without affecting UX.
+- Validates name + email + password presence, password length ≥8, and that the email domain is on the allowlist (`cics.msu.edu`, `s.msumain.edu.ph`, `msumain.edu.ph`).
+- `bcrypt.hash(password, 12)` — bcrypt with 12 rounds (raised from 10 during the RA 10173 hardening, §9). Each extra round doubles the work: ~100 ms → ~400 ms per hash. Still invisible to a user logging in once, but 4× more expensive for an attacker testing a stolen hash dump offline.
 - Account starts in `account_status='pending'` — must be approved by admin.
 - Writes an audit log row.
 
@@ -110,17 +112,20 @@ function adminOnly(req,res,next) { if (req.user?.role !== 'admin') return res.st
 - `/api/login` is for students/faculty. Refuses `role='admin'` accounts.
 - `/api/admin/login` is for admins. Refuses non-admins.
 - Both reject `pending` and `rejected` accounts.
+- Both are **rate limited**: 10 failed attempts within 15 minutes locks that IP+email pair and returns `429`. A success clears the counter. See §9.
 - Token expiry is **8 hours** (`expiresIn:'8h'`) — survives a full demo day plus prep.
 
 **Panel hook:** "Why two endpoints?" → keeps admin auth audit trail separate; lets you change admin auth (e.g., 2FA later) without touching the user flow.
 
 ### 3.11 `/api/upload` — file message endpoint
 - `verifyToken` first, then multer extracts the file.
+- **Immediately encrypts the file at rest** (`encryptFileAtRest`, AES-256-GCM) before anything references it. This is *fail-closed*: if encryption throws, the file is deleted and the request returns `500` — an unencrypted file is never left on disk.
 - Decides `msgType` from `req.file.mimetype`:
   - `image/*` → `'image'`
   - everything else allowed → `'file'`
 - Resolves the final `conv_key`. If the inbound key starts with `private_<email>`, calls `buildPrivateKey(req.user.email, targetEmail)` to canonicalize.
 - INSERTs the message row, then emits `message:new` to the correct Socket.IO room.
+- The file is later delivered only through `GET /uploads/:name` (auth-checked, decrypts on the fly). Because `<img>`/`<audio>` tags can't send an `Authorization` header, the client appends the JWT as `?token=` via the `fileSrc()` helper.
 
 ### 3.12 Admin REST routes
 - `GET /api/admin/stats` — totals + live online count from the in-memory `onlineUsers` Map (not the DB column — DB column lags).
@@ -187,13 +192,15 @@ Key client-side patterns:
 | Question | One-line answer |
 |---|---|
 | "Why JWT and not sessions?" | Stateless — same token works for REST + Socket.IO without server-side session storage; scales horizontally. |
-| "Why bcrypt rounds = 10?" | ~100 ms per hash on modern hardware. Defeats brute force without UX impact. Bcrypt is purpose-built for password hashing (memory + time hardness). |
+| "Why bcrypt rounds = 12?" | ~400 ms per hash on modern hardware — invisible to a user logging in once, 4× costlier than the old 10 rounds for an attacker brute-forcing a stolen hash dump. Bcrypt is purpose-built for password hashing (memory + time hardness). Raised from 10 → 12 during the RA 10173 hardening. |
 | "Is AES-256-GCM overkill?" | No — capstone Section 1.3 Objective 3 mandates encrypted comms. GCM gives confidentiality + integrity in one operation and is FIPS 140 approved. |
 | "How do you guarantee message ordering?" | Per-room ordering is preserved by Socket.IO's per-socket queue. Final order is the `created_at` timestamp in `messages` — what the history fetch ORDERs by. |
 | "What if two users register the same email?" | `users.email` is `UNIQUE` — INSERT fails, route returns 409. |
-| "What if VoIP STUN is unreachable on offline LAN?" | Same-subnet peers use host ICE candidates. Tested; works without internet on the same LAN segment. |
-| "How do you prevent SQL injection?" | All queries use `mysql2` parameter binding (`db.query('… WHERE id=?',[id])`). No string concatenation anywhere. |
-| "How do you handle uploads from malicious users?" | Mimetype allowlist (not blocklist), 5 MB cap, randomized filenames, served from a separate `/uploads/` URL path. No execution context. |
+| "What if VoIP STUN is unreachable on offline LAN?" | There is no STUN server to be unreachable — `iceServers` is deliberately **empty**. STUN exists to discover your public IP for traversing NAT across the internet; on a single LAN segment there is no NAT between peers, so host candidates connect directly. Requirement: both peers on the same /24. |
+| "How do you prevent SQL injection?" | All queries use `?` parameter binding through `db.query('… WHERE id=?',[id])` — the SQLite adapter prepares the statement and binds values separately, so user input is never parsed as SQL. No string concatenation anywhere. |
+| "How do you handle uploads from malicious users?" | Mimetype allowlist (not blocklist), 5 MB cap, randomized filenames. Files are stored **outside** `public/` and encrypted at rest with AES-256-GCM; the only way to read one is the authenticated `GET /uploads/:name` route, which `path.basename()`s the name to defeat `../` traversal. No execution context. |
+| "What if someone brute-forces a password?" | Login is rate limited — 10 failures per IP+email in a 15-minute window returns `429` and locks that pair for the rest of the window. Combined with bcrypt at 12 rounds, online guessing is impractical. |
+| "Where is the personal data, and how is it protected?" | RA 10173 answer: message text and uploaded files are AES-256-GCM encrypted at rest; passwords are bcrypt hashed (never recoverable); access is JWT-gated with role separation; every security-relevant action is written to `audit_logs` for accountability. See §9. |
 | "How would you scale to 1000 users?" | Two changes: split Socket.IO with a Redis adapter, and add a CDN for `/uploads/`. Database is already indexed for it. |
 | "What happens if the server crashes mid-message?" | Three layers: (1) DB INSERT is atomic — partial messages don't exist. (2) Socket.IO retries the disconnected client. (3) On boot, `setupDatabase()` resets all users to `offline`. |
 | "Why no migrations runner like Alembic / Knex?" | At this scale, idempotent `CREATE TABLE IF NOT EXISTS` + `try/catch ALTER TABLE` is simpler than a separate runner. If we cross 30+ schema changes we'd switch. |
@@ -214,7 +221,7 @@ Key client-side patterns:
 8. Place a 1:1 voice call.
 9. Place a group voice call.
 10. Open the admin dashboard's Feedback tab → show the existing responses + click View on one.
-11. Show the encryption — open MySQL Workbench, `SELECT id, conv_key, type, text FROM messages WHERE type='chat' LIMIT 5;` — point at the `iv:authTag:ciphertext` format.
+11. Show the encryption — from `msuka-ip-v7/`, run `node db-audit.js` (or open the DB with any SQLite viewer) and `SELECT id, conv_key, type, text FROM messages WHERE type='chat' LIMIT 5;` — point at the `iv:authTag:ciphertext` format in the `text` column. Nobody reading the raw database file sees plaintext.
 
 ---
 
@@ -235,6 +242,31 @@ Key client-side patterns:
 
 ---
 
-## 9. If anything goes wrong on demo day
+## 9. RA 10173 (Data Privacy Act) hardening — the security story
+
+The panel may frame this as "you're storing student communications — how do you comply with the Data Privacy Act of 2012?" This is the one-page answer. All of it is implemented in `server.js`; none of it is aspirational.
+
+**Confidentiality at rest**
+- Message text: AES-256-GCM via `encryptMessage`/`decryptMessage`, stored as `iv:authTag:ciphertext`. GCM gives confidentiality *and* integrity (a tampered ciphertext fails the auth-tag check on decrypt).
+- Uploaded files: AES-256-GCM via `encryptFileAtRest`, kept **outside** `public/` so the web server can't serve them directly. Delivered only through the auth-checked `GET /uploads/:name`, which decrypts on demand.
+- **Fail-closed:** if encryption ever throws, the operation aborts — a message or file is never written in plaintext as a fallback. (This was a deliberate change from the earlier soft-fail behaviour.)
+
+**Access control & accountability**
+- Passwords: bcrypt at 12 rounds — never stored or recoverable in plaintext.
+- Every route is JWT-gated; admin routes add `adminOnly`; the two login flows keep student and admin auth separate.
+- **Login rate limiting:** 10 failures per IP+email in 15 minutes → `429` lockout. Defeats online brute force.
+- **Audit log:** every security-relevant action (register, approve, reject, add/edit/delete user, etc.) writes a row to `audit_logs` — the accountability trail the law expects.
+
+**Secure deployment**
+- In `NODE_ENV=production` the server **refuses to boot** with the built-in dev secrets, and skips seeding the known-password demo accounts (which would otherwise be a standing backdoor).
+- Voice calls require the HTTPS origin `https://<ip>:3443` (self-signed cert) so microphone capture happens over a secure context.
+
+**Honest scope limit (say this before they catch it):** the server holds the AES key because it serves shared history to multiple clients, so this is encryption *at rest* — it protects against database/disk exfiltration, not against a fully compromised server. True end-to-end encryption would need client-held keys and is out of scope for a LAN capstone.
+
+**One-liner if they only ask once:** "Personal data is encrypted at rest with AES-256-GCM, access is JWT-gated with role separation and login rate limiting, passwords are bcrypt-hashed, and every privileged action is audit-logged — the RA 10173 hardening pass."
+
+---
+
+## 10. If anything goes wrong on demo day
 
 Open `DEBUGGING.md`. Every error message listed there is something we hit and solved during build, so the fix is one paragraph away.

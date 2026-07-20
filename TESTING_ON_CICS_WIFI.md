@@ -8,9 +8,12 @@ order. Estimated setup time: 10–15 minutes.
 
 ## Step 1 — Pick the "host" laptop
 
-One machine runs XAMPP (MySQL) and the Node server. Everyone else connects to
-it as a client. Choose the most reliable laptop and keep it powered on
-throughout the testing session.
+One machine runs the Node server. Everyone else connects to it as a client.
+Choose the most reliable laptop and keep it powered on throughout the testing
+session.
+
+> No XAMPP or MySQL is involved — the database is an embedded SQLite file that
+> the server opens on its own. The host only needs Node.js 22.5+.
 
 ## Step 2 — Connect the host laptop to CICS Wi-Fi
 
@@ -40,16 +43,14 @@ and click Allow.
 
 ## Step 5 — Start the services on the host
 
-1. Open the **XAMPP Control Panel** and click **Start** next to MySQL. The
-   indicator must turn green.
-2. Open a Command Prompt in the project folder and run:
+1. Open a Command Prompt in the project folder and run:
 
        cd C:\Users\diran\OneDrive\Desktop\msuka-ip-v7_Final\msuka-ip-v7
        npm start
 
-3. Wait until the console prints:
+2. Wait until the console prints:
 
-       MySQL connected
+       SQLite ready: ...\msukaip.db
        MSUkaIP: http://localhost:3000
 
    Leave this terminal window open.
@@ -107,10 +108,10 @@ For the Likert survey with 30 respondents:
 | --- | --- |
 | Testers see "site can't be reached" | Windows Firewall is blocking port 3000. Redo Step 4. |
 | Host IP changes each day | Re-run `ipconfig` and share the new IP, or ask CICS IT for a DHCP reservation. |
-| Console shows `DB failed` on startup | XAMPP MySQL is not running. Start it from the XAMPP Control Panel. |
+| Console shows `DB failed` on startup | Check the error text. `Cannot find module 'node:sqlite'` means Node is older than 22.5 — upgrade it. `database is locked` means another tool has `msukaip.db` open — close it. |
 | Voice call fails between devices | Both peers must be on the same Wi-Fi subnet. Verify with `ipconfig`. |
 | Browser blocks microphone | Use `http://<host-IP>:3000` directly (private IPs are treated as secure). Avoid `localhost` on remote devices. |
-| Login page loads but cannot submit | The host laptop went to sleep or MySQL stopped. Wake the laptop and restart `npm start`. |
+| Login page loads but cannot submit | The host laptop went to sleep or the server process stopped. Wake the laptop and restart `npm start`. If it returns `429`, the login rate limiter tripped after 10 failed attempts — wait 15 minutes or use a different account. |
 | Testers on the same Wi-Fi cannot reach the host even with the correct IP | The Wi-Fi has **AP/client isolation** enabled. Ask CICS IT to disable client isolation on that SSID — otherwise no LAN application will work between devices. |
 
 ---

@@ -8,7 +8,7 @@ You are the planning architect for MSUkaIP, a LAN-based messaging + VoIP capston
 
 ## Actual stack (do NOT assume otherwise)
 - Backend: Node.js + Express + Socket.IO — everything lives in `msuka-ip-v7/server.js`
-- Database: SQLite via `msuka-ip-v7/db.js` (Node's built-in `node:sqlite`, exposes a mysql2-compatible `db.query()` — README.md still says MySQL; it is stale)
+- Database: SQLite via `msuka-ip-v7/db.js` (Node's built-in `node:sqlite`, exposes a mysql2-compatible `db.query()`). Migrated from XAMPP/MySQL on 2026-07-18 — `PROMPTS.md` and parts of `DECISIONS.md`/`AUDIT.md` still describe the pre-migration plan and are historical records, not current state.
 - Frontend: vanilla HTML/JS, no build step — `public/index.html` (login+chat SPA), `public/admin.html`, `public/feedback.html`
 - Voice: WebRTC peer-to-peer, Socket.IO signaling only, empty `iceServers` (LAN host candidates)
 - Tests: Playwright in `msuka-ip-v7/tests/`

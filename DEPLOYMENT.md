@@ -2,7 +2,7 @@
 
 End-to-end instructions to get the chat + VoIP system running on a CICS LAN for
 the capstone demo. Target host: any Windows 10/11 laptop or desktop with
-Node.js 18+ and MySQL 8 installed.
+**Node.js 22.5+** installed. No database server is required.
 
 ---
 
@@ -10,37 +10,39 @@ Node.js 18+ and MySQL 8 installed.
 
 | Tool | Tested version | Install link |
 |------|----------------|--------------|
-| Node.js | 18.x or 20.x LTS | https://nodejs.org/en/download |
-| MySQL Server | 8.0+ | https://dev.mysql.com/downloads/installer/ |
+| Node.js | **22.5+** (required — the app uses the built-in `node:sqlite` module) | https://nodejs.org/en/download |
 | Modern browser on every client | Chrome 120+ / Edge 120+ | Required for WebRTC + `getUserMedia` |
 
 Verify after install:
 
 ```powershell
-node --version
+node --version   # must be v22.5.0 or higher
 npm --version
-mysql --version
 ```
+
+> **No MySQL / XAMPP needed.** The database is an embedded SQLite file driven by
+> Node's built-in `node:sqlite`. There is no service to install, start, or secure.
 
 ---
 
 ## 2. Database setup
 
-Open MySQL Shell or MySQL Workbench and create the schema:
+**There is nothing to do in this step.** The database is a single file created
+automatically on first start at `msuka-ip-v7/msukaip.db`.
 
-```sql
-CREATE DATABASE IF NOT EXISTS msukaip
-  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-You do **not** need to create tables manually — `server.js` runs `CREATE TABLE
-IF NOT EXISTS` on every start and seeds two demo accounts:
+On every boot, `server.js` runs `CREATE TABLE IF NOT EXISTS` for all seven
+tables and (outside production) seeds two demo accounts:
 
 - `admin@cics.msu.edu` / `admin123` (Admin dashboard only)
 - `student@cics.msu.edu` / `student123` (Chat app)
 
-If you use a non-root MySQL user, grant it ALL on `msukaip.*` and put the
-credentials in `.env` (next step).
+> **Production note:** when `NODE_ENV=production`, demo-account seeding is
+> skipped and the server refuses to boot with the built-in dev secrets. Set real
+> `JWT_SECRET` / `AES_SECRET` values in `.env` (next step), or force the demo
+> accounts for a supervised defense run with `SEED_DEMO=1`.
+
+To move the database elsewhere, set `SQLITE_PATH` in `.env`. To inspect schema
+and integrity at any time: `node db-audit.js`.
 
 ---
 
@@ -66,11 +68,11 @@ Fill in `.env`:
 JWT_SECRET=<paste 48+ random chars>
 AES_SECRET=<paste another 48+ random chars>
 AES_SALT=<paste 16+ random chars>
-MYSQL_HOST=localhost
-MYSQL_USER=root
-MYSQL_PASSWORD=<your MySQL root password>
-MYSQL_DATABASE=msukaip
 PORT=3000
+# Optional — defaults to msuka-ip-v7/msukaip.db
+#SQLITE_PATH=./msukaip.db
+# Uncomment for a real deployment (refuses dev secrets, skips demo seeding)
+#NODE_ENV=production
 ```
 
 Generate strong secrets in PowerShell:
@@ -95,12 +97,17 @@ Expected startup output:
 ```
 🔧  .env loaded
 🔐  AES-256-GCM encryption initialized
-✅  MySQL connected
-✅  Tables ready
+✅  SQLite ready: ...\msuka-ip-v7\msukaip.db
+✅  Tables, indexes & integrity constraints ensured
+🔄  Reset:   admin@cics.msu.edu / admin123
+🔄  Reset:   student@cics.msu.edu / student123
 ✅  All users reset to offline
 🚀  MSUkaIP: http://localhost:3000
 🛡️   Admin:   http://localhost:3000/admin.html
 ```
+
+The two `🔄 Reset` lines are the demo accounts being re-seeded — they disappear
+once `NODE_ENV=production` is set.
 
 If `JWT_SECRET` / `AES_SECRET` are missing, you'll see a warning telling you
 to set them — do not demo without setting real values.
@@ -182,19 +189,29 @@ offline network.
 
 ## 8. Backup and recovery
 
-Before demo day:
+Before demo day, run the built-in backup helper:
 
 ```powershell
-mysqldump -u root -p msukaip > msukaip-backup.sql
-Compress-Archive -Path msuka-ip-v7\public\uploads -DestinationPath uploads.zip
+cd msuka-ip-v7
+npm run backup
 ```
 
-Restore:
+This writes a timestamped snapshot into `msuka-ip-v7/backups/`:
+
+- `db-<timestamp>.db` — the full SQLite database, taken with `VACUUM INTO` so
+  it is a consistent copy **even while the server is running**
+- `uploads-<timestamp>.zip` — the encrypted uploads folder
+
+Restore is a file copy — stop the server first:
 
 ```powershell
-mysql -u root -p msukaip < msukaip-backup.sql
-Expand-Archive uploads.zip -DestinationPath msuka-ip-v7\public\
+Copy-Item backups\db-<timestamp>.db msukaip.db -Force
+Expand-Archive backups\uploads-<timestamp>.zip -DestinationPath . -Force
 ```
+
+> Restore the **uploads archive together with the database** from the same
+> timestamp. Files are encrypted with `AES_SECRET`/`AES_SALT`, so a restore into
+> an install with different secrets will not decrypt.
 
 ---
 
@@ -202,7 +219,9 @@ Expand-Archive uploads.zip -DestinationPath msuka-ip-v7\public\
 
 | Symptom | Cause / fix |
 |---------|-------------|
-| `❌ DB failed: ER_ACCESS_DENIED_ERROR` | Wrong `MYSQL_PASSWORD` in `.env`. |
+| `SQLITE_BUSY` / `database is locked` | Another process has the DB open (e.g. `db-audit.js` or a SQLite viewer). WAL + a 5 s busy timeout normally absorb this — close the other tool and retry. |
+| `Cannot find module 'node:sqlite'` | Node is older than 22.5. Check `node --version` and upgrade. |
+| Server exits immediately with a secrets error | `NODE_ENV=production` with the built-in dev secrets. Set real `JWT_SECRET`/`AES_SECRET` in `.env`. |
 | `EADDRINUSE :::3000` | Port already in use. Change `PORT` in `.env` or stop the other process. |
 | Clients can connect to chat but mic is blocked | Browser secure-context rule — see §6. |
 | Old messages show as gibberish | `AES_SECRET` / `AES_SALT` was changed after messages were stored. Restore the previous values. |
