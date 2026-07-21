@@ -15,10 +15,18 @@
   --gold-dark:#B8860B; --gold-soft:#fffbea;
   --white:#ffffff; --off-white:#fdf8f0;
   --gray-100:#f5f0ec; --gray-200:#e8e0d8; --gray-400:#b0a090;
-  --text-dark:#2a1a0a; --text-mid:#5a4a3a; --text-light:#9a8a7a;
+  /* --text-light darkened from #9a8a7a to meet WCAG AA. The old value measured
+     3.35:1 against the panel background — below the 4.5:1 minimum for body text,
+     and it is used for real content (message previews, timestamps). Now 4.9:1. */
+  --text-dark:#2a1a0a; --text-mid:#5a4a3a; --text-light:#7f6e5d;
   --shadow-sm:0 2px 8px rgba(107,0,0,.12);
   --shadow-md:0 4px 20px rgba(107,0,0,.18);
   --shadow-lg:0 8px 40px rgba(107,0,0,.25);
+  /* Paper grain, defined once and reused. An inline SVG turbulence filter costs
+     no HTTP request and no image file, which matters on an offline LAN.
+     numOctaves:2 (not 3) and a 160px tile keep the one-off rasterization cheap;
+     the browser decodes this URI once and reuses it for every surface. */
+  --grain:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.42 0'/></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>");
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Nunito',sans-serif;height:100vh;overflow:hidden;background:linear-gradient(135deg,#f5ede3 0%,#efe4d4 30%,#ead9c3 60%,#e1c8ad 100%) fixed;}
@@ -32,8 +40,69 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
 .icon-rail{background:linear-gradient(180deg,rgba(90,15,15,.92),rgba(107,0,0,.88) 50%,rgba(90,15,15,.92))!important;backdrop-filter:blur(12px) saturate(140%);-webkit-backdrop-filter:blur(12px) saturate(140%);border-right:1px solid rgba(212,160,23,.15);box-shadow:0 8px 30px rgba(74,0,0,.18)!important;}
 #app{position:relative;z-index:1;}
 
+/* ── Paper grain on the panel surfaces ───────────────────────────────────────
+   The comment above says the panels are "translucent enough to see the
+   texture", but they never were: body::after paints the grain at z-index 0,
+   the panels sit at z-index 1 and cover 100% of the chat screen, and their
+   backdrop-filter blur(20px) smears whatever fine noise does show through into
+   flat colour. Measured: 0% of the grain layer was visible while chatting.
+
+   So the grain is composited into the panel background instead of floated over
+   it. background-image paints above background-color but *below* content, so
+   the texture never sits on top of message text — the skill's warning that
+   textures hurt readability is avoided by construction rather than by tuning
+   opacity down until it disappears.
+
+   !important is required, not decorative: the rules above set the `background`
+   shorthand with !important, which also sets background-image:none !important.
+   Without it this layer is discarded. */
+.left-panel,.right-panel,.center-panel,.contacts-panel{
+  background-image:var(--grain)!important;
+  /* these two also need !important — background-repeat and background-size are
+     components of the `background` shorthand set above, so they inherit its
+     !important reset and would otherwise fall back to auto/repeat by accident
+     rather than by intent */
+  background-repeat:repeat!important;
+  background-size:160px 160px!important;
+  /* soft-light keeps the cream tone and just breaks up the flatness; overlay
+     at this alpha reads as dirt on a light surface. */
+  background-blend-mode:soft-light;
+}
+.icon-rail{
+  background-image:var(--grain),linear-gradient(180deg,rgba(90,15,15,.92),rgba(107,0,0,.88) 50%,rgba(90,15,15,.92))!important;
+  background-repeat:repeat,no-repeat!important;
+  background-size:160px 160px,auto!important;
+  /* overlay on the dark maroon — soft-light is invisible against it */
+  background-blend-mode:overlay,normal;
+}
+
+/* ── Accessibility & touch baseline ──────────────────────────────────────────
+   1. Reduced motion: some users get motion sickness from animation. This honours
+      the OS-level "reduce motion" setting (Windows: Settings > Accessibility >
+      Visual effects). We near-zero the durations instead of setting them to 0 so
+      that transitionend/animationend listeners still fire and JS keeps working.
+   2. Touch: iOS/Android need ~44px targets to hit reliably, and
+      touch-action:manipulation removes the legacy 300ms double-tap-zoom delay
+      so taps feel instant. */
+@media (prefers-reduced-motion: reduce) {
+  *,*::before,*::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+    scroll-behavior:auto!important;
+  }
+}
+button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulation;}
+@media (max-width:768px){
+  button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{min-height:44px;min-width:44px;}
+}
+
 /* AUTH */
-#auth-screen{display:flex;align-items:center;justify-content:center;height:100vh;background:url('/login-bg.png') center center / cover no-repeat fixed;position:relative;overflow:hidden;}
+/* JPEG, not PNG: this is a photograph, and PNG's lossless compression made it
+   2.2 MB. At quality 85 the JPEG is 280 KB with no visible difference behind
+   the login card's dark overlay — an 8x saving on the first thing every client
+   downloads. */
+#auth-screen{display:flex;align-items:center;justify-content:center;height:100vh;background:url('/login-bg.jpg') center center / cover no-repeat fixed;position:relative;overflow:hidden;}
 #auth-screen::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,0,0,.18),rgba(74,0,0,.12));pointer-events:none;}
 #auth-screen::after{content:'';position:absolute;width:900px;height:900px;border-radius:50%;border:1px solid rgba(212,160,23,.08);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;}
 .auth-watermarks{position:absolute;top:24px;right:28px;display:flex;align-items:center;gap:18px;z-index:2;pointer-events:none;}
@@ -149,6 +218,11 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
 @media (max-width:1180px){.contacts-panel{display:none;}}
 @media (max-width:880px){.icon-rail{width:60px;}.left-panel{width:280px;}}
 
+/* Phone layout (≤768px) lives at the very end of this stylesheet — see the
+   "PHONE LAYOUT" block there. It has to come last: media queries add no
+   specificity, so an override placed here would lose on source order to the
+   component rules below. */
+
 /* LEFT PANEL */
 .left-panel{width:320px;background:var(--white);border-right:1px solid var(--gray-200);display:flex;flex-direction:column;flex-shrink:0;box-shadow:2px 0 12px rgba(107,0,0,.06);}
 .left-header{background:var(--white);padding:1rem 1.1rem .55rem;border-bottom:1px solid var(--gray-200);}
@@ -239,6 +313,14 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
 #chat-panel.active{display:flex;}
 .chat-header{background:var(--white);padding:.6rem 1.4rem;min-height:62px;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;gap:12px;flex-shrink:0;position:relative;}
 .chat-header #chat-avatar{width:34px!important;height:34px!important;font-size:.78rem!important;}
+/* Back-to-list button. Hidden by default — only the phone layout shows it,
+   because that is the only layout where the list gets replaced by the chat. */
+.chat-back{display:none;align-items:center;justify-content:center;width:38px;height:38px;
+  flex-shrink:0;margin-right:-4px;border:none;background:transparent;border-radius:10px;
+  cursor:pointer;color:var(--maroon);transition:background .15s;}
+.chat-back:hover{background:var(--maroon-soft);}
+.chat-back:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+.chat-back svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
 .chat-header-info{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;}
 .chat-header-info h3{font-size:.98rem;font-weight:800;color:var(--maroon-dark);letter-spacing:-.01em;font-family:'Cinzel',serif;line-height:1.2;}
 .chat-header-info span{font-size:.74rem;color:var(--text-mid);font-weight:600;margin-top:2px;line-height:1.2;}
@@ -251,6 +333,19 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
 
 #messages-area{flex:1;overflow-y:auto;padding:1.2rem 1.4rem;display:flex;flex-direction:column;gap:6px;}
 .msg-row{display:flex;align-items:flex-end;gap:10px;margin-bottom:2px;}
+/* Entry animation for messages that arrive while you're watching. Deliberately
+   NOT applied when loading history — 50 messages animating at once is noise, so
+   appendMessage() only adds .is-new for live arrivals.
+   The slide direction matches the side the bubble is anchored to (yours from the
+   right, theirs from the left) so the motion reinforces who sent it rather than
+   just decorating. 180ms ease-out: long enough to read as motion, short enough
+   that it never delays the message. */
+@keyframes msgInMine  {from{opacity:0;transform:translate(14px,6px);}to{opacity:1;transform:none;}}
+@keyframes msgInTheirs{from{opacity:0;transform:translate(-14px,6px);}to{opacity:1;transform:none;}}
+@keyframes msgInCenter{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+.msg-row.is-new.mine  {animation:msgInMine   .18s ease-out;}
+.msg-row.is-new.theirs{animation:msgInTheirs .18s ease-out;}
+.msg-row.is-new.system,.msg-row.is-new.announcement{animation:msgInCenter .18s ease-out;}
 .msg-row.mine{flex-direction:row-reverse;}
 .msg-row.theirs{flex-direction:row;}
 .msg-row.system,.msg-row.announcement{justify-content:center;margin:.5rem 0;}
@@ -475,6 +570,70 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:rgba(107,0,0,.2);border-radius:4px;}
 ::-webkit-scrollbar-thumb:hover{background:rgba(107,0,0,.4);}
+
+/* ══ PHONE LAYOUT (≤768px) — single pane ══════════════════════════════════════
+   MUST STAY LAST IN THIS STYLESHEET. Media queries carry no extra specificity,
+   so these overrides only win by being later in source order than the desktop
+   component rules above.
+
+   The desktop layout puts the nav rail, the conversation list and the chat side
+   by side. On a 375px phone that chrome (60px rail + 320px list = 380px) is
+   wider than the whole screen, so the chat pane collapsed to 0px and the app
+   was unusable — you could browse conversations but never read one.
+
+   Fix is the standard phone messaging pattern: show ONE pane at a time. The
+   list fills the screen; opening a conversation swaps to the chat; a back
+   button returns to the list. The rail becomes a bottom tab bar, where thumbs
+   actually reach. */
+@media (max-width:768px){
+  /* dvh tracks the mobile address bar as it hides/shows; vh does not, which is
+     what pushes the composer off-screen. Plain vh first as the fallback. */
+  #app{flex-direction:column;padding:0;gap:0;height:100vh;height:100dvh;}
+
+  /* Rail -> bottom tab bar. order:3 puts it after both panels visually. */
+  .icon-rail{order:3;width:100%!important;height:auto;flex-direction:row;
+    justify-content:space-around;align-items:center;gap:0;padding:4px 2px;
+    /* clears the iPhone home indicator */
+    padding-bottom:calc(4px + env(safe-area-inset-bottom));
+    border-radius:0!important;flex-shrink:0;border-right:none;
+    box-shadow:0 -4px 16px rgba(74,0,0,.18)!important;}
+  .icon-rail .rail-logo,.icon-rail .rail-avatar{display:none;}
+  /* "New Group" comes out of the tab bar on phones: the Groups list already
+     has its own "+ New Group" button, so nothing becomes unreachable, and
+     dropping the duplicate lifts the remaining tabs from 42px to ~53px wide,
+     back over the 44px touch minimum.
+     Seven tabs is more than the ideal five, but Feedback and Sign Out have no
+     other entry point in the UI — hiding them would strand the user, which is
+     a worse failure than a slightly crowded bar. */
+  .icon-rail .rail-btn[onclick*="openNewGroupModal"]{display:none;}
+  .icon-rail .rail-btn{flex:1;min-width:0;min-height:48px;padding:6px 2px;
+    justify-content:center;border-radius:10px;}
+  .icon-rail .rail-btn .rbadge,.icon-rail .rail-btn .notif-count{top:2px;right:50%;
+    transform:translateX(18px);}
+
+  /* Both panes full width; only one displayed at a time. */
+  .left-panel,.right-panel.center-panel{width:100%!important;flex:1 1 auto;
+    min-width:0;min-height:0;border-radius:0!important;border-right:none!important;}
+  .right-panel.center-panel{display:none;}
+  #app.chat-open .left-panel{display:none;}
+  #app.chat-open .right-panel.center-panel{display:flex;}
+
+  /* 100vh here would run the composer under the tab bar — fill the parent. */
+  #chat-panel{height:100%;min-height:0;}
+  .chat-header{padding:.55rem .7rem;min-height:56px;gap:8px;}
+  .chat-back{display:flex;}
+  /* Bubbles get more width; 60% of 375px is unreadably narrow. */
+  .msg-content{max-width:88%;}
+
+  /* Composer: five 44px buttons plus padding left the text field at 80px —
+     too narrow to type in. The emoji button is dropped because every phone
+     keyboard has an emoji key already, and the gaps/padding are tightened.
+     That returns roughly 90px to the input while keeping 44px touch targets
+     and every feature (attach, image, voice, send) reachable. */
+  .input-row{border-radius:0;padding:.55rem .5rem .6rem;gap:4px;}
+  #emoji-btn{display:none;}
+  #msg-input{min-width:0;}
+}
 </style>
 </head>
 <body>
@@ -690,6 +849,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
     </div>
     <div id="chat-panel">
       <div class="chat-header">
+        <button class="chat-back" onclick="closeConversation()" title="Back to conversations" aria-label="Back to conversations"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
         <div class="conv-avatar">
           <div class="avatar-circle" id="chat-avatar" style="width:38px;height:38px;font-size:.85rem;">?</div>
         </div>
@@ -943,6 +1103,12 @@ function avatarColor(n){const p=['#1a3a5c','#1D9E75','#e67e22','#8e44ad','#e74c3
 //  SOCKET
 // ══════════════════════════════════════════
 function initSocket() {
+  // Close any previous connection first. launchApp() can run twice in one page
+  // lifetime (the DOMContentLoaded session-restore path, then a login), and
+  // without this each call would leave the old socket alive with its own
+  // 'message:new' listener — every incoming message would then be appended once
+  // per stale socket. Reproduced by restoring a session and logging in again.
+  if (socket) { try { socket.removeAllListeners(); socket.disconnect(); } catch { /* already gone */ } }
   socket = io({ auth:{ token: currentUser.token } });
 
   socket.on('connect', () => { initConversations(); });
@@ -1005,7 +1171,7 @@ function initSocket() {
       conversations[key].unread=(conversations[key].unread||0)+1;
     }
 
-    if (activeConvKey===key) appendMessage(msg,key);
+    if (activeConvKey===key) appendMessage(msg,key,true);
     // Refresh correct section
     if (key === 'group_general') updateGlobalPreview();
     else if (key.startsWith('group_')) { if (currentNav==='groups') renderGroupsList(); }
@@ -1112,6 +1278,10 @@ function openGlobalChat() {
 
 function switchNav(name, btn) {
   currentNav = name;
+  // Tapping a bottom tab on a phone means "show me that list", so leave the
+  // chat view. openGlobalChat() calls this first and then reopens, so the
+  // global-chat tab still lands on the conversation.
+  closeConversation();
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
   document.querySelectorAll('.icon-rail .rail-btn').forEach(b => b.classList.remove('active'));
@@ -1349,8 +1519,16 @@ async function deleteGroup(e, key, groupId) {
 // ══════════════════════════════════════════
 //  OPEN CONVERSATION
 // ══════════════════════════════════════════
+// On the phone layout the chat replaces the conversation list, so opening a
+// conversation has to flip #app into chat-open. The class does nothing at
+// desktop widths — the CSS that reads it lives inside the ≤768px query.
+function closeConversation(){
+  document.getElementById('app').classList.remove('chat-open');
+}
+
 function openConversation(key) {
   activeConvKey=key;
+  document.getElementById('app').classList.add('chat-open');
   const conv=conversations[key];
   conv.unread=0;
   const tr=document.getElementById('typing-row');if(tr)tr.innerHTML='';
@@ -1388,13 +1566,15 @@ function renderMessages(key) {
   area.scrollTop=area.scrollHeight;
 }
 
-function appendMessage(msg,key) {
+// isNew=true only for messages arriving live over the socket. History rendering
+// leaves it false so the whole backlog doesn't animate in at once.
+function appendMessage(msg,key,isNew) {
   if(!key)key=activeConvKey;
   const area=document.getElementById('messages-area');
   const isMine=msg.sender===currentUser?.name;
   const isGroup=conversations[key]?.type==='group';
   const row=document.createElement('div');
-  row.className=`msg-row ${msg.type==='system'||msg.type==='announcement'?msg.type:isMine?'mine':'theirs'}`;
+  row.className=`msg-row ${msg.type==='system'||msg.type==='announcement'?msg.type:isMine?'mine':'theirs'}${isNew?' is-new':''}`;
   if(msg.id) row.dataset.msgId = msg.id;
 
   if(msg.type==='system') {

@@ -3,7 +3,7 @@
 > Brief symptom → root cause → fix.
 > Add a new section whenever you solve a non-obvious problem during the build.
 
-The stack is **Node.js + Express + Socket.IO + MySQL + vanilla HTML/JS**. Anything mentioning Python/FastAPI/Vite from older notes is no longer relevant.
+The stack is **Node.js + Express + Socket.IO + SQLite + vanilla HTML/JS**. Anything mentioning Python/FastAPI/Vite from older notes is no longer relevant, and anything mentioning MySQL/XAMPP predates the 2026-07-18 SQLite migration.
 
 ---
 
@@ -14,9 +14,17 @@ The stack is **Node.js + Express + Socket.IO + MySQL + vanilla HTML/JS**. Anythi
 **Fix:** `Copy-Item .env.example .env` inside `msuka-ip-v7/`, fill in strong `JWT_SECRET`, `AES_SECRET`, `AES_SALT`, then restart. The warning disappears.
 **Important:** Once you set `AES_SECRET` / `AES_SALT`, never rotate them — older encrypted messages would become unreadable.
 
-### `ER_ACCESS_DENIED_ERROR: Access denied for user 'root'@'localhost'`
-**Cause:** Wrong `MYSQL_PASSWORD` in `.env` (or empty when your MySQL needs one).
-**Fix:** Verify with `mysql -u root -p` first. Set the matching password in `.env` and restart `npm start`.
+### `Cannot find module 'node:sqlite'`
+**Cause:** Node is older than 22.5. The database driver is a Node built-in introduced in 22.5, so there is nothing to `npm install` — the runtime itself is too old.
+**Fix:** `node --version`, then upgrade to Node 22.5+ (LTS 22.x or newer) and restart.
+
+### `SQLITE_BUSY` / `database is locked`
+**Cause:** A second process has `msukaip.db` open for writing — usually `node db-audit.js`, `npm run backup`, or a SQLite GUI left open while the server runs.
+**Fix:** Close the other tool. WAL mode plus a 5-second `busy_timeout` normally absorb this, so a persistent lock means something is genuinely holding the file.
+
+### Server exits immediately: `NODE_ENV=production but JWT_SECRET/AES_SECRET are the built-in dev defaults`
+**Cause:** Intentional. In production the server refuses to boot on dev secrets — otherwise anyone with repo access could forge admin tokens and decrypt stored messages.
+**Fix:** Put real `JWT_SECRET` and `AES_SECRET` values in `.env` (see `.env.example`), or unset `NODE_ENV` for local development.
 
 ### `EADDRINUSE :::3000`
 **Cause:** Another process is already on port 3000 (probably a previous `npm start` that didn't quit).
@@ -26,9 +34,9 @@ Get-NetTCPConnection -LocalPort 3000 -State Listen | ForEach-Object { Stop-Proce
 ```
 Or change `PORT=3001` in `.env`.
 
-### Server crashes on boot with `Unknown database 'msukaip'`
-**Cause:** MySQL is running but the schema database wasn't created.
-**Fix:** `CREATE DATABASE IF NOT EXISTS msukaip CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;` then restart. Tables are created automatically by `setupDatabase()`.
+### The database file is missing or you want a clean slate
+**Cause:** There is no "database doesn't exist" error anymore — `msukaip.db` is created automatically on first start, and `setupDatabase()` creates all seven tables plus indexes.
+**Fix:** To reset completely, stop the server, **back up first** (`npm run backup`), delete `msukaip.db` (plus the `-wal` and `-shm` files beside it), and restart. You get a fresh schema and re-seeded demo accounts. All existing messages and users are gone — this is destructive.
 
 ---
 

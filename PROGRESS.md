@@ -13,13 +13,14 @@
 ## Stack note
 
 > The original doc template assumed Python/FastAPI + React/Vite.
-> Actual build is **Node.js + Express + Socket.IO + vanilla HTML/JS + MySQL**.
+> Actual build is **Node.js + Express + Socket.IO + vanilla HTML/JS + SQLite**.
 > Phase labels below are mapped to the real stack.
+> Database migrated from XAMPP/MySQL to embedded SQLite (`node:sqlite`) on 2026-07-18 — no DB server needed.
 
 ## Phase checklist
 
 - ✅ **Phase 1** — Project bootstrap & folder structure (`package.json`, `server.js`, `public/`, `tests/`)
-- ✅ **Phase 2** — Database schema (MySQL via `mysql2/promise`)
+- ✅ **Phase 2** — Database schema (SQLite via `db.js` / `node:sqlite`; originally MySQL + `mysql2/promise`)
 - ✅ **Phase 3** — Backend config & DB connection (`server.js` 538 lines)
 - ✅ **Phase 4** — Authentication (JWT + bcryptjs)
 - ✅ **Phase 5** — User & conversation management (CRUD in `server.js`)
@@ -29,7 +30,7 @@
 - ✅ **Phase 9** — Admin module (`public/admin.html` — 607 lines)
 - ✅ **Phase 10** — Frontend bootstrap (vanilla HTML/JS, not React — 4 pages, ~3.3k lines)
 - ✅ **Phase 11** — Auth pages (`public/index.html` — 1,296 lines incl. login flow)
-- ✅ **Phase 12** — Chat dashboard (`public/chat.html` — 956 lines)
+- ✅ **Phase 12** — Chat dashboard (merged into `public/index.html`; there is no separate `chat.html`)
 - ✅ **Phase 13** — VoIP call UI (1:1 + group call panels in `chat.html`, audited 2026-05-14; needs LAN smoke test only)
 - ✅ **Phase 14** — Admin dashboard (analytics + management in `admin.html`)
 - ✅ **Phase 15** — Reports, deployment, debugging docs (`feedback.html` + `DEPLOYMENT.md`)
@@ -38,8 +39,10 @@
 
 ## Known issues
 
-- Secrets now read from `.env` (see `msuka-ip-v7/.env.example`); server warns if defaults are still in use.
-- VoIP needs an end-to-end smoke test on the target LAN — see §7 checklist in `DEPLOYMENT.md`.
+- Secrets read from `.env` (see `msuka-ip-v7/.env.example`); in production the server now **refuses to boot** on dev defaults.
+- VoIP needs an end-to-end smoke test on the target LAN — see §7 checklist in `DEPLOYMENT.md`. **This is the main remaining deliverable.**
+- Playwright: `feedback-form.spec.js` radio clicks intermittently time out in Firefox (flake, not a regression — retry before investigating).
+- Survey responses still need collecting (20–30 respondents) for Chapter 4.
 
 ## Completion log
 
@@ -49,6 +52,11 @@
 - 2026-05-14 — VoIP signaling audited (1:1 + group), wiring verified end-to-end in code; marked Phase 8 & 13 ✅
 - 2026-05-14 — `DEPLOYMENT.md` written (MySQL, env, firewall, secure-context note, smoke-test checklist); Phase 15 ✅
 - 2026-05-20 — ESLint added (flat config + `eslint-plugin-html` for inline `<script>` blocks); `lint`/`lint:fix` npm scripts; removed dead sparkline code in `admin.html` (`pushSparkPoint` + orphaned `loadSparkHistory`/`saveSparkHistory`/`storageKey`/`SPARK_HISTORY_KEY`); `npm run lint` clean — 0 problems
+- 2026-07-18 — **Database migrated from XAMPP/MySQL to SQLite** (`db.js` on Node's built-in `node:sqlite`, WAL + foreign_keys + busy_timeout). Adapter keeps a mysql2-compatible `db.query()` surface so no call site in `server.js` changed. One-time importer at `scripts/migrate-mysql-to-sqlite.js`. Added LAN HTTPS endpoint on :3443 (self-signed cert) so browsers grant mic access for VoIP. Added `scripts/preflight.js` and `scripts/backup.js` (`VACUUM INTO` snapshots)
+- 2026-07-18 — **RA 10173 Tier 1** (security-critical): AES encryption made fail-closed (no silent plaintext fallback); uploads moved out of `public/` and encrypted at rest, served only via authenticated `GET /uploads/:name`; login rate limiting (10 fails / 15 min per IP+email); production boot refuses dev-default secrets; demo seeding skipped in production; bcrypt 10 → 12 rounds; password minimum 6 → 8 chars
+- 2026-07-20 — **RA 10173 Tier 2**: session revocation + expanded audit logging
+- 2026-07-20 — Added `CLAUDE.md` (project guide for AI-assisted sessions) and seven task-scoped subagents in `.claude/agents/`; corrected stale MySQL/STUN claims in `README.md`
+- 2026-07-21 — Documentation truth-pass: `DEFENSE.md` corrected (elevator pitch, SQLite adapter section, bcrypt 12, password ≥8, rate limiting, encrypted uploads, empty-`iceServers` rationale, demo step 11 no longer says MySQL Workbench) and gained a new §9 covering the RA 10173 security story; `DEPLOYMENT.md` rewritten for SQLite (no MySQL prerequisite, no schema creation step, `npm run backup` instead of `mysqldump`, SQLite-specific troubleshooting); `PROGRESS.md` brought current
 
 ## Notes
 
@@ -56,3 +64,5 @@
 - Final deliverable: working LAN deployment + capstone evaluation survey (Likert, 20–30 respondents) — survey form (`feedback.html`) already built.
 - Defense priority: be able to explain every line of code in oral defense — avoid one-shot generation.
 - Remaining work (~5%): run the §7 LAN smoke test from `DEPLOYMENT.md` on the demo host, then collect the 20–30 survey responses via `feedback.html`.
+- Deployment is simpler than the original Gantt assumed: no MySQL/XAMPP to install on the demo host, and `node_modules/` can be copied by USB to a fully offline machine (`npm install` is the only step needing internet).
+- Defense prep: `DEFENSE.md` §9 is the RA 10173 security answer; §3.6 covers why SQLite over MySQL. Both were written against the shipped code, not the original plan.

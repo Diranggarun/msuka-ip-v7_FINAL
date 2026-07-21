@@ -432,6 +432,68 @@ test.describe('6. Performance & Availability Tests', () => {
     console.log('✅ UI visible on tablet viewport (768x1024)');
   });
 
+  // 6.4 and 6.5 only ever checked the LOGIN screen, so they passed while the
+  // chat itself was broken on phones: the rail + conversation list are wider
+  // than a 375px screen, which squeezed the chat pane to 0px. These tests log
+  // in and measure the real thing so that cannot regress unnoticed.
+  test('6.7 phone: chat pane is usable after opening a conversation', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await studentLogin(page);
+    await openGlobalChat(page);
+
+    const chatWidth  = await page.locator('.right-panel.center-panel').evaluate(el => el.getBoundingClientRect().width);
+    const inputWidth = await page.locator('#msg-input').evaluate(el => el.getBoundingClientRect().width);
+    expect(chatWidth).toBeGreaterThan(300);   // was 0 before the phone layout
+    expect(inputWidth).toBeGreaterThan(120);  // was 80 when 5 buttons crowded it
+
+    // The list gives way to the chat rather than sharing the width.
+    await expect(page.locator('.left-panel')).toBeHidden();
+    console.log(`✅ Phone chat usable — pane ${Math.round(chatWidth)}px, input ${Math.round(inputWidth)}px`);
+  });
+
+  test('6.8 phone: back button returns from chat to the conversation list', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await studentLogin(page);
+    await openGlobalChat(page);
+
+    const back = page.locator('.chat-back');
+    await expect(back).toBeVisible();
+    // Rounded because Firefox reports sub-pixel values (a 44px box measures
+    // 43.999999) and this is a touch-target check, not a pixel-perfect one.
+    const box = await back.boundingBox();
+    expect(Math.round(box.width)).toBeGreaterThanOrEqual(44);
+    expect(Math.round(box.height)).toBeGreaterThanOrEqual(44);
+
+    await back.click();
+    await expect(page.locator('.left-panel')).toBeVisible();
+    console.log('✅ Back button returns to conversation list');
+  });
+
+  test('6.9 phone: no page scrolls sideways', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    for (const path of ['/', '/feedback.html', '/admin.html']) {
+      await page.goto(`${BASE_URL}${path}`);
+      // eslint-disable-next-line no-undef -- evaluated in the browser page context
+      const overflows = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+      expect(overflows, `${path} scrolls horizontally at 375px`).toBe(false);
+    }
+    console.log('✅ No horizontal overflow on any page at 375px');
+  });
+
+  test('6.10 phone: survey answer targets meet the 44px touch minimum', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto(`${BASE_URL}/feedback.html`);
+    // Respondents fill this in on their phones — the Likert label is the hit
+    // area because the radio input itself is display:none.
+    const undersized = await page.evaluate(() =>
+      // eslint-disable-next-line no-undef -- evaluated in the browser page context
+      [...document.querySelectorAll('.likert-option label')]
+        .filter(l => l.getBoundingClientRect().height < 44).length
+    );
+    expect(undersized).toBe(0);
+    console.log('✅ All Likert targets ≥44px on phone');
+  });
+
   test('6.6 Admin dashboard loads under 3 seconds', async ({ page }) => {
     const start = Date.now();
     await page.goto(`${BASE_URL}/admin.html`);

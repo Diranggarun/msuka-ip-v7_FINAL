@@ -1,6 +1,12 @@
 # Database Schema Reference
 
-**Database:** MySQL 8 · **Name:** `msukaip` · **Driver:** `mysql2/promise` (Node)
+**Database:** SQLite (embedded) · **File:** `msuka-ip-v7/msukaip.db` · **Driver:** Node built-in `node:sqlite`, wrapped by `db.js` in a `mysql2/promise`-compatible surface
+
+> Migrated from MySQL 8 on 2026-07-18. The column types below are written in the
+> original MySQL vocabulary (`INT PK AUTO_INCREMENT`, `VARCHAR(n)`); in SQLite
+> these become `INTEGER PRIMARY KEY AUTOINCREMENT` and `TEXT`. The logical schema
+> — tables, keys, relationships, indexes — is unchanged, which is why the
+> diagrams below still hold.
 Generated from the actual running schema on 2026-05-14 (see `msuka-ip-v7/db-audit.js`).
 
 ## Tables (7)
@@ -31,7 +37,7 @@ created_at      TIMESTAMP                                DEFAULT CURRENT_TIMESTA
 Indexes: `PRIMARY(id)`, `UNIQUE(email)`, `idx_users_account_status`, `idx_users_status`.
 
 ### groups_table
-(Named with `_table` suffix because `groups` is a MySQL reserved word.)
+(Named with `_table` suffix because `groups` is a reserved word in MySQL, where the schema was originally authored. The name was kept through the SQLite migration so no query had to change.)
 ```
 id           INT PK AUTO_INCREMENT
 name         VARCHAR(100) NOT NULL
@@ -126,7 +132,7 @@ Passwords are rotated on each start so demo accounts can't be left altered. **Ch
 
 ## Charset
 
-All tables use `utf8mb4_unicode_ci` — supports emojis, Filipino, and any Unicode characters in usernames/messages.
+SQLite stores all text as UTF-8 natively, so emojis, Filipino, and any other Unicode in usernames/messages work without a collation setting. (Under the original MySQL schema this required `utf8mb4_unicode_ci`.)
 
 ## Schema evolution
 

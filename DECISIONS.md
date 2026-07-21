@@ -31,9 +31,16 @@ These are decisions baked into the project specification. Don't revisit without 
 - **Reasoning:** Async support is critical for Socket.IO + WebRTC signaling at 50–100 concurrent users. FastAPI's Pydantic integration also matches the project's typed-schema discipline.
 - **Trade-off:** Smaller ecosystem than Django; no built-in admin UI (we build our own in Phase 14).
 
-### Database: MySQL 8 (not PostgreSQL)
-- **Reasoning:** Most CICS lab machines have MySQL pre-installed. Easier to demo without environment setup.
+### ~~Database: MySQL 8 (not PostgreSQL)~~ — SUPERSEDED 2026-07-18
+- **Reasoning (at the time):** Most CICS lab machines have MySQL pre-installed. Easier to demo without environment setup.
 - **Trade-off:** Loses some PostgreSQL-only features (JSONB indexing, etc.); minor for this scope.
+- **Superseded by:** *Database: embedded SQLite* below.
+
+### Database: embedded SQLite via `node:sqlite` (replaces MySQL 8) — 2026-07-18
+- **Reasoning:** The "MySQL is pre-installed" assumption did not survive contact with real deployment. Every demo host needed XAMPP installed, MySQL started, a schema created, and a root password wired into `.env` — four failure points before the app could even boot, on machines we don't control. SQLite removes all four: the database is a single file the server creates itself, and the driver is built into Node 22.5+, so there is nothing to install and no native module to compile.
+- **Migration cost was near zero:** `db.js` wraps `node:sqlite` in a `mysql2/promise`-compatible surface, so every `const [rows] = await db.query(sql, params)` call site in `server.js` was left untouched. A one-time importer (`scripts/migrate-mysql-to-sqlite.js`) moved existing rows across.
+- **Concurrency:** opened with `journal_mode=WAL` so readers don't block the writer, `foreign_keys=ON` (off by default in SQLite), and `busy_timeout=5000`. Writes serialize on Node's event loop, so `SQLITE_BUSY` can only come from a second process (e.g. `db-audit.js`), which the timeout absorbs.
+- **Trade-off:** Single-host only — SQLite can't be shared across multiple app servers. Irrelevant here (one LAN server by design), and the mysql2-compatible adapter means going back is a `db.js` change rather than a codebase change. Also forfeits MySQL-specific tooling like Workbench and `mysqldump`; replaced by `npm run backup` (`VACUUM INTO` snapshots) and `node db-audit.js`.
 
 ### Real-time chat: Socket.IO (not raw WebSockets)
 - **Reasoning:** Automatic reconnection, room management, and event-based API match the use case. Capstone Chapter 3.2.5 specifies Socket.IO.
@@ -67,7 +74,7 @@ _Newest entries first._
 
 ## 2026-05-14 — Move secrets to `.env` with inline loader
 
-**Decision:** `JWT_SECRET`, `AES_SECRET`, `AES_SALT`, and `MYSQL_*` read from `process.env`. A tiny inline loader parses `.env` so no `dotenv` package is added.
+**Decision:** `JWT_SECRET`, `AES_SECRET`, `AES_SALT`, and optionally `SQLITE_PATH` read from `process.env`. A tiny inline loader parses `.env` so no `dotenv` package is added. (The original `MYSQL_*` credentials disappeared with the SQLite migration — an embedded file database has no credentials to leak.)
 
 **Context:** Hardcoded dev secrets in `server.js` are a defense red flag and a real risk on LAN deployment.
 

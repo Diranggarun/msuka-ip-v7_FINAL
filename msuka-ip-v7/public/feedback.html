@@ -11,17 +11,54 @@
   --maroon-soft:#f9f0f0;--gold:#D4A017;--gold-bright:#FFD700;
   --gold-dark:#B8860B;--gold-soft:#fffbea;
   --white:#fff;--gray-100:#f5f0ec;--gray-200:#e8e0d8;
-  --text-dark:#2a1a0a;--text-mid:#5a4a3a;--text-light:#9a8a7a;
+  /* --text-light darkened from #9a8a7a (3.35:1, below the WCAG AA 4.5:1 floor) */
+  --text-dark:#2a1a0a;--text-mid:#5a4a3a;--text-light:#7f6e5d;
   --shadow-sm:0 2px 8px rgba(107,0,0,.12);
   --shadow-md:0 4px 20px rgba(107,0,0,.18);
   --shadow-lg:0 8px 40px rgba(107,0,0,.25);
+  /* Paper grain — same tile as index.html and admin.html. */
+  --grain:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.42 0'/></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>");
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Nunito',sans-serif;min-height:100vh;background:url('/msu-gate.jpg') center center / cover no-repeat fixed,linear-gradient(135deg,#f5ede3 0%,#efe4d4 30%,#ead9c3 60%,#e1c8ad 100%);}
 body::before{content:'';position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(74,0,0,.28) 0%,rgba(74,0,0,.26) 50%,rgba(74,0,0,.28) 100%),radial-gradient(900px 600px at 8% 0%,rgba(212,160,23,.12),transparent 70%),radial-gradient(700px 500px at 95% 100%,rgba(107,0,0,.10),transparent 70%);z-index:0;}
 body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.20;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");}
 .topbar,.hero,.container{position:relative;z-index:1;}
+
+/* ── Accessibility & touch baseline (see index.html for the full rationale) ──
+   The Likert radio labels are the main tap target on this page, so the 44px
+   minimum matters more here than anywhere else — respondents fill this in on
+   their phones. */
+@media (prefers-reduced-motion: reduce) {
+  *,*::before,*::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+    scroll-behavior:auto!important;
+  }
+}
+button,label{touch-action:manipulation;}
+/* The radio input itself is display:none — the <label> is the real hit area,
+   so that is what has to meet the 44px minimum. The respondent-info fields sit
+   at 40-42px by default, just under the threshold, so they are nudged too:
+   this page is filled in on phones by 20-30 survey respondents. */
+@media (max-width:768px){
+  button,.likert-option label{min-height:44px;justify-content:center;}
+  .info-group input,.info-group select{min-height:44px;}
+}
 .info-card,.section-card,.submit-section{background:linear-gradient(160deg,rgba(255,253,250,.78),rgba(252,246,236,.72))!important;backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border:1px solid rgba(255,255,255,.55)!important;box-shadow:0 8px 30px rgba(74,0,0,.10),inset 0 1px 0 rgba(255,255,255,.6)!important;border-radius:18px!important;}
+
+/* ── Paper grain on the survey cards ─────────────────────────────────────────
+   Under the content, never over it: this page is read and filled in by 20-30
+   respondents, so the Likert labels and question text must stay crisp.
+   !important is required — the `background` shorthand above resets
+   background-image/-repeat/-size with !important. */
+.info-card,.section-card,.submit-section{
+  background-image:var(--grain),linear-gradient(160deg,rgba(255,253,250,.78),rgba(252,246,236,.72))!important;
+  background-repeat:repeat,no-repeat!important;
+  background-size:160px 160px,auto!important;
+  background-blend-mode:soft-light,normal;
+}
 .legend{background:linear-gradient(135deg,rgba(255,251,234,.85),rgba(255,247,220,.78))!important;backdrop-filter:blur(14px) saturate(150%);-webkit-backdrop-filter:blur(14px) saturate(150%);border:1px solid rgba(212,160,23,.4)!important;border-radius:16px!important;box-shadow:0 4px 14px rgba(212,160,23,.10),inset 0 1px 0 rgba(255,255,255,.5)!important;}
 .result-card{background:linear-gradient(160deg,rgba(255,253,250,.96),rgba(252,246,236,.92))!important;backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);border:1px solid rgba(255,255,255,.55)!important;box-shadow:0 20px 50px rgba(74,0,0,.25),inset 0 1px 0 rgba(255,255,255,.6)!important;}
 .result-overall{background:linear-gradient(135deg,rgba(74,0,0,.92),rgba(139,26,26,.85))!important;backdrop-filter:blur(8px);border-radius:16px!important;}

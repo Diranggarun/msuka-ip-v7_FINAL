@@ -12,15 +12,31 @@
   --gold-dark:#B8860B;--gold-soft:#fffbea;
   --white:#fff;--off-white:#fdf8f0;
   --gray-100:#f5f0ec;--gray-200:#e8e0d8;
-  --text-dark:#2a1a0a;--text-mid:#5a4a3a;--text-light:#9a8a7a;
+  /* --text-light darkened from #9a8a7a (3.35:1, below the WCAG AA 4.5:1 floor) */
+  --text-dark:#2a1a0a;--text-mid:#5a4a3a;--text-light:#7f6e5d;
   --shadow-sm:0 2px 8px rgba(107,0,0,.12);
   --shadow-md:0 4px 20px rgba(107,0,0,.18);
   --shadow-lg:0 8px 40px rgba(107,0,0,.25);
+  /* Paper grain — same tile as index.html so all three pages share one texture.
+     Inline SVG: no HTTP request, no image file, works on an offline LAN. */
+  --grain:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.42 0'/></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>");
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Nunito',sans-serif;min-height:100vh;background:linear-gradient(135deg,#f5ede3 0%,#efe4d4 30%,#ead9c3 60%,#e1c8ad 100%) fixed;}
 body::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(900px 600px at 8% 0%,rgba(212,160,23,.18),transparent 65%),radial-gradient(700px 500px at 95% 100%,rgba(107,0,0,.12),transparent 65%),radial-gradient(500px 400px at 50% 45%,rgba(255,250,235,.25),transparent 70%);z-index:0;}
 body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.32;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");}
+
+/* ── Accessibility & touch baseline (see index.html for the full rationale) ── */
+@media (prefers-reduced-motion: reduce) {
+  *,*::before,*::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+    scroll-behavior:auto!important;
+  }
+}
+button,.tab,.rail-btn{touch-action:manipulation;}
+@media (max-width:768px){ button,.tab,.rail-btn{min-height:44px;} }
 
 /* ── Glassmorphism for admin surfaces — warm cream tint, soft inset highlight ── */
 .admin-main,#app{position:relative;z-index:1;}
@@ -29,7 +45,26 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
 .card,.stat-card{background:linear-gradient(160deg,rgba(255,253,250,.78),rgba(252,246,236,.72))!important;backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border:1px solid rgba(255,255,255,.55)!important;box-shadow:0 8px 30px rgba(74,0,0,.10),inset 0 1px 0 rgba(255,255,255,.6)!important;border-radius:18px!important;}
 .tabs{background:linear-gradient(160deg,rgba(255,253,250,.78),rgba(252,246,236,.72))!important;backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);border:1px solid rgba(255,255,255,.55)!important;border-radius:14px!important;box-shadow:0 4px 16px rgba(74,0,0,.08)!important;}
 
-#auth-screen{display:flex;align-items:center;justify-content:center;height:100vh;background:url('/login-bg.png') center center / cover no-repeat fixed;position:relative;overflow:hidden;}
+/* ── Paper grain on the card surfaces ────────────────────────────────────────
+   Composited into the background rather than floated over the cards, so the
+   texture sits under the content and never over table text. !important is
+   required because the `background` shorthand above sets background-image,
+   -repeat and -size to their initial values with !important. */
+.card,.stat-card,.tabs{
+  background-image:var(--grain),linear-gradient(160deg,rgba(255,253,250,.78),rgba(252,246,236,.72))!important;
+  background-repeat:repeat,no-repeat!important;
+  background-size:160px 160px,auto!important;
+  background-blend-mode:soft-light,normal;
+}
+.admin-rail{
+  background-image:var(--grain),linear-gradient(180deg,rgba(90,15,15,.92),rgba(107,0,0,.88) 50%,rgba(90,15,15,.92))!important;
+  background-repeat:repeat,no-repeat!important;
+  background-size:160px 160px,auto!important;
+  /* overlay, not soft-light — soft-light is invisible on the dark maroon */
+  background-blend-mode:overlay,normal;
+}
+
+#auth-screen{display:flex;align-items:center;justify-content:center;height:100vh;background:url('/login-bg.jpg') center center / cover no-repeat fixed;position:relative;overflow:hidden;}
 #auth-screen::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,0,0,.18),rgba(74,0,0,.12));pointer-events:none;}
 #auth-screen::after{content:'';position:absolute;width:750px;height:750px;border-radius:50%;border:1px solid rgba(212,160,23,.09);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;}
 .auth-deco{position:absolute;width:100%;height:100%;pointer-events:none;}
