@@ -47,7 +47,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
 .auth-deco span:nth-child(1){width:350px;height:350px;top:-120px;right:-100px;}
 .auth-deco span:nth-child(2){width:220px;height:220px;bottom:-80px;left:-70px;}
 .auth-deco span:nth-child(3){width:120px;height:120px;top:25%;right:6%;}
-.auth-card{background:rgba(255,255,255,.08);backdrop-filter:blur(10px) saturate(130%);-webkit-backdrop-filter:blur(10px) saturate(130%);border-radius:20px;width:400px;box-shadow:0 12px 40px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.25);overflow:hidden;position:relative;z-index:1;animation:cardIn .5s cubic-bezier(.34,1.56,.64,1);border:1px solid rgba(255,255,255,.2);}
+.auth-card{background:rgba(255,255,255,.08);backdrop-filter:blur(10px) saturate(130%);-webkit-backdrop-filter:blur(10px) saturate(130%);border-radius:20px;width:400px;max-height:92vh;box-shadow:0 12px 40px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.25);overflow-y:auto;overflow-x:hidden;position:relative;z-index:1;animation:cardIn .5s cubic-bezier(.34,1.56,.64,1);border:1px solid rgba(255,255,255,.2);}
 @keyframes cardIn{from{opacity:0;transform:translateY(28px) scale(.96)}to{opacity:1;transform:none}}
 
 .auth-logo-bar{background:transparent;padding:1.6rem 1.5rem 1.3rem;text-align:center;position:relative;overflow:hidden;border-bottom:1px solid rgba(255,255,255,.12);}
