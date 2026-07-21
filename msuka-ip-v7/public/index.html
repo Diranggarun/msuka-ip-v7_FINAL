@@ -177,6 +177,11 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 @media (max-width:1180px){.contacts-panel{display:none;}}
 @media (max-width:880px){.icon-rail{width:60px;}.left-panel{width:280px;}}
 
+/* Phone layout (≤768px) lives at the very end of this stylesheet — see the
+   "PHONE LAYOUT" block there. It has to come last: media queries add no
+   specificity, so an override placed here would lose on source order to the
+   component rules below. */
+
 /* LEFT PANEL */
 .left-panel{width:320px;background:var(--white);border-right:1px solid var(--gray-200);display:flex;flex-direction:column;flex-shrink:0;box-shadow:2px 0 12px rgba(107,0,0,.06);}
 .left-header{background:var(--white);padding:1rem 1.1rem .55rem;border-bottom:1px solid var(--gray-200);}
@@ -267,6 +272,14 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 #chat-panel.active{display:flex;}
 .chat-header{background:var(--white);padding:.6rem 1.4rem;min-height:62px;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;gap:12px;flex-shrink:0;position:relative;}
 .chat-header #chat-avatar{width:34px!important;height:34px!important;font-size:.78rem!important;}
+/* Back-to-list button. Hidden by default — only the phone layout shows it,
+   because that is the only layout where the list gets replaced by the chat. */
+.chat-back{display:none;align-items:center;justify-content:center;width:38px;height:38px;
+  flex-shrink:0;margin-right:-4px;border:none;background:transparent;border-radius:10px;
+  cursor:pointer;color:var(--maroon);transition:background .15s;}
+.chat-back:hover{background:var(--maroon-soft);}
+.chat-back:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+.chat-back svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
 .chat-header-info{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;}
 .chat-header-info h3{font-size:.98rem;font-weight:800;color:var(--maroon-dark);letter-spacing:-.01em;font-family:'Cinzel',serif;line-height:1.2;}
 .chat-header-info span{font-size:.74rem;color:var(--text-mid);font-weight:600;margin-top:2px;line-height:1.2;}
@@ -516,6 +529,70 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:rgba(107,0,0,.2);border-radius:4px;}
 ::-webkit-scrollbar-thumb:hover{background:rgba(107,0,0,.4);}
+
+/* ══ PHONE LAYOUT (≤768px) — single pane ══════════════════════════════════════
+   MUST STAY LAST IN THIS STYLESHEET. Media queries carry no extra specificity,
+   so these overrides only win by being later in source order than the desktop
+   component rules above.
+
+   The desktop layout puts the nav rail, the conversation list and the chat side
+   by side. On a 375px phone that chrome (60px rail + 320px list = 380px) is
+   wider than the whole screen, so the chat pane collapsed to 0px and the app
+   was unusable — you could browse conversations but never read one.
+
+   Fix is the standard phone messaging pattern: show ONE pane at a time. The
+   list fills the screen; opening a conversation swaps to the chat; a back
+   button returns to the list. The rail becomes a bottom tab bar, where thumbs
+   actually reach. */
+@media (max-width:768px){
+  /* dvh tracks the mobile address bar as it hides/shows; vh does not, which is
+     what pushes the composer off-screen. Plain vh first as the fallback. */
+  #app{flex-direction:column;padding:0;gap:0;height:100vh;height:100dvh;}
+
+  /* Rail -> bottom tab bar. order:3 puts it after both panels visually. */
+  .icon-rail{order:3;width:100%!important;height:auto;flex-direction:row;
+    justify-content:space-around;align-items:center;gap:0;padding:4px 2px;
+    /* clears the iPhone home indicator */
+    padding-bottom:calc(4px + env(safe-area-inset-bottom));
+    border-radius:0!important;flex-shrink:0;border-right:none;
+    box-shadow:0 -4px 16px rgba(74,0,0,.18)!important;}
+  .icon-rail .rail-logo,.icon-rail .rail-avatar{display:none;}
+  /* "New Group" comes out of the tab bar on phones: the Groups list already
+     has its own "+ New Group" button, so nothing becomes unreachable, and
+     dropping the duplicate lifts the remaining tabs from 42px to ~53px wide,
+     back over the 44px touch minimum.
+     Seven tabs is more than the ideal five, but Feedback and Sign Out have no
+     other entry point in the UI — hiding them would strand the user, which is
+     a worse failure than a slightly crowded bar. */
+  .icon-rail .rail-btn[onclick*="openNewGroupModal"]{display:none;}
+  .icon-rail .rail-btn{flex:1;min-width:0;min-height:48px;padding:6px 2px;
+    justify-content:center;border-radius:10px;}
+  .icon-rail .rail-btn .rbadge,.icon-rail .rail-btn .notif-count{top:2px;right:50%;
+    transform:translateX(18px);}
+
+  /* Both panes full width; only one displayed at a time. */
+  .left-panel,.right-panel.center-panel{width:100%!important;flex:1 1 auto;
+    min-width:0;min-height:0;border-radius:0!important;border-right:none!important;}
+  .right-panel.center-panel{display:none;}
+  #app.chat-open .left-panel{display:none;}
+  #app.chat-open .right-panel.center-panel{display:flex;}
+
+  /* 100vh here would run the composer under the tab bar — fill the parent. */
+  #chat-panel{height:100%;min-height:0;}
+  .chat-header{padding:.55rem .7rem;min-height:56px;gap:8px;}
+  .chat-back{display:flex;}
+  /* Bubbles get more width; 60% of 375px is unreadably narrow. */
+  .msg-content{max-width:88%;}
+
+  /* Composer: five 44px buttons plus padding left the text field at 80px —
+     too narrow to type in. The emoji button is dropped because every phone
+     keyboard has an emoji key already, and the gaps/padding are tightened.
+     That returns roughly 90px to the input while keeping 44px touch targets
+     and every feature (attach, image, voice, send) reachable. */
+  .input-row{border-radius:0;padding:.55rem .5rem .6rem;gap:4px;}
+  #emoji-btn{display:none;}
+  #msg-input{min-width:0;}
+}
 </style>
 </head>
 <body>
@@ -731,6 +808,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
     </div>
     <div id="chat-panel">
       <div class="chat-header">
+        <button class="chat-back" onclick="closeConversation()" title="Back to conversations" aria-label="Back to conversations"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
         <div class="conv-avatar">
           <div class="avatar-circle" id="chat-avatar" style="width:38px;height:38px;font-size:.85rem;">?</div>
         </div>
@@ -1159,6 +1237,10 @@ function openGlobalChat() {
 
 function switchNav(name, btn) {
   currentNav = name;
+  // Tapping a bottom tab on a phone means "show me that list", so leave the
+  // chat view. openGlobalChat() calls this first and then reopens, so the
+  // global-chat tab still lands on the conversation.
+  closeConversation();
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
   document.querySelectorAll('.icon-rail .rail-btn').forEach(b => b.classList.remove('active'));
@@ -1396,8 +1478,16 @@ async function deleteGroup(e, key, groupId) {
 // ══════════════════════════════════════════
 //  OPEN CONVERSATION
 // ══════════════════════════════════════════
+// On the phone layout the chat replaces the conversation list, so opening a
+// conversation has to flip #app into chat-open. The class does nothing at
+// desktop widths — the CSS that reads it lives inside the ≤768px query.
+function closeConversation(){
+  document.getElementById('app').classList.remove('chat-open');
+}
+
 function openConversation(key) {
   activeConvKey=key;
+  document.getElementById('app').classList.add('chat-open');
   const conv=conversations[key];
   conv.unread=0;
   const tr=document.getElementById('typing-row');if(tr)tr.innerHTML='';
