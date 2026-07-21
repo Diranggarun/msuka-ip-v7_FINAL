@@ -30,6 +30,10 @@ Thumbs.db
 !.claude/agents/
 memory/
 
+# Third-party agent skills installed via `npx skills add`. Downloaded content,
+# reproducible from skills-lock.json — treated like node_modules, not committed.
+.agents/
+
 # Logs
 *.log
 npm-debug.log*

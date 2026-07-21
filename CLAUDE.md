@@ -45,6 +45,31 @@ node db-audit.js        # schema + integrity audit
 
 Project agents live in `.claude/agents/`: `planner` (read-only architect), `backend-dev`, `frontend-dev`, `webrtc-specialist`, `code-reviewer` (read-only security review), `test-runner`, `debugger` (read-only investigation). Delegate matching work to them.
 
+## Skills — routing for this project
+
+Design skills are installed in `.agents/skills/` (gitignored; reinstall with `npx skills@latest add <repo>` from `skills-lock.json`). Skills auto-trigger from their own descriptions, but most of these were written for React/Tailwind marketing sites, so this table decides what applies **here**. Consult it before invoking a design skill.
+
+**Use freely — stack-agnostic judgement, applied by hand:**
+
+| Skill | Use for |
+|---|---|
+| `impeccable` | UI critique, hierarchy, a11y, spacing, states. Works on any stack. Ships hook scripts — leave them unregistered. |
+| `redesign-existing-projects` | Audits before changing. Explicitly supports vanilla CSS. |
+| `apple-design` | Interaction/motion principles, reduced-motion, gesture and sheet behaviour. |
+| `emil-design-eng` | Small polish calls and "invisible details". |
+| `find-animation-opportunities` · `improve-animations` · `review-animations` | Motion audits. Read-only; they plan, they don't implement. |
+| `animation-vocabulary` | Naming a motion effect. |
+
+**Do not apply without saying why first:**
+
+- `full-output-enforcement` — mandates exhaustive unabridged output. Directly contradicts the capstone rule at the top of this file (small, explainable changes over large generated blocks). **Never enable it here.**
+- `gpt-taste` — requires GSAP ScrollTrigger and AIDA landing-page structure. This is a chat app on an offline LAN with no bundler and no GSAP.
+- `minimalist-ui` · `industrial-brutalist-ui` · `high-end-visual-design` — each prescribes its own palette and type. Would displace the maroon/gold `:root` tokens and the Cinzel/Nunito pairing, which are institutional MSU identity, not style choices.
+- `design-taste-frontend` (+`-v1`) · `stitch-design-taste` — scoped to landing pages/portfolios and Google Stitch.
+- `image-to-code` · `imagegen-frontend-web` · `imagegen-frontend-mobile` · `brandkit` — generate design imagery, then React/Tailwind. No image pipeline here, and generated markup can't drop into the inline-`<script>` pages.
+
+Standing rule for every one of them: take the *reasoning*, never paste the code. Anything landing in `public/*.html` must match the existing compact style and be explainable line by line in oral defense.
+
 ## Demo accounts (dev only — seeding skipped in production)
 
 `admin@cics.msu.edu`/`admin123` (admin portal only) · `student@cics.msu.edu`/`student123` (chat only)
