@@ -22,6 +22,11 @@
   --shadow-sm:0 2px 8px rgba(107,0,0,.12);
   --shadow-md:0 4px 20px rgba(107,0,0,.18);
   --shadow-lg:0 8px 40px rgba(107,0,0,.25);
+  /* Paper grain, defined once and reused. An inline SVG turbulence filter costs
+     no HTTP request and no image file, which matters on an offline LAN.
+     numOctaves:2 (not 3) and a 160px tile keep the one-off rasterization cheap;
+     the browser decodes this URI once and reuses it for every surface. */
+  --grain:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.42 0'/></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>");
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Nunito',sans-serif;height:100vh;overflow:hidden;background:linear-gradient(135deg,#f5ede3 0%,#efe4d4 30%,#ead9c3 60%,#e1c8ad 100%) fixed;}
@@ -34,6 +39,42 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
 .contacts-panel{background:rgba(255,253,250,.75)!important;backdrop-filter:blur(20px) saturate(150%);-webkit-backdrop-filter:blur(20px) saturate(150%);box-shadow:0 8px 30px rgba(74,0,0,.08)!important;}
 .icon-rail{background:linear-gradient(180deg,rgba(90,15,15,.92),rgba(107,0,0,.88) 50%,rgba(90,15,15,.92))!important;backdrop-filter:blur(12px) saturate(140%);-webkit-backdrop-filter:blur(12px) saturate(140%);border-right:1px solid rgba(212,160,23,.15);box-shadow:0 8px 30px rgba(74,0,0,.18)!important;}
 #app{position:relative;z-index:1;}
+
+/* ── Paper grain on the panel surfaces ───────────────────────────────────────
+   The comment above says the panels are "translucent enough to see the
+   texture", but they never were: body::after paints the grain at z-index 0,
+   the panels sit at z-index 1 and cover 100% of the chat screen, and their
+   backdrop-filter blur(20px) smears whatever fine noise does show through into
+   flat colour. Measured: 0% of the grain layer was visible while chatting.
+
+   So the grain is composited into the panel background instead of floated over
+   it. background-image paints above background-color but *below* content, so
+   the texture never sits on top of message text — the skill's warning that
+   textures hurt readability is avoided by construction rather than by tuning
+   opacity down until it disappears.
+
+   !important is required, not decorative: the rules above set the `background`
+   shorthand with !important, which also sets background-image:none !important.
+   Without it this layer is discarded. */
+.left-panel,.right-panel,.center-panel,.contacts-panel{
+  background-image:var(--grain)!important;
+  /* these two also need !important — background-repeat and background-size are
+     components of the `background` shorthand set above, so they inherit its
+     !important reset and would otherwise fall back to auto/repeat by accident
+     rather than by intent */
+  background-repeat:repeat!important;
+  background-size:160px 160px!important;
+  /* soft-light keeps the cream tone and just breaks up the flatness; overlay
+     at this alpha reads as dirt on a light surface. */
+  background-blend-mode:soft-light;
+}
+.icon-rail{
+  background-image:var(--grain),linear-gradient(180deg,rgba(90,15,15,.92),rgba(107,0,0,.88) 50%,rgba(90,15,15,.92))!important;
+  background-repeat:repeat,no-repeat!important;
+  background-size:160px 160px,auto!important;
+  /* overlay on the dark maroon — soft-light is invisible against it */
+  background-blend-mode:overlay,normal;
+}
 
 /* ── Accessibility & touch baseline ──────────────────────────────────────────
    1. Reduced motion: some users get motion sickness from animation. This honours

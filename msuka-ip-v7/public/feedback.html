@@ -16,6 +16,8 @@
   --shadow-sm:0 2px 8px rgba(107,0,0,.12);
   --shadow-md:0 4px 20px rgba(107,0,0,.18);
   --shadow-lg:0 8px 40px rgba(107,0,0,.25);
+  /* Paper grain — same tile as index.html and admin.html. */
+  --grain:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.42 0'/></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>");
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Nunito',sans-serif;min-height:100vh;background:url('/msu-gate.jpg') center center / cover no-repeat fixed,linear-gradient(135deg,#f5ede3 0%,#efe4d4 30%,#ead9c3 60%,#e1c8ad 100%);}
@@ -45,6 +47,18 @@ button,label{touch-action:manipulation;}
   .info-group input,.info-group select{min-height:44px;}
 }
 .info-card,.section-card,.submit-section{background:linear-gradient(160deg,rgba(255,253,250,.78),rgba(252,246,236,.72))!important;backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border:1px solid rgba(255,255,255,.55)!important;box-shadow:0 8px 30px rgba(74,0,0,.10),inset 0 1px 0 rgba(255,255,255,.6)!important;border-radius:18px!important;}
+
+/* ── Paper grain on the survey cards ─────────────────────────────────────────
+   Under the content, never over it: this page is read and filled in by 20-30
+   respondents, so the Likert labels and question text must stay crisp.
+   !important is required — the `background` shorthand above resets
+   background-image/-repeat/-size with !important. */
+.info-card,.section-card,.submit-section{
+  background-image:var(--grain),linear-gradient(160deg,rgba(255,253,250,.78),rgba(252,246,236,.72))!important;
+  background-repeat:repeat,no-repeat!important;
+  background-size:160px 160px,auto!important;
+  background-blend-mode:soft-light,normal;
+}
 .legend{background:linear-gradient(135deg,rgba(255,251,234,.85),rgba(255,247,220,.78))!important;backdrop-filter:blur(14px) saturate(150%);-webkit-backdrop-filter:blur(14px) saturate(150%);border:1px solid rgba(212,160,23,.4)!important;border-radius:16px!important;box-shadow:0 4px 14px rgba(212,160,23,.10),inset 0 1px 0 rgba(255,255,255,.5)!important;}
 .result-card{background:linear-gradient(160deg,rgba(255,253,250,.96),rgba(252,246,236,.92))!important;backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);border:1px solid rgba(255,255,255,.55)!important;box-shadow:0 20px 50px rgba(74,0,0,.25),inset 0 1px 0 rgba(255,255,255,.6)!important;}
 .result-overall{background:linear-gradient(135deg,rgba(74,0,0,.92),rgba(139,26,26,.85))!important;backdrop-filter:blur(8px);border-radius:16px!important;}
