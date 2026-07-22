@@ -45,6 +45,8 @@ button,label{touch-action:manipulation;}
 @media (max-width:768px){
   button,.likert-option label{min-height:44px;justify-content:center;}
   .info-group input,.info-group select{min-height:44px;}
+  /* "← Back to Chat" is bare text, so it tapped at only 36px tall. */
+  .topbar a[href="/"]{display:inline-flex;align-items:center;min-height:44px;padding:0 10px;}
 }
 .info-card,.section-card,.submit-section{background:linear-gradient(160deg,rgba(255,253,250,.78),rgba(252,246,236,.72))!important;backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border:1px solid rgba(255,255,255,.55)!important;box-shadow:0 8px 30px rgba(74,0,0,.10),inset 0 1px 0 rgba(255,255,255,.6)!important;border-radius:18px!important;}
 

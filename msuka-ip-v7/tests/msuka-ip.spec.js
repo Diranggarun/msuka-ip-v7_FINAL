@@ -521,6 +521,35 @@ test.describe('6. Performance & Availability Tests', () => {
     console.log('✅ No horizontal overflow on any page at 375px');
   });
 
+  // The admin dashboard had no phone layout at all — at 320-414px its content
+  // was 707px wide and the page scrolled sideways. Checked across the standard
+  // breakpoints so it can't silently regress.
+  test('6.11 no page scrolls sideways at any phone width', async ({ page }) => {
+    for (const width of [320, 375, 414]) {
+      for (const path of ['/', '/feedback.html', '/admin.html']) {
+        await page.setViewportSize({ width, height: 800 });
+        await page.goto(`${BASE_URL}${path}`);
+        // eslint-disable-next-line no-undef -- evaluated in the browser page context
+        const scrollW = await page.evaluate(() => document.documentElement.scrollWidth);
+        expect(scrollW, `${path} overflows at ${width}px`).toBeLessThanOrEqual(width + 1);
+      }
+    }
+    console.log('✅ No horizontal overflow on any page at 320/375/414px');
+  });
+
+  test('6.12 phone: admin dashboard is usable when logged in', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await adminLogin(page);
+    // eslint-disable-next-line no-undef -- evaluated in the browser page context
+    const scrollW = await page.evaluate(() => document.documentElement.scrollWidth);
+    expect(scrollW, 'admin dashboard overflows on a phone').toBeLessThanOrEqual(376);
+
+    // The side rail becomes a bottom tab bar, so it spans the full width.
+    const railBox = await page.locator('.admin-rail').boundingBox();
+    expect(Math.round(railBox.width)).toBeGreaterThan(300);
+    console.log(`✅ Admin usable on phone — no overflow, rail is a ${Math.round(railBox.width)}px bottom bar`);
+  });
+
   test('6.10 phone: survey answer targets meet the 44px touch minimum', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto(`${BASE_URL}/feedback.html`);

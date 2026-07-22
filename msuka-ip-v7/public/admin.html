@@ -280,6 +280,51 @@ tr:hover td{background:var(--maroon-soft);}
 .mon-foot{font-size:.72rem;color:var(--text-light);display:flex;align-items:center;gap:6px;border-top:1px solid var(--gray-100);padding-top:9px;}
 .mon-foot svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
 .mon-role{margin-left:auto;font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:20px;background:var(--maroon-soft);color:var(--maroon);}
+
+/* ══ PHONE LAYOUT (≤768px) ═══════════════════════════════════════════════════
+   MUST STAY LAST IN THIS STYLESHEET — media queries add no specificity, so
+   these only win by coming after the desktop rules above.
+
+   The admin dashboard had no phone layout at all: breakpoints stopped at
+   1100px, so at 320–414px the page was 707px wide and scrolled sideways. The
+   causes were a 68px side rail, a stat-card grid with a fixed 170px first
+   column, and three tables with no scroll container.
+
+   Fix mirrors the chat app's phone pattern (same system, same muscle memory):
+   the rail becomes a bottom tab bar, cards stack, and wide tables scroll
+   inside their own card instead of pushing the page. */
+@media (max-width:768px){
+  #app.open{flex-direction:column;}
+
+  /* Rail -> bottom tab bar. order:2 puts it after the main content. */
+  .admin-rail{order:2;width:100%!important;height:auto!important;position:sticky;top:auto;bottom:0;
+    flex-direction:row;justify-content:space-around;align-items:center;
+    padding:4px 2px;padding-bottom:calc(4px + env(safe-area-inset-bottom));
+    gap:0;overflow-y:visible;overflow-x:auto;align-self:auto;z-index:50;
+    box-shadow:0 -4px 16px rgba(74,0,0,.22);}
+  /* the gold edge line belongs on the top edge once the rail is horizontal */
+  .admin-rail::after{top:0;bottom:auto;left:0;right:0;width:auto;height:3px;
+    background:linear-gradient(90deg,transparent,var(--gold),var(--gold-bright),var(--gold),transparent);}
+  .admin-rail-logo{display:none;}
+  .rail-tab{flex:1 0 auto;min-width:44px;min-height:48px;justify-content:center;border-radius:10px;}
+
+  .admin-main{order:1;min-width:0;width:100%;}
+  .container{padding:.9rem .7rem;max-width:100%;}
+  .topbar{padding:.6rem .8rem;}
+
+  /* the fixed 170px column is what forced the card to 594px */
+  .stat-card{grid-template-columns:1fr;gap:.7rem;min-height:0;padding:.9rem 1rem;}
+  .stats-toolbar{gap:.6rem;}
+
+  /* Tables are wide by nature — let them scroll inside the card rather than
+     stretching the page. Keeps the body free of horizontal scroll. */
+  .card{overflow-x:auto;padding:1rem .9rem;}
+  table{min-width:520px;}
+
+  /* "← Back to Chat" is a real navigation control but rendered as bare text,
+     so it was a 28px-wide tap target. Give it the 44px minimum. */
+  .topbar a[href="/"]{display:inline-flex;align-items:center;min-height:44px;padding:0 10px;}
+}
 </style>
 </head>
 <body>

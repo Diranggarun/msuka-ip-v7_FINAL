@@ -631,7 +631,12 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
      other entry point in the UI — hiding them would strand the user, which is
      a worse failure than a slightly crowded bar. */
   .icon-rail .rail-btn[onclick*="openNewGroupModal"]{display:none;}
-  .icon-rail .rail-btn{flex:1;min-width:0;min-height:48px;padding:6px 2px;
+  /* flex-basis 44px + shrink:0 keeps every tab at the 44px touch minimum. On a
+     320px screen seven tabs no longer fit, so the bar scrolls horizontally
+     instead of squeezing targets down to 40px — an unreachable button is worse
+     than one that needs a small swipe. */
+  .icon-rail{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;}
+  .icon-rail .rail-btn{flex:1 0 44px;min-width:44px;min-height:48px;padding:6px 2px;
     justify-content:center;border-radius:10px;}
   .icon-rail .rail-btn .rbadge,.icon-rail .rail-btn .notif-count{top:2px;right:50%;
     transform:translateX(18px);}
