@@ -1037,7 +1037,17 @@ io.on('connection', async(socket)=>{
   socket.on('webrtc:ice-candidate',({targetSocketId,candidate})=>io.to(targetSocketId).emit('webrtc:ice-candidate',{candidate}));
 
   // Group call
-  socket.on('room:join',({roomId})=>{ socket.join(roomId); if(!activeRooms.has(roomId))activeRooms.set(roomId,new Set()); activeRooms.get(roomId).add(socket.id); socket.to(roomId).emit('room:peer-joined',{socketId:socket.id,name,role}); const members=[...activeRooms.get(roomId)].filter(s=>s!==socket.id).map(s=>({socketId:s,...onlineUsers.get(s)})); socket.emit('room:members',{roomId,members}); });
+  socket.on('room:join',async({roomId})=>{
+    if(!roomId || typeof roomId!=='string') return;
+    // A group call room is the group's own key, so only its members may join —
+    // same access rule as the group's messages. Refusing here stops a non-member
+    // from receiving a private call's peer list and WebRTC signaling.
+    if(!(await canAccessConv(id, roomId))){
+      await logAudit(id,'ACCESS_DENIED',`Blocked room:join on ${roomId}`,socket);
+      return socket.emit('room:error',{reason:'You are not a member of this call.'});
+    }
+    socket.join(roomId); if(!activeRooms.has(roomId))activeRooms.set(roomId,new Set()); activeRooms.get(roomId).add(socket.id); socket.to(roomId).emit('room:peer-joined',{socketId:socket.id,name,role}); const members=[...activeRooms.get(roomId)].filter(s=>s!==socket.id).map(s=>({socketId:s,...onlineUsers.get(s)})); socket.emit('room:members',{roomId,members});
+  });
   socket.on('room:leave',({roomId})=>{ socket.leave(roomId); if(activeRooms.has(roomId)){activeRooms.get(roomId).delete(socket.id); if(activeRooms.get(roomId).size===0)activeRooms.delete(roomId);} socket.to(roomId).emit('room:peer-left',{socketId:socket.id,name}); });
   socket.on('room:offer',        ({targetSocketId,offer})    =>io.to(targetSocketId).emit('room:offer',        {offer,    fromSocketId:socket.id}));
   socket.on('room:answer',       ({targetSocketId,answer})   =>io.to(targetSocketId).emit('room:answer',       {answer,   fromSocketId:socket.id}));

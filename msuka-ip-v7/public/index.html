@@ -1323,6 +1323,7 @@ function initSocket() {
   socket.on('webrtc:offer', async({offer,fromSocketId})=>{ await startWebRTC(fromSocketId,false); await peerConnection.setRemoteDescription(offer); const a=await peerConnection.createAnswer(); await peerConnection.setLocalDescription(a); socket.emit('webrtc:answer',{targetSocketId:fromSocketId,answer:a}); });
   socket.on('webrtc:answer',       async({answer})=>await peerConnection?.setRemoteDescription(answer));
   socket.on('webrtc:ice-candidate',({candidate})=>peerConnection?.addIceCandidate(candidate));
+  socket.on('room:error',      ({reason})=>{ alert(reason||'Cannot join this call.'); leaveGroupCall(); });
   socket.on('room:members',    async({members})=>{ for(const m of members) await createGroupPeer(m.socketId,m.name,true); });
   socket.on('room:peer-joined',async({socketId,name})=>{ addPeerCard(socketId,name); await createGroupPeer(socketId,name,false); });
   socket.on('room:peer-left',  ({socketId})=>{ groupPeers[socketId]?.close(); delete groupPeers[socketId]; document.getElementById(`peer-${socketId}`)?.remove(); });
@@ -1902,9 +1903,13 @@ async function startWebRTC(targetSocketId,isInitiator){
 //  GROUP CALL
 // ══════════════════════════════════════════
 async function startGroupCall(){
+  // The call room IS the group's conversation key, so everyone in the group
+  // joins the same room (a random per-caller id could never be shared, so the
+  // old scheme left each caller alone). The server only lets group members join.
+  if(!activeConvKey || !activeConvKey.startsWith('group_')){ alert('Open a group chat to start a group call.'); return; }
   groupStream=await getMic();
   if(!groupStream)return;
-  currentRoomId='room-'+Date.now();
+  currentRoomId=activeConvKey;
   document.getElementById('peers-grid').innerHTML='';
   document.getElementById('group-call-panel').classList.add('show');
   addPeerCard('self',currentUser.name+' (you)');
