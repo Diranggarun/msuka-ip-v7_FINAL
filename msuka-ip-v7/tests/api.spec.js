@@ -291,3 +291,24 @@ test.describe('11. File Upload API', () => {
   });
 
 });
+
+// ═══════════════════════════════════════════════════════════════════
+//  TEST GROUP 12: Security headers (OWASP A05)
+// ═══════════════════════════════════════════════════════════════════
+test.describe('12. Security headers', () => {
+  let ctx;
+  test.beforeAll(async () => { ctx = await request.newContext({ baseURL: BASE_URL }); });
+  test.afterAll(async () => { await ctx.dispose(); });
+
+  test('12.1 responses carry the hardening headers and hide the stack', async () => {
+    const r = await ctx.get('/');
+    const h = r.headers();
+    expect(h['x-content-type-options']).toBe('nosniff');
+    expect(h['x-frame-options']).toBe('DENY');
+    expect(h['referrer-policy']).toBe('no-referrer');
+    expect(h['content-security-policy']).toContain("default-src 'self'");
+    expect(h['content-security-policy']).toContain("object-src 'none'");
+    expect(h['x-powered-by']).toBeUndefined();   // Express banner removed
+    console.log('✅ Security headers present; X-Powered-By hidden');
+  });
+});

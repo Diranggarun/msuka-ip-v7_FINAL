@@ -87,6 +87,26 @@ async function setupHttps() {
     console.warn(`⚠️   HTTPS disabled (${e.message}) — voice calls will only work on http://localhost:${process.env.PORT || 3000}.`);
   }
 }
+// ── Security headers (OWASP A05: Security Misconfiguration) ───────────────────
+// Set on every response before any route. No external dependency (Helmet) — the
+// header set is small and each line is defensible in oral defense.
+app.disable('x-powered-by');                                    // don't advertise Express
+app.use((req,res,next)=>{
+  res.setHeader('X-Content-Type-Options','nosniff');            // no MIME sniffing
+  res.setHeader('X-Frame-Options','DENY');                      // clickjacking: never framed
+  res.setHeader('Referrer-Policy','no-referrer');               // don't leak URLs off-site
+  res.setHeader('Permissions-Policy','geolocation=(), camera=(), microphone=(self)'); // mic only for us
+  // CSP: this app inlines its scripts/styles/handlers, so script/style need
+  // 'unsafe-inline'; the value still blocks external/plugin content, framing,
+  // and <base> hijacking. Output is separately escaped against XSS (A03).
+  res.setHeader('Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; "+
+    "img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' ws: wss:; "+
+    "object-src 'none'; base-uri 'self'; frame-ancestors 'none'");
+  // HSTS only over TLS (browsers ignore it on plain HTTP, and sending it there is off-spec).
+  if (req.secure) res.setHeader('Strict-Transport-Security','max-age=31536000; includeSubDomains');
+  next();
+});
 app.use(express.json());
 app.use(express.static(path.join(__dirname,'public'),{
   setHeaders:(res,filePath)=>{

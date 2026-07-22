@@ -1128,6 +1128,11 @@ function formatTime(ts){return new Date(ts).toLocaleTimeString([],{hour:'2-digit
 // Uploads are auth-protected server-side; <img>/<audio>/<a> can't send an
 // Authorization header, so the token rides along as a query parameter.
 function fileSrc(u){return u&&u.startsWith('/uploads/')?`${u}?token=${encodeURIComponent(currentUser?.token||'')}`:u;}
+// HTML-escape any user-controlled value before it goes into innerHTML. Without
+// this a chat message like <img src=x onerror=...> would execute in every
+// recipient's browser (stored XSS — OWASP A03). Applied to message text, sender
+// names, and uploaded file names throughout appendMessage.
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
 /* ── Sound notifications (Web Audio API — no external files) ─────────── */
 let _audioCtx = null;
@@ -1513,8 +1518,8 @@ function renderGroupsList() {
           <div class="avatar-circle group" style="width:46px;height:46px;"><svg viewBox="0 0 24 24" style="width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5"/><path d="M15 19c0-2 2-3.5 4-3.5"/></svg></div>
         </div>
         <div class="conv-info">
-          <div class="conv-name">${conv.name}</div>
-          <div class="conv-preview">${conv.lastMsg || 'Group chat'}</div>
+          <div class="conv-name">${esc(conv.name)}</div>
+          <div class="conv-preview">${esc(conv.lastMsg) || 'Group chat'}</div>
         </div>
         <div class="conv-meta" style="align-items:flex-end;gap:4px;">
           <span class="conv-time">${time}</span>
@@ -1545,12 +1550,12 @@ function renderPrivateList() {
     return `
       <div class="conv-item ${activeConvKey === key ? 'active' : ''} ${conv.unread > 0 ? 'unread' : ''}" onclick="openConversation('${key}')">
         <div class="conv-avatar">
-          <div class="avatar-circle ${colorFor(u.name)}" style="width:46px;height:46px;">${initials(u.name)}</div>
+          <div class="avatar-circle ${colorFor(u.name)}" style="width:46px;height:46px;">${esc(initials(u.name))}</div>
           <div class="online-badge"></div>
         </div>
         <div class="conv-info">
-          <div class="conv-name">${u.name}</div>
-          <div class="conv-preview" style="color:#1D9E75;font-size:.75rem;">● Online · ${u.role}</div>
+          <div class="conv-name">${esc(u.name)}</div>
+          <div class="conv-preview" style="color:#1D9E75;font-size:.75rem;">● Online · ${esc(u.role)}</div>
         </div>
         <div class="conv-meta">
           <span class="conv-time">${time}</span>
@@ -1661,23 +1666,26 @@ function appendMessage(msg,key,isNew) {
   if(msg.id) row.dataset.msgId = msg.id;
 
   if(msg.type==='system') {
-    row.innerHTML=`<div class="bubble">${msg.text}</div>`;
+    row.innerHTML=`<div class="bubble">${esc(msg.text)}</div>`;
   } else if(msg.type==='announcement') {
-    row.innerHTML=`<div class="bubble">📢 <strong>${msg.sender}:</strong> ${msg.text}</div>`;
+    row.innerHTML=`<div class="bubble">📢 <strong>${esc(msg.sender)}:</strong> ${esc(msg.text)}</div>`;
   } else {
-    const avatarHtml=!isMine?`<div class="msg-avatar" style="background:${avatarColor(msg.sender)}">${initials(msg.sender)}</div>`:'';
-    const nameHtml=(!isMine&&isGroup)?`<div class="msg-sender-name">${msg.sender}</div>`:'';
+    const avatarHtml=!isMine?`<div class="msg-avatar" style="background:${avatarColor(msg.sender)}">${esc(initials(msg.sender))}</div>`:'';
+    const nameHtml=(!isMine&&isGroup)?`<div class="msg-sender-name">${esc(msg.sender)}</div>`:'';
     let bubbleHtml='';
+    // fname is the user-supplied original filename — escaped for the text
+    // content, and encodeURIComponent'd where it sits inside an attribute.
+    const fname=esc(msg.file_name), fnameAttr=encodeURIComponent(msg.file_name||'');
     if(msg.type==='image') {
       const src=fileSrc(msg.file_url);
-      bubbleHtml=`<div class="bubble img-bubble"><img src="${src}" alt="${msg.file_name}" onclick="window.open('${src}','_blank')"/><div class="img-caption"><span class="img-caption-text">${msg.file_name} · ${formatFileSize(msg.file_size)}</span><a href="${src}" download="${msg.file_name}" class="img-dl" title="Download image" aria-label="Download image"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a></div></div>`;
+      bubbleHtml=`<div class="bubble img-bubble"><img src="${src}" alt="${fname}" onclick="window.open('${src}','_blank')"/><div class="img-caption"><span class="img-caption-text">${fname} · ${formatFileSize(msg.file_size)}</span><a href="${src}" download="${fnameAttr}" class="img-dl" title="Download image" aria-label="Download image"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a></div></div>`;
     } else if(msg.type==='voice') {
       bubbleHtml=`<div class="bubble voice-bubble"><span class="voice-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></span><div class="voice-body"><audio controls src="${fileSrc(msg.file_url)}"></audio><div class="voice-size">${formatFileSize(msg.file_size)}</div></div></div>`;
     } else if(msg.type==='file') {
       const icon=msg.file_type?.includes('pdf')?'📄':'📝';
-      bubbleHtml=`<div class="bubble file-bubble"><span class="file-icon">${icon}</span><div class="file-info"><div class="fname">${msg.file_name}</div><div class="fsize">${formatFileSize(msg.file_size)}</div></div><a href="${fileSrc(msg.file_url)}" download="${msg.file_name}" class="file-dl" title="Download" aria-label="Download file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a></div>`;
+      bubbleHtml=`<div class="bubble file-bubble"><span class="file-icon">${icon}</span><div class="file-info"><div class="fname">${fname}</div><div class="fsize">${formatFileSize(msg.file_size)}</div></div><a href="${fileSrc(msg.file_url)}" download="${fnameAttr}" class="file-dl" title="Download" aria-label="Download file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a></div>`;
     } else {
-      bubbleHtml=`<div class="bubble">${msg.text}</div>`;
+      bubbleHtml=`<div class="bubble">${esc(msg.text)}</div>`;
     }
     const canDelete = msg.id && isMine;
     const actionsHtml = canDelete ? `<div class="msg-actions"><button class="msg-action-btn" title="Delete message" aria-label="Delete message" onclick="deleteMessage(${msg.id}, this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></div>` : '';
@@ -1839,7 +1847,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 //  GROUP CREATION
 // ══════════════════════════════════════════
 function openNewGroupModal() {
-  document.getElementById('members-checklist').innerHTML=onlineUsers.map(u=>`<label class="member-check"><input type="checkbox" value="${u.email}" data-name="${u.name}"/><div class="avatar-circle ${colorFor(u.name)}" style="width:32px;height:32px;font-size:.72rem;">${initials(u.name)}</div><span style="font-size:.88rem;">${u.name}</span></label>`).join('');
+  document.getElementById('members-checklist').innerHTML=onlineUsers.map(u=>`<label class="member-check"><input type="checkbox" value="${esc(u.email)}" data-name="${esc(u.name)}"/><div class="avatar-circle ${colorFor(u.name)}" style="width:32px;height:32px;font-size:.72rem;">${esc(initials(u.name))}</div><span style="font-size:.88rem;">${esc(u.name)}</span></label>`).join('');
   document.getElementById('modal-overlay').classList.add('open');
 }
 function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
@@ -1925,7 +1933,7 @@ async function startGroupCall(){
 }
 function leaveGroupCall(){socket.emit('room:leave',{roomId:currentRoomId});Object.values(groupPeers).forEach(pc=>pc.close());groupPeers={};groupStream?.getTracks().forEach(t=>t.stop());groupStream=null;currentRoomId=null;document.getElementById('group-call-panel').classList.remove('show');}
 function toggleGroupMute(){if(!groupStream)return;isGroupMuted=!isGroupMuted;groupStream.getAudioTracks().forEach(t=>t.enabled=!isGroupMuted);const btn=document.getElementById('group-mute-btn');btn.innerHTML=(isGroupMuted?MIC_OFF_SVG:MIC_ON_SVG).replace('icn-lg','')+`<span>${isGroupMuted?'Unmute':'Mute'}</span>`;}
-function addPeerCard(sid,name){if(document.getElementById(`peer-${sid}`))return;const c=document.createElement('div');c.className='peer-card';c.id=`peer-${sid}`;c.innerHTML=`<div class="pa">${initials(name)}</div><p>${name}</p>`;document.getElementById('peers-grid').appendChild(c);}
+function addPeerCard(sid,name){if(document.getElementById(`peer-${sid}`))return;const c=document.createElement('div');c.className='peer-card';c.id=`peer-${sid}`;c.innerHTML=`<div class="pa">${esc(initials(name))}</div><p>${esc(name)}</p>`;document.getElementById('peers-grid').appendChild(c);}
 async function createGroupPeer(targetSocketId,targetName,isInitiator){
   addPeerCard(targetSocketId,targetName);
   const pc=new RTCPeerConnection(iceConfig); groupPeers[targetSocketId]=pc;
@@ -2076,8 +2084,8 @@ function showToast(type, title, message, onClick) {
   toast.innerHTML = `
     <span class="toast-icon">${icons[type]||'🔔'}</span>
     <div class="toast-body">
-      <div class="toast-title">${title}</div>
-      <div class="toast-msg">${message}</div>
+      <div class="toast-title">${esc(title)}</div>
+      <div class="toast-msg">${esc(message)}</div>
       <div class="toast-time">${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>
     </div>
     <button class="toast-close" onclick="event.stopPropagation();dismissToast('${id}')">✕</button>`;

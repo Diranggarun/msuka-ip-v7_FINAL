@@ -698,9 +698,9 @@ async function loadFeedback(){
     tbody.innerHTML=responses.map((r,i)=>`
       <tr>
         <td style="color:var(--text-light);font-size:.8rem">${i+1}</td>
-        <td><strong style="color:var(--maroon-dark)">${r.respondent_name||'Anonymous'}</strong></td>
-        <td style="color:var(--text-mid);font-size:.78rem">${r.respondent_type}</td>
-        <td style="color:var(--text-mid);font-size:.78rem">${r.device}</td>
+        <td><strong style="color:var(--maroon-dark)">${esc(r.respondent_name||'Anonymous')}</strong></td>
+        <td style="color:var(--text-mid);font-size:.78rem">${esc(r.respondent_type)}</td>
+        <td style="color:var(--text-mid);font-size:.78rem">${esc(r.device)}</td>
         <td>${Number(r.mean_a).toFixed(2)}</td>
         <td>${Number(r.mean_b).toFixed(2)}</td>
         <td>${Number(r.mean_c).toFixed(2)}</td>
@@ -738,9 +738,9 @@ async function viewFeedbackDetail(id){
 
     document.getElementById('fb-detail-body').innerHTML=`
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem 1rem;background:var(--gold-soft);border:1px solid var(--gold);border-radius:10px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.82rem;">
-        <div><strong>Name:</strong> ${r.respondent_name||'Anonymous'}</div>
-        <div><strong>Type:</strong> ${r.respondent_type}</div>
-        <div><strong>Device:</strong> ${r.device}</div>
+        <div><strong>Name:</strong> ${esc(r.respondent_name||'Anonymous')}</div>
+        <div><strong>Type:</strong> ${esc(r.respondent_type)}</div>
+        <div><strong>Device:</strong> ${esc(r.device)}</div>
         <div><strong>Date:</strong> ${r.response_date? new Date(r.response_date).toLocaleDateString():'—'}</div>
         <div style="grid-column:1/-1;color:var(--text-mid);font-size:.74rem;"><strong>Submitted:</strong> ${new Date(r.created_at).toLocaleString()}</div>
       </div>
@@ -993,31 +993,31 @@ async function loadPending(){
     }
     el.innerHTML=users.map(u=>`
       <div class="pending-card">
-        <div class="pending-avatar">${u.name.charAt(0).toUpperCase()}</div>
+        <div class="pending-avatar">${esc(String(u.name).charAt(0).toUpperCase())}</div>
         <div class="pending-info">
-          <h4>${u.name}</h4>
-          <p>${u.email} · <span class="badge ${u.role}">${u.role}</span> · Registered: ${new Date(u.created_at).toLocaleString()}</p>
+          <h4>${esc(u.name)}</h4>
+          <p>${esc(u.email)} · <span class="badge ${esc(u.role)}">${esc(u.role)}</span> · Registered: ${new Date(u.created_at).toLocaleString()}</p>
         </div>
         <div class="pending-actions">
-          <button class="btn-sm btn-approve" onclick="approveUser(${u.id},'${u.name}')"><svg class="bi" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Approve</button>
-          <button class="btn-sm btn-reject"  onclick="rejectUser(${u.id},'${u.name}')"><svg class="bi" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Reject</button>
+          <button class="btn-sm btn-approve" onclick="approveUser(${u.id})"><svg class="bi" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Approve</button>
+          <button class="btn-sm btn-reject"  onclick="rejectUser(${u.id})"><svg class="bi" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Reject</button>
         </div>
       </div>`).join('');
   }catch(err){console.error(err);}
 }
 
-async function approveUser(id,name){
+async function approveUser(id){
   try{
     const res=await fetch(`/api/admin/users/${id}/approve`,{method:'PUT',headers:{Authorization:`Bearer ${authToken}`}});
     const data=await res.json();
     if(!res.ok) return alert(data.error);
-    alert(`✅ ${name} approved! They can now login to MSUkaIP.`);
+    alert('✅ Account approved! They can now login to MSUkaIP.');
     loadPending();loadUsers();loadStats();
   }catch{alert('Server error');}
 }
 
-async function rejectUser(id,name){
-  if(!confirm(`Reject and delete ${name}'s account request?`)) return;
+async function rejectUser(id){
+  if(!confirm('Reject and delete this account request?')) return;
   try{
     const res=await fetch(`/api/admin/users/${id}/reject`,{method:'DELETE',headers:{Authorization:`Bearer ${authToken}`}});
     const data=await res.json();
@@ -1039,15 +1039,15 @@ function renderUsers(users){
   tbody.innerHTML=users.map((u,i)=>`
     <tr>
       <td style="color:var(--text-light);font-size:.8rem">${i+1}</td>
-      <td><strong style="color:var(--maroon-dark)">${u.name}</strong></td>
-      <td style="color:var(--text-mid);font-size:.82rem">${u.email}</td>
-      <td><span class="badge ${u.role}">${u.role}</span></td>
-      <td><span class="badge ${u.account_status}">${u.account_status}</span></td>
-      <td><span class="badge ${u.status}">${u.status}</span></td>
+      <td><strong style="color:var(--maroon-dark)">${esc(u.name)}</strong></td>
+      <td style="color:var(--text-mid);font-size:.82rem">${esc(u.email)}</td>
+      <td><span class="badge ${esc(u.role)}">${esc(u.role)}</span></td>
+      <td><span class="badge ${esc(u.account_status)}">${esc(u.account_status)}</span></td>
+      <td><span class="badge ${esc(u.status)}">${esc(u.status)}</span></td>
       <td style="color:var(--text-light);font-size:.78rem">${new Date(u.created_at).toLocaleDateString()}</td>
       <td style="display:flex;gap:5px;">
-        <button class="btn-sm btn-warning" onclick="openEditModal(${u.id},'${u.name}','${u.email}','${u.role}')"><svg class="bi" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Edit</button>
-        <button class="btn-sm btn-danger"  onclick="openDeleteModal(${u.id},'${u.name}')"><svg class="bi" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>Del</button>
+        <button class="btn-sm btn-warning" onclick="openEditModal(${u.id})"><svg class="bi" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Edit</button>
+        <button class="btn-sm btn-danger"  onclick="openDeleteModal(${u.id})"><svg class="bi" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>Del</button>
       </td>
     </tr>`).join('');
 }
@@ -1078,7 +1078,12 @@ async function addUser(){
   }catch{errEl.textContent='Server error. Try again.';errEl.style.display='block';}
 }
 
-function openEditModal(id,name,email,role){
+function openEditModal(id){
+  // Look the user up by id instead of taking name/email/role as inline-onclick
+  // arguments — passing user-controlled strings through an HTML attribute is an
+  // injection vector. esc() guards the values as they go into the form.
+  const u=allUsers.find(x=>String(x.id)===String(id)); if(!u) return;
+  const name=esc(u.name), email=esc(u.email), role=u.role;
   document.getElementById('modal-content').innerHTML=`
     <h3 style="display:flex;align-items:center;gap:8px;"><svg style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Edit User</h3>
     <input type="text"     id="edit-name"     value="${name}"  placeholder="Full name"/>
@@ -1108,7 +1113,9 @@ async function saveEdit(id){
   }catch{alert('Server error');}
 }
 
-function openDeleteModal(id,name){
+function openDeleteModal(id){
+  const u=allUsers.find(x=>String(x.id)===String(id));
+  const name=esc(u?u.name:'this user');
   document.getElementById('modal-content').innerHTML=`
     <h3 style="display:flex;align-items:center;gap:8px;"><svg style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg> Delete User</h3>
     <p>Are you sure you want to delete <strong>${name}</strong>?<br>This action cannot be undone.</p>
@@ -1152,8 +1159,8 @@ async function loadLogs(){
       <div class="log-item">
         <div class="log-icon">${icons[l.action] ?? fallbackIcon}</div>
         <div class="log-text">
-          <strong>${l.user_name??'System'}</strong> — ${l.action}
-          <span>${l.details} · ${new Date(l.created_at).toLocaleString()}</span>
+          <strong>${esc(l.user_name??'System')}</strong> — ${esc(l.action)}
+          <span>${esc(l.details)} · ${new Date(l.created_at).toLocaleString()}</span>
         </div>
       </div>`).join('');
   }catch{}
@@ -1168,9 +1175,9 @@ async function loadMessages(){
     tbody.innerHTML=msgs.map((m,i)=>`
       <tr>
         <td style="color:var(--text-light);font-size:.8rem">${i+1}</td>
-        <td><strong style="color:var(--maroon-dark)">${m.sender??'System'}</strong></td>
-        <td><span class="badge ${m.type==='announcement'?'admin':m.type==='system'?'faculty':'student'}">${m.type}</span></td>
-        <td style="color:var(--text-dark);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.text}</td>
+        <td><strong style="color:var(--maroon-dark)">${esc(m.sender??'System')}</strong></td>
+        <td><span class="badge ${m.type==='announcement'?'admin':m.type==='system'?'faculty':'student'}">${esc(m.type)}</span></td>
+        <td style="color:var(--text-dark);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(m.text)}</td>
         <td style="color:var(--text-light);font-size:.78rem">${new Date(m.created_at).toLocaleString()}</td>
       </tr>`).join('');
   }catch{}
