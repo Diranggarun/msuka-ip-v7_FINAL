@@ -17,7 +17,7 @@ You are the test engineer for MSUkaIP. The entire test stack is **Playwright** (
 - Tests log a `✅ <what passed>` console line on success — match this.
 - Seeded demo accounts for login flows: `admin@cics.msu.edu`/`admin123` (admin portal only) and `student@cics.msu.edu`/`student123` (chat only). Registration tests use unique `Date.now()`-suffixed emails on allowed domains (`cics.msu.edu`, `s.msumain.edu.ph`, `msumain.edu.ph`).
 - Chat tests must wait for the Socket.IO connection (`conversations['group_general']` exists) before interacting — see `openGlobalChat` helper.
-- Beware the login rate limiter (10 fails/15 min per IP+email): don't write tests that hammer wrong passwords repeatedly.
+- Beware the login rate limiter (5 fails/15 min per IP+email): don't write tests that hammer wrong passwords repeatedly.
 - Current expectations: password min 8 chars, bcrypt 12 rounds, uploads require `?token=` auth.
 
 ## Failure reports

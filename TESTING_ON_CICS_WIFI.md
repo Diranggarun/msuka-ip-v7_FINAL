@@ -111,7 +111,7 @@ For the Likert survey with 30 respondents:
 | Console shows `DB failed` on startup | Check the error text. `Cannot find module 'node:sqlite'` means Node is older than 22.5 — upgrade it. `database is locked` means another tool has `msukaip.db` open — close it. |
 | Voice call fails between devices | Both peers must be on the same Wi-Fi subnet. Verify with `ipconfig`. |
 | Browser blocks microphone | Use `http://<host-IP>:3000` directly (private IPs are treated as secure). Avoid `localhost` on remote devices. |
-| Login page loads but cannot submit | The host laptop went to sleep or the server process stopped. Wake the laptop and restart `npm start`. If it returns `429`, the login rate limiter tripped after 10 failed attempts — wait 15 minutes or use a different account. |
+| Login page loads but cannot submit | The host laptop went to sleep or the server process stopped. Wake the laptop and restart `npm start`. If it returns `429`, the login rate limiter tripped after 5 failed attempts — wait 15 minutes or use a different account. |
 | Testers on the same Wi-Fi cannot reach the host even with the correct IP | The Wi-Fi has **AP/client isolation** enabled. Ask CICS IT to disable client isolation on that SSID — otherwise no LAN application will work between devices. |
 
 ---

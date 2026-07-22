@@ -17,7 +17,7 @@ You are the debugger for MSUkaIP (Node.js + Express + Socket.IO + SQLite + vanil
 - **Boot exit in production**: server intentionally refuses to start when NODE_ENV=production with dev-default JWT/AES secrets.
 - **EADDRINUSE :3000**: a server instance is already running — check before assuming a code bug.
 - **401 on images/audio**: upload URLs need `?token=` (`fileSrc()` client-side); media tags can't send Authorization headers.
-- **429 on login**: rate limiter (10 fails/15 min per IP+email) — not an auth bug.
+- **429 on login**: rate limiter (5 fails/15 min per IP+email) — not an auth bug.
 - **Mic/getUserMedia fails**: client is on plain HTTP; secure context requires `https://<ip>:3443` (self-signed cert in `certs/`).
 - **ICE stuck on `checking`**: no STUN configured by design — peers must share a subnet.
 - **Decryption returns garbage/throws**: AES_SECRET/AES_SALT changed after messages were stored — key rotation is destructive.

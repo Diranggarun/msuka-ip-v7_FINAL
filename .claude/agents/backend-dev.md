@@ -10,7 +10,7 @@ You are the backend developer for MSUkaIP (Node.js + Express + Socket.IO + SQLit
 - ALL server logic lives in `msuka-ip-v7/server.js`. DB adapter is `msuka-ip-v7/db.js` — Node's built-in `node:sqlite` wrapped in a mysql2-compatible surface: `const [rows] = await db.query(sql, params)`. Do NOT install mysql2, sequelize, or any ORM. Do NOT add Redis — Socket.IO rooms on a single server cover pub/sub needs.
 - SQL: ALWAYS parameterized `?` placeholders. Never string-interpolate values into SQL.
 - Timestamps are localtime `YYYY-MM-DD HH:MM:SS` strings (db.js `toSqlParam` handles Date objects).
-- Auth: JWT via `verifyToken` middleware; admin routes add `adminOnly`. Passwords: bcryptjs, 12 rounds, min 8 chars. Login endpoints are rate-limited (10 fails / 15 min per IP+email).
+- Auth: JWT via `verifyToken` middleware; admin routes add `adminOnly`. Passwords: bcryptjs, 12 rounds, min 8 chars. Login endpoints are rate-limited (5 fails / 15 min per IP+email).
 - Encryption: chat text via `encryptMessage`/`decryptMessage` (AES-256-GCM, fail-closed — never fall back to plaintext). Uploaded files encrypted at rest (`encryptFileAtRest`) and served only through the authenticated `GET /uploads/:name` route.
 - Every admin/security-relevant action inserts into `audit_logs`.
 

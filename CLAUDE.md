@@ -28,7 +28,7 @@ node db-audit.js        # schema + integrity audit
 - **Rooms:** general chat is `group_general`; private rooms are `private_<sortedEmailA>__<sortedEmailB>`.
 - **SQL:** always parameterized `?` placeholders through `db.query()`. Timestamps are localtime `YYYY-MM-DD HH:MM:SS` strings.
 - **Uploads:** stored in `msuka-ip-v7/uploads/` (outside `public/`), encrypted at rest, served only via authenticated `GET /uploads/:name`. Client media URLs must use `fileSrc(u)` which appends `?token=` (media tags can't send Authorization headers).
-- **Security invariants (RA 10173 hardening — do not regress):** login rate limiting (10 fails/15 min per IP+email); production boot refuses dev-default secrets; demo accounts seed only outside production; two-tier login (admins → `/admin.html` only, students/faculty → chat only); security-relevant actions write to `audit_logs`.
+- **Security invariants (RA 10173 hardening — do not regress):** login rate limiting (5 fails/15 min per IP+email); production boot refuses dev-default secrets; demo accounts seed only outside production; two-tier login (admins → `/admin.html` only, students/faculty → chat only); security-relevant actions write to `audit_logs`.
 - **Offline-LAN rule:** no CDNs, no external fonts, no internet APIs, no STUN/TURN. Everything self-hosted.
 - **Style:** match the existing compact single-file style; frontend reuses existing helpers (`appendMessage`, `showAuthMsg`, `fileSrc`, …) and the maroon/gold `:root` design tokens.
 

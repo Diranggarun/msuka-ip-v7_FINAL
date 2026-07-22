@@ -112,7 +112,7 @@ function adminOnly(req,res,next) { if (req.user?.role !== 'admin') return res.st
 - `/api/login` is for students/faculty. Refuses `role='admin'` accounts.
 - `/api/admin/login` is for admins. Refuses non-admins.
 - Both reject `pending` and `rejected` accounts.
-- Both are **rate limited**: 10 failed attempts within 15 minutes locks that IP+email pair and returns `429`. A success clears the counter. See §9.
+- Both are **rate limited**: 5 failed attempts within 15 minutes locks that IP+email pair and returns `429`. A success clears the counter. See §9.
 - Token expiry is **8 hours** (`expiresIn:'8h'`) — survives a full demo day plus prep.
 
 **Panel hook:** "Why two endpoints?" → keeps admin auth audit trail separate; lets you change admin auth (e.g., 2FA later) without touching the user flow.
@@ -199,13 +199,15 @@ Key client-side patterns:
 | "What if VoIP STUN is unreachable on offline LAN?" | There is no STUN server to be unreachable — `iceServers` is deliberately **empty**. STUN exists to discover your public IP for traversing NAT across the internet; on a single LAN segment there is no NAT between peers, so host candidates connect directly. Requirement: both peers on the same /24. |
 | "How do you prevent SQL injection?" | All queries use `?` parameter binding through `db.query('… WHERE id=?',[id])` — the SQLite adapter prepares the statement and binds values separately, so user input is never parsed as SQL. No string concatenation anywhere. |
 | "How do you handle uploads from malicious users?" | Mimetype allowlist (not blocklist), 5 MB cap, randomized filenames. Files are stored **outside** `public/` and encrypted at rest with AES-256-GCM; the only way to read one is the authenticated `GET /uploads/:name` route, which `path.basename()`s the name to defeat `../` traversal. No execution context. |
-| "What if someone brute-forces a password?" | Login is rate limited — 10 failures per IP+email in a 15-minute window returns `429` and locks that pair for the rest of the window. Combined with bcrypt at 12 rounds, online guessing is impractical. |
+| "What if someone brute-forces a password?" | Login is rate limited — 5 failures per IP+email in a 15-minute window returns `429` and locks that pair for the rest of the window. Combined with bcrypt at 12 rounds, online guessing is impractical. |
 | "Where is the personal data, and how is it protected?" | RA 10173 answer: message text and uploaded files are AES-256-GCM encrypted at rest; passwords are bcrypt hashed (never recoverable); access is JWT-gated with role separation; every security-relevant action is written to `audit_logs` for accountability. See §9. |
 | "How would you scale to 1000 users?" | Two changes: split Socket.IO with a Redis adapter, and add a CDN for `/uploads/`. Database is already indexed for it. |
 | "What happens if the server crashes mid-message?" | Three layers: (1) DB INSERT is atomic — partial messages don't exist. (2) Socket.IO retries the disconnected client. (3) On boot, `setupDatabase()` resets all users to `offline`. |
 | "Why no migrations runner like Alembic / Knex?" | At this scale, idempotent `CREATE TABLE IF NOT EXISTS` + `try/catch ALTER TABLE` is simpler than a separate runner. If we cross 30+ schema changes we'd switch. |
 | "Why a separate `survey_responses` table instead of reusing `audit_logs`?" | Audit logs are user-action history. Survey responses are research data with strict structure (Likert means as DECIMAL, response date, etc.). Different lifecycle. |
 | "How do you know it works on the LAN?" | `npm run preflight` checks env + DB + LAN IP + firewall command. §7 of DEPLOYMENT.md is a 13-step smoke-test checklist. |
+| "What stops me reading another group's private messages?" | Both the history fetch (`messages:get`) and the send path (`message:send`) run `canAccessConv()`, which checks `group_members` before touching a `group_<id>` conversation. A non-member gets an empty history or a "not a member" error, and the attempt is audit-logged. We tested this with two accounts — a non-member is refused read and write. `group_general` is the deliberately open room. |
+| "How would I brute-force an account?" | You wouldn't get far — 5 wrong tries per IP+email locks that pair for 15 minutes (`429`), and passwords are bcrypt at 12 rounds (~400 ms each), so even offline guessing on a stolen hash is expensive. |
 
 ---
 
@@ -254,8 +256,13 @@ The panel may frame this as "you're storing student communications — how do yo
 **Access control & accountability**
 - Passwords: bcrypt at 12 rounds — never stored or recoverable in plaintext.
 - Every route is JWT-gated; admin routes add `adminOnly`; the two login flows keep student and admin auth separate.
-- **Login rate limiting:** 10 failures per IP+email in 15 minutes → `429` lockout. Defeats online brute force.
-- **Audit log:** every security-relevant action (register, approve, reject, add/edit/delete user, etc.) writes a row to `audit_logs` — the accountability trail the law expects.
+- **Group message isolation:** `messages:get` and `message:send` call `canAccessConv(userId, convKey)`, which checks `group_members` before returning or storing anything for a `group_<id>` conversation. Without this, any logged-in user could read or post to a private group just by guessing its numeric id (the client supplies the key). `group_general` is the intentionally open college-wide room. A blocked attempt writes an `ACCESS_DENIED` audit row.
+- **Login rate limiting:** 5 failures per IP+email in 15 minutes → `429` lockout. Defeats online brute force.
+- **Audit log:** every security-relevant action (register, approve, reject, add/edit/delete user, login, failed login, blocked access, etc.) writes a row to `audit_logs` — the accountability trail the law expects.
+- **Admin login monitor:** `/api/admin/login-activity` aggregates `audit_logs` into a per-user view — successful logins, failed attempts, and last sign-in — rendered as cards in the admin dashboard (users with failed attempts get a red stripe). Read-only; it surfaces the audit trail rather than adding new tracking.
+
+**Informed use**
+- **Terms & privacy agreement:** after login the user must accept a modal covering institutional-use-only, respectful conduct, the RA 10173 privacy statement (messages encrypted at rest; admins see login activity but *not* message contents), and monitoring. Declining signs them out. Shown once per login session.
 
 **Secure deployment**
 - In `NODE_ENV=production` the server **refuses to boot** with the built-in dev secrets, and skips seeding the known-password demo accounts (which would otherwise be a standing backdoor).

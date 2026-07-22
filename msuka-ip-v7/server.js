@@ -824,6 +824,11 @@ io.on('connection', async(socket)=>{
   // Get messages for a conversation
   socket.on('messages:get', async({key})=>{
     try {
+      // Refuse history for a group the caller does not belong to (RA 10173).
+      if(!(await canAccessConv(id, key))){
+        await logAudit(id,'ACCESS_DENIED',`Blocked messages:get on ${key}`,socket);
+        return socket.emit('messages:history',{key,messages:[]});
+      }
       let rows;
       if(key.startsWith('private_')) {
         const targetEmail=key.replace('private_','');
@@ -845,6 +850,11 @@ io.on('connection', async(socket)=>{
   socket.on('message:send', async({text,convKey})=>{
     const t=text?.trim(); if(!t||!convKey) return;
     try {
+      // Refuse posting into a group the caller does not belong to (RA 10173).
+      if(!(await canAccessConv(id, convKey))){
+        await logAudit(id,'ACCESS_DENIED',`Blocked message:send to ${convKey}`,socket);
+        return socket.emit('message:error',{convKey,reason:'You are not a member of this conversation.'});
+      }
       let realKey=convKey;
       if(convKey.startsWith('private_')) {
         const targetEmail=convKey.replace('private_','');
@@ -1024,6 +1034,21 @@ io.on('connection', async(socket)=>{
 // query the same row set from `messages` regardless of who opens the chat.
 function buildPrivateKey(email1,email2) {
   return 'private_'+(email1<email2?email1+'__'+email2:email2+'__'+email1);
+}
+
+// Authorization gate for group conversations (RA 10173 — access control).
+// A conv_key of the form `group_<id>` is private to its members. Without this
+// check any authenticated user could read or post to any group just by guessing
+// the id, since the client supplies the key. `group_general` is the open
+// college-wide room and is intentionally exempt. Returns true if `userId` may
+// access `convKey`; non-group keys pass through (private 1:1 keys are already
+// bound to the caller's own email by buildPrivateKey).
+async function canAccessConv(userId, convKey) {
+  if (!convKey || !convKey.startsWith('group_') || convKey === 'group_general') return true;
+  const gid = convKey.slice('group_'.length);
+  if (!/^\d+$/.test(gid)) return false; // malformed group key
+  const [rows] = await db.query('SELECT 1 FROM group_members WHERE group_id=? AND user_id=? LIMIT 1', [gid, userId]);
+  return rows.length > 0;
 }
 
 const PORT=process.env.PORT||3000;

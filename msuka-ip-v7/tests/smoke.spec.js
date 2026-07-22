@@ -60,6 +60,13 @@ test.describe('Smoke — notifications panel', () => {
     await page.click('button.btn-login');
     await expect(page.locator('#app')).toBeVisible({ timeout: 8000 });
 
+    // Accept the post-login terms agreement, which overlays the app.
+    const agree = page.locator('.agree-accept');
+    if (await agree.isVisible().catch(() => false)) {
+      await agree.click();
+      await page.locator('#agree-overlay').waitFor({ state: 'hidden', timeout: 4000 });
+    }
+
     await page.click('#rail-notif');
     // Title in left panel header should flip to "Notifications"
     await expect(page.locator('.left-header-titles h2')).toHaveText('Notifications', { timeout: 4000 });
