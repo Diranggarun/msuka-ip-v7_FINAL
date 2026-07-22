@@ -39,21 +39,47 @@ const io = new Server(server, { cors:{ origin:'*' } });
 // accepts the browser warning once.
 const HTTPS_PORT = process.env.HTTPS_PORT || 3443;
 let httpsServer = null;
+// Every IPv4 address a LAN client could use to reach this host.
+function lanIPv4s() {
+  return Object.values(os.networkInterfaces()).flat()
+    .filter(i => i && i.family === 'IPv4' && !i.internal)
+    .map(i => i.address);
+}
+
 async function setupHttps() {
   try {
     const certDir  = path.join(__dirname, 'certs');
     const keyPath  = path.join(certDir, 'key.pem');
     const certPath = path.join(certDir, 'cert.pem');
-    if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
+    const sansPath = path.join(certDir, '.sans'); // records which names the cert was built for
+
+    // The certificate must list every address clients actually type, as Subject
+    // Alternative Names — modern browsers ignore the legacy commonName entirely
+    // and reject a cert whose SAN list doesn't include the host being visited.
+    // The LAN IP can change between sessions (DHCP), so we rebuild the cert
+    // whenever the current address set differs from the one it was made for.
+    const ips = lanIPv4s();
+    const wantSans = ['localhost', 'msukaip.lan', '127.0.0.1', ...ips].join(',');
+    const haveSans = fs.existsSync(sansPath) ? fs.readFileSync(sansPath, 'utf8').trim() : '';
+    const stale = !fs.existsSync(keyPath) || !fs.existsSync(certPath) || haveSans !== wantSans;
+
+    if (stale) {
       const selfsigned = require('selfsigned');
+      const altNames = [
+        { type: 2, value: 'localhost' },      // type 2 = DNS name
+        { type: 2, value: 'msukaip.lan' },
+        { type: 7, ip: '127.0.0.1' },         // type 7 = IP address
+        ...ips.map(ip => ({ type: 7, ip })),
+      ];
       const pems = await selfsigned.generate(
         [{ name: 'commonName', value: 'msukaip.lan' }],
-        { days: 3650, keySize: 2048 }
+        { days: 3650, keySize: 2048, extensions: [{ name: 'subjectAltName', altNames }] }
       );
       fs.mkdirSync(certDir, { recursive: true });
       fs.writeFileSync(keyPath, pems.private);
       fs.writeFileSync(certPath, pems.cert);
-      console.log('🔐  Generated self-signed TLS certificate in certs/');
+      fs.writeFileSync(sansPath, wantSans);
+      console.log(`🔐  Generated self-signed TLS certificate (valid for: ${wantSans})`);
     }
     httpsServer = https.createServer({ key: fs.readFileSync(keyPath), cert: fs.readFileSync(certPath) }, app);
     io.attach(httpsServer);
