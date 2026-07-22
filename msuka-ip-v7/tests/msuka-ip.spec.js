@@ -23,6 +23,19 @@ async function studentLogin(page) {
   await page.fill('#login-password', USER_PASS);
   await page.click('button.btn-login');
   await page.waitForSelector('#app', { state: 'visible', timeout: 8000 });
+  // A user must accept the terms agreement after login before the chat is
+  // usable; it overlays the app, so tests dismiss it exactly as a user would.
+  await acceptAgreement(page);
+}
+
+// Accept the post-login terms modal if it is showing. No-op when it isn't
+// (e.g. already accepted earlier in the same browser session).
+async function acceptAgreement(page) {
+  const accept = page.locator('.agree-accept');
+  if (await accept.isVisible().catch(() => false)) {
+    await accept.click();
+    await page.locator('#agree-overlay').waitFor({ state: 'hidden', timeout: 4000 });
+  }
 }
 
 async function adminLogin(page) {
@@ -126,6 +139,34 @@ test.describe('1. Authentication Tests', () => {
     await page.click('button.btn-register');
     await expect(page.locator('#reg-msg')).toContainText('8 characters');
     console.log('✅ Short password validation works');
+  });
+
+  test('1.9 Terms agreement appears after login and must be accepted', async ({ page }) => {
+    await page.goto(BASE_URL);
+    await page.fill('#login-email', USER_EMAIL);
+    await page.fill('#login-password', USER_PASS);
+    await page.click('button.btn-login');
+    // The agreement overlays the app and must be dealt with first.
+    await expect(page.locator('#agree-overlay')).toBeVisible();
+    await expect(page.locator('#agree-title')).toContainText('Terms of Use');
+    await page.click('.agree-accept');
+    await expect(page.locator('#agree-overlay')).toBeHidden();
+    // After accepting, the chat is reachable.
+    await expect(page.locator('.left-panel')).toBeVisible();
+    console.log('✅ Agreement shown, accepted, chat unlocked');
+  });
+
+  test('1.10 Declining the agreement signs the user out', async ({ page }) => {
+    await page.goto(BASE_URL);
+    await page.fill('#login-email', USER_EMAIL);
+    await page.fill('#login-password', USER_PASS);
+    await page.click('button.btn-login');
+    await expect(page.locator('#agree-overlay')).toBeVisible();
+    await page.click('.agree-decline');
+    // Declining logs out — back to the auth screen, app hidden.
+    await expect(page.locator('#auth-screen')).toBeVisible();
+    await expect(page.locator('#app')).toBeHidden();
+    console.log('✅ Declining the agreement logs the user out');
   });
 
 });

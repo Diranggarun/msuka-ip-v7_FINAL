@@ -571,6 +571,31 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 ::-webkit-scrollbar-thumb{background:rgba(107,0,0,.2);border-radius:4px;}
 ::-webkit-scrollbar-thumb:hover{background:rgba(107,0,0,.4);}
 
+/* ── User agreement modal (once per login) ───────────────────────────────── */
+#agree-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(74,0,0,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:20px;}
+#agree-overlay.show{display:flex;animation:agreeFade .2s ease;}
+@keyframes agreeFade{from{opacity:0}to{opacity:1}}
+.agree-card{background:var(--white);border-radius:18px;max-width:460px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.4);overflow:hidden;animation:agreeIn .28s cubic-bezier(.34,1.56,.64,1);}
+@keyframes agreeIn{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
+.agree-head{display:flex;align-items:center;gap:14px;padding:20px 22px;background:linear-gradient(135deg,var(--maroon-dark),var(--maroon));color:#fff;}
+.agree-head img{width:46px;height:46px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 2px 6px rgba(0,0,0,.35));}
+.agree-head h3{font-family:'Cinzel',serif;font-size:1.1rem;color:var(--gold-bright);letter-spacing:.02em;margin:0;}
+.agree-head p{font-size:.72rem;color:rgba(255,255,255,.75);margin:2px 0 0;letter-spacing:.03em;}
+.agree-body{padding:18px 22px;overflow-y:auto;color:var(--text-dark);font-size:.86rem;line-height:1.55;}
+.agree-body>p{margin:0 0 12px;}
+.agree-body ul{margin:0 0 12px;padding-left:18px;display:flex;flex-direction:column;gap:9px;}
+.agree-body li{color:var(--text-mid);}
+.agree-body li strong{color:var(--maroon-dark);}
+.agree-fine{font-size:.76rem;color:var(--text-light);font-style:italic;}
+.agree-actions{display:flex;gap:10px;padding:16px 22px;border-top:1px solid var(--gray-200);background:var(--off-white);}
+.agree-actions button{flex:1;padding:.72rem;border-radius:10px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem;cursor:pointer;border:none;transition:transform .12s,box-shadow .15s,background .15s;}
+.agree-actions button:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+.agree-decline{background:var(--white);color:var(--maroon);border:1.5px solid var(--gray-200)!important;}
+.agree-decline:hover{background:var(--maroon-soft);}
+.agree-accept{background:linear-gradient(135deg,var(--maroon),var(--maroon-light));color:var(--gold-bright);box-shadow:var(--shadow-sm);}
+.agree-accept:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);}
+@media (max-width:480px){.agree-actions{flex-direction:column-reverse;}}
+
 /* ══ PHONE LAYOUT (≤768px) — single pane ══════════════════════════════════════
    MUST STAY LAST IN THIS STYLESHEET. Media queries carry no extra specificity,
    so these overrides only win by being later in source order than the desktop
@@ -894,6 +919,34 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
   </div>
 </div>
 
+<!-- USER AGREEMENT (shown once per login) -->
+<div id="agree-overlay" role="dialog" aria-modal="true" aria-labelledby="agree-title">
+  <div class="agree-card">
+    <div class="agree-head">
+      <img src="/msukaip-logo.png" alt="MSU seal"/>
+      <div>
+        <h3 id="agree-title">Terms of Use &amp; Data Privacy</h3>
+        <p>MSUkaIP — CICS LAN Messenger</p>
+      </div>
+    </div>
+    <div class="agree-body">
+      <p>Welcome, <strong id="agree-name">user</strong>. Before you continue, please read and accept the following:</p>
+      <ul>
+        <li><strong>Institutional use only.</strong> This system is for official communication within the College of Information and Computing Sciences. Access is limited to verified MSU institutional accounts.</li>
+        <li><strong>Respectful conduct.</strong> Harassment, spam, and sharing of offensive or unlawful content are prohibited and may lead to account suspension.</li>
+        <li><strong>Privacy (RA 10173).</strong> Your messages and files are encrypted at rest. Administrators can see account and login activity for security, but <em>cannot</em> read your message contents.</li>
+        <li><strong>Monitoring.</strong> Login attempts and security-relevant actions are recorded in an audit log for accountability.</li>
+        <li><strong>No misuse.</strong> Attempting to bypass authentication, access other accounts, or disrupt the service is a violation of this agreement.</li>
+      </ul>
+      <p class="agree-fine">By selecting “I Agree” you confirm you have read and accept these terms. Declining will sign you out.</p>
+    </div>
+    <div class="agree-actions">
+      <button class="agree-decline" onclick="declineAgreement()">Decline</button>
+      <button class="agree-accept" onclick="acceptAgreement()">I Agree</button>
+    </div>
+  </div>
+</div>
+
 <!-- ACTIVE CALL -->
 <div id="call-panel">
   <h4><svg class="icn" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.34 1.9.65 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.31 1.85.53 2.81.65A2 2 0 0 1 22 16.92z"/></svg> On Call</h4>
@@ -996,6 +1049,27 @@ function launchApp(u){
   requestNotifPermission();
   loadNotifList();
   initSocket();
+  maybeShowAgreement(u);
+}
+
+// The agreement pops after login and must be accepted to use the app. It shows
+// once per login session: the flag is cleared on logout (below), so a fresh
+// login shows it again, but returning from the feedback page does not re-nag.
+function maybeShowAgreement(u){
+  let agreed=false;
+  try{ agreed=sessionStorage.getItem('msuka_agreed')==='1'; }catch{}
+  if(agreed) return;
+  document.getElementById('agree-name').textContent=u.name||'user';
+  document.getElementById('agree-overlay').classList.add('show');
+}
+function acceptAgreement(){
+  try{ sessionStorage.setItem('msuka_agreed','1'); }catch{}
+  document.getElementById('agree-overlay').classList.remove('show');
+}
+function declineAgreement(){
+  // Declining means no consent → sign out.
+  document.getElementById('agree-overlay').classList.remove('show');
+  logout();
 }
 
 // Restore session if user navigated away (e.g. feedback page) and came back.
@@ -2149,7 +2223,7 @@ function logout(){
   // Persist notifications to this user's storage before wiping the in-memory copy;
   // they'll be reloaded on next login for the same account.
   saveNotifList();
-  try{ sessionStorage.removeItem('msuka_user'); }catch{}
+  try{ sessionStorage.removeItem('msuka_user'); sessionStorage.removeItem('msuka_agreed'); }catch{}
   currentUser=null; conversations={}; onlineUsers=[]; activeConvKey=null; currentNav='global';
   notifList = [];
   unreadCount = 0;

@@ -280,10 +280,10 @@ app.get('/uploads/:name', verifyTokenAllowQuery, (req,res) => {
 });
 
 // ── Login rate limiting (in-memory, per IP+email) ─────────────────────────────
-// 10 failed attempts within 15 minutes locks that IP+email pair for 15 minutes.
+// 5 failed attempts within 15 minutes locks that IP+email pair for 15 minutes.
 // Counters clear on successful login; the map is pruned to avoid growth.
 const loginFailures = new Map(); // key -> { count, firstAt }
-const RATE_MAX = 10, RATE_WINDOW_MS = 15*60*1000;
+const RATE_MAX = 5, RATE_WINDOW_MS = 15*60*1000;
 const rateKey = (req,email) => `${req.ip || req.socket.remoteAddress || '?'}|${String(email||'').trim().toLowerCase()}`;
 function loginLocked(key) {
   const e = loginFailures.get(key);
@@ -673,6 +673,27 @@ app.get('/api/admin/logs',verifyToken,adminOnly,async(req,res)=>{
 app.get('/api/admin/messages',verifyToken,adminOnly,async(req,res)=>{
   // Privacy: admins are not allowed to read user message content.
   res.status(403).json({error:'Message content is private and cannot be viewed by administrators.'});
+});
+
+// Per-user login-activity summary for the admin monitoring cards. Built entirely
+// from audit_logs (LOGIN = success, LOGIN_FAILED = failed attempt), so no new
+// tracking is introduced — this just aggregates what security logging already
+// records. LEFT JOIN keeps a user even with zero activity.
+app.get('/api/admin/login-activity',verifyToken,adminOnly,async(req,res)=>{
+  try {
+    const [rows]=await db.query(
+      `SELECT u.id, u.name, u.email, u.role, u.account_status,
+              SUM(CASE WHEN l.action='LOGIN'        THEN 1 ELSE 0 END) AS successes,
+              SUM(CASE WHEN l.action='LOGIN_FAILED' THEN 1 ELSE 0 END) AS failed,
+              MAX(CASE WHEN l.action='LOGIN' THEN l.created_at END)    AS last_login
+         FROM users u
+         LEFT JOIN audit_logs l ON l.user_id=u.id
+        GROUP BY u.id
+        ORDER BY (last_login IS NULL), last_login DESC`);
+    await logAudit(req.user.id,'VIEW_LOGIN_ACTIVITY','Viewed login-activity monitor',req);
+    res.json(rows);
+  }
+  catch { res.status(500).json({error:'Server error'}); }
 });
 
 // ── Survey responses ────────────────────────────────────────────────────────
