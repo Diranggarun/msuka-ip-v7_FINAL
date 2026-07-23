@@ -151,7 +151,11 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 .auth-deco span:nth-child(1){width:350px;height:350px;top:-120px;right:-100px;}
 .auth-deco span:nth-child(2){width:220px;height:220px;bottom:-80px;left:-70px;}
 .auth-deco span:nth-child(3){width:120px;height:120px;top:25%;right:6%;}
-.auth-card{background:rgba(255,255,255,.08);backdrop-filter:blur(10px) saturate(130%);-webkit-backdrop-filter:blur(10px) saturate(130%);border-radius:20px;width:400px;box-shadow:0 12px 40px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.25);overflow:hidden;position:relative;z-index:1;animation:cardIn .6s .52s both cubic-bezier(.34,1.56,.64,1);border:1px solid rgba(255,255,255,.2);}
+/* Layered depth (high-end "machined hardware" reasoning): a top inner highlight,
+   a faint gold tray-edge ring, and two diffused ambient shadows — one neutral,
+   one maroon-tinted — so the glass card reads as sitting in a frame rather than
+   pasted on. All within the maroon/gold identity. */
+.auth-card{background:rgba(255,255,255,.08);backdrop-filter:blur(10px) saturate(130%);-webkit-backdrop-filter:blur(10px) saturate(130%);border-radius:22px;width:400px;box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 0 0 1px rgba(212,160,23,.14),0 26px 60px -14px rgba(0,0,0,.52),0 10px 28px -10px rgba(74,0,0,.34);overflow:hidden;position:relative;z-index:1;animation:cardIn .6s .52s both cubic-bezier(.34,1.56,.64,1);border:1px solid rgba(255,255,255,.2);}
 @keyframes cardIn{from{opacity:0;transform:translateY(28px) scale(.96)}to{opacity:1;transform:none}}
 
 .auth-logo-bar{background:transparent;padding:1.6rem 1.5rem 1.3rem;text-align:center;position:relative;overflow:hidden;border-bottom:1px solid rgba(255,255,255,.12);}
@@ -199,6 +203,17 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 /* Press feedback — the button dips under the finger/click so the interface
    visibly acknowledges the press. Placed after :hover so it wins while pressed. */
 .btn:active{transform:scale(.97);transition-duration:.06s;}
+/* Button-in-Button CTA: the arrow rides in its own circular well rather than
+   sitting naked next to the label, and glides right on hover — the "kinetic
+   tension" that makes a primary action feel considered. */
+.btn-login,.btn-register{display:flex;align-items:center;justify-content:center;gap:11px;}
+.btn-arrow{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:transform .32s cubic-bezier(.23,1,.32,1),background .32s;}
+.btn-arrow svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+.btn-login .btn-arrow{background:rgba(212,160,23,.20);}
+.btn-register .btn-arrow{background:rgba(74,0,0,.14);}
+.btn-login:hover .btn-arrow{transform:translateX(4px);background:rgba(212,160,23,.34);}
+.btn-register:hover .btn-arrow{transform:translateX(4px);background:rgba(74,0,0,.22);}
+@media (prefers-reduced-motion:reduce){.btn-arrow{transition:none;}.btn-login:hover .btn-arrow,.btn-register:hover .btn-arrow{transform:none;}}
 .amsg{padding:.6rem .9rem;border-radius:8px;font-size:.8rem;margin-top:.7rem;text-align:center;display:none;font-weight:700;}
 .amsg.error{background:#fde8e8;color:#c0392b;border:1px solid #f5c6c6;}
 .amsg.success{background:#e8f8f0;color:#1a7a4a;border:1px solid #b8e8ce;}
@@ -764,7 +779,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
           </button>
         </div>
       </div>
-      <button class="btn btn-login" onclick="login()">Sign In</button>
+      <button class="btn btn-login" onclick="login()"><span>Sign In</span><span class="btn-arrow"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></button>
       <div class="amsg" id="login-msg"></div>
       <p class="adivider" style="margin-top:.8rem;">Don't have an account? <a href="#" onclick="switchAuthTab('register')">Register here</a></p>
     </div>
@@ -804,7 +819,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
           <option value="faculty">Faculty</option>
         </select>
       </div>
-      <button class="btn btn-register" onclick="register()">Create Account</button>
+      <button class="btn btn-register" onclick="register()"><span>Create Account</span><span class="btn-arrow"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></button>
       <div class="amsg" id="reg-msg"></div>
       <p class="adivider" style="margin-top:.8rem;">Already have an account? <a href="#" onclick="switchAuthTab('login')">Sign in</a></p>
     </div>
