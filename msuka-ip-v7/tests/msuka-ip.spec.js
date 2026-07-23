@@ -65,7 +65,10 @@ test.describe('1. Authentication Tests', () => {
 
   test('1.1 Login page loads correctly', async ({ page }) => {
     await page.goto(BASE_URL);
-    await expect(page.locator('h1')).toContainText('MSUkaIP');
+    // The landing hero is the page's single <h1>; the MSUkaIP brand label sits
+    // in the sign-in card beside it.
+    await expect(page.locator('h1')).toBeVisible();
+    await expect(page.locator('.auth-brand-name')).toContainText('MSUkaIP');
     await expect(page.locator('#login-email')).toBeVisible();
     await expect(page.locator('#login-password')).toBeVisible();
     console.log('✅ Login page loaded successfully');
@@ -82,7 +85,11 @@ test.describe('1. Authentication Tests', () => {
 
   test('1.3 Login with invalid credentials shows error', async ({ page }) => {
     await page.goto(BASE_URL);
-    await page.fill('#login-email', 'wrong@cics.msu.edu');
+    // Unique email per run: a fixed one accumulates failures across repeated
+    // suite runs and trips the 5-attempt lockout (429), which would return
+    // "Too many failed attempts" instead of the "Invalid credentials" this
+    // test is checking. An unknown email still returns "Invalid credentials".
+    await page.fill('#login-email', `wrong_${Date.now()}@cics.msu.edu`);
     await page.fill('#login-password', 'wrongpassword');
     await page.click('button.btn-login');
     await expect(page.locator('#login-msg')).toBeVisible();

@@ -102,9 +102,44 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    2.2 MB. At quality 85 the JPEG is 280 KB with no visible difference behind
    the login card's dark overlay — an 8x saving on the first thing every client
    downloads. */
-#auth-screen{display:flex;align-items:center;justify-content:center;height:100vh;background:url('/login-bg.jpg') center center / cover no-repeat fixed;position:relative;overflow:hidden;}
-#auth-screen::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,0,0,.18),rgba(74,0,0,.12));pointer-events:none;}
-#auth-screen::after{content:'';position:absolute;width:900px;height:900px;border-radius:50%;border:1px solid rgba(212,160,23,.08);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;}
+#auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:clamp(20px,4vw,48px);background:url('/login-bg.jpg') center center / cover no-repeat fixed;position:relative;overflow-x:hidden;overflow-y:auto;}
+/* Overlay darkened so the white hero text clears WCAG AA over the photo, and so
+   the network animation reads as glowing lines rather than washing out. */
+#auth-screen::before{content:'';position:absolute;inset:0;z-index:0;background:linear-gradient(120deg,rgba(18,7,3,.80),rgba(74,0,0,.62) 60%,rgba(30,10,4,.72));pointer-events:none;}
+#auth-screen::after{content:'';position:absolute;width:900px;height:900px;border-radius:50%;border:1px solid rgba(212,160,23,.08);top:50%;left:50%;transform:translate(-50%,-50%);z-index:1;pointer-events:none;}
+
+/* ── Landing hero (the network animation lives on #net-canvas behind this) ── */
+#net-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;}
+.landing-wrap{position:relative;z-index:2;display:grid;grid-template-columns:1.05fr .95fr;align-items:center;gap:clamp(28px,5vw,72px);max-width:1080px;width:100%;}
+.landing-hero{color:#fff;max-width:540px;}
+.lh-eyebrow{font-size:.72rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-bright);margin:0 0 16px;}
+.lh-title{font-family:'Cinzel',serif;font-size:clamp(2.3rem,5vw,3.9rem);line-height:1.05;font-weight:700;letter-spacing:-.005em;margin:0 0 18px;text-shadow:0 4px 26px rgba(0,0,0,.55);text-wrap:balance;}
+.lh-accent{color:var(--gold-bright);}
+.lh-sub{font-size:1.02rem;line-height:1.6;color:rgba(255,255,255,.85);margin:0 0 26px;max-width:46ch;}
+.lh-feats{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:13px;}
+.lh-feats li{display:flex;align-items:center;gap:13px;font-size:.94rem;font-weight:600;color:rgba(255,255,255,.92);}
+.lh-ico{width:38px;height:38px;flex-shrink:0;border-radius:11px;display:flex;align-items:center;justify-content:center;background:rgba(212,160,23,.15);border:1px solid rgba(212,160,23,.32);color:var(--gold-bright);}
+.lh-ico svg{width:19px;height:19px;}
+.landing-wrap .auth-card{justify-self:center;margin:0;}
+
+/* Staggered load-in — the hero assembles top-to-bottom, the card arrives last. */
+@keyframes lhUp{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:none;}}
+.lh-eyebrow{animation:lhUp .6s .05s both cubic-bezier(.2,.7,.3,1);}
+.lh-title{animation:lhUp .7s .16s both cubic-bezier(.2,.7,.3,1);}
+.lh-sub{animation:lhUp .7s .30s both cubic-bezier(.2,.7,.3,1);}
+.lh-feats{animation:lhUp .7s .44s both cubic-bezier(.2,.7,.3,1);}
+
+@media (max-width:900px){
+  #auth-screen{align-items:flex-start;}
+  .landing-wrap{grid-template-columns:1fr;max-width:440px;gap:26px;padding:8px 0 12px;}
+  .landing-hero{text-align:center;max-width:none;}
+  .lh-sub{margin-left:auto;margin-right:auto;}
+  .lh-feats{align-items:center;}
+  .lh-title{font-size:clamp(2rem,9vw,2.9rem);}
+}
+@media (prefers-reduced-motion:reduce){
+  .lh-eyebrow,.lh-title,.lh-sub,.lh-feats{animation:none!important;}
+}
 .auth-watermarks{position:absolute;top:24px;right:28px;display:flex;align-items:center;gap:18px;z-index:2;pointer-events:none;}
 .auth-watermarks img{width:110px;height:110px;object-fit:contain;opacity:.45;filter:drop-shadow(0 2px 8px rgba(0,0,0,.4));}
 /* Per-logo visual balance: scale each artwork so the *logo content* (not the image canvas) looks the same weight. */
@@ -116,14 +151,17 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 .auth-deco span:nth-child(1){width:350px;height:350px;top:-120px;right:-100px;}
 .auth-deco span:nth-child(2){width:220px;height:220px;bottom:-80px;left:-70px;}
 .auth-deco span:nth-child(3){width:120px;height:120px;top:25%;right:6%;}
-.auth-card{background:rgba(255,255,255,.08);backdrop-filter:blur(10px) saturate(130%);-webkit-backdrop-filter:blur(10px) saturate(130%);border-radius:20px;width:400px;box-shadow:0 12px 40px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.25);overflow:hidden;position:relative;z-index:1;animation:cardIn .5s cubic-bezier(.34,1.56,.64,1);border:1px solid rgba(255,255,255,.2);}
+.auth-card{background:rgba(255,255,255,.08);backdrop-filter:blur(10px) saturate(130%);-webkit-backdrop-filter:blur(10px) saturate(130%);border-radius:20px;width:400px;box-shadow:0 12px 40px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.25);overflow:hidden;position:relative;z-index:1;animation:cardIn .6s .52s both cubic-bezier(.34,1.56,.64,1);border:1px solid rgba(255,255,255,.2);}
 @keyframes cardIn{from{opacity:0;transform:translateY(28px) scale(.96)}to{opacity:1;transform:none}}
 
 .auth-logo-bar{background:transparent;padding:1.6rem 1.5rem 1.3rem;text-align:center;position:relative;overflow:hidden;border-bottom:1px solid rgba(255,255,255,.12);}
 .auth-logo-bar::before{content:'';position:absolute;top:-30px;left:50%;transform:translateX(-50%);width:200px;height:200px;border-radius:50%;background:rgba(212,160,23,.06);}
 .auth-logo-bar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),var(--gold-bright),var(--gold),transparent);}
 .auth-logo-bar img{width:88px;height:88px;object-fit:contain;filter:drop-shadow(0 4px 16px rgba(0,0,0,.5));display:block;margin:0 auto .7rem;position:relative;z-index:1;}
-.auth-logo-bar h1{font-family:'Cinzel',serif;font-size:1.55rem;font-weight:700;color:var(--gold-bright);letter-spacing:.1em;text-shadow:0 2px 10px rgba(0,0,0,.4);position:relative;z-index:1;}
+/* Brand label inside the login card. It used to be the page's <h1>; the landing
+   hero headline is now the single <h1>, so this is a styled div (one h1 per page
+   is the accessibility rule) — same look, different element. */
+.auth-logo-bar .auth-brand-name{font-family:'Cinzel',serif;font-size:1.55rem;font-weight:700;color:var(--gold-bright);letter-spacing:.1em;text-shadow:0 2px 10px rgba(0,0,0,.4);position:relative;z-index:1;}
 .auth-logo-bar p{color:rgba(255,255,255,.6);font-size:.7rem;margin-top:4px;letter-spacing:.05em;position:relative;z-index:1;}
 .auth-seal-frame{width:130px;height:130px;border-radius:50%;background:#fff;padding:0;display:flex;align-items:center;justify-content:center;position:relative;margin:0 auto .9rem;box-shadow:0 0 0 2px var(--gold),0 0 0 5px rgba(212,160,23,.25),0 10px 28px rgba(0,0,0,.5);overflow:hidden;z-index:1;}
 .auth-seal-frame::before{content:'';position:absolute;inset:-12px;border-radius:50%;border:1px dashed rgba(212,160,23,.4);pointer-events:none;}
@@ -678,10 +716,25 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
     <img src="/cics-logo.webp" alt=""/>
   </div>
   <div class="auth-deco"><span></span><span></span><span></span></div>
+  <!-- Landing: an ambient network animation (Canvas) behind a hero + the login
+       card. The network is the subject made visible — students as nodes,
+       messages travelling the links between them, over the campus LAN. -->
+  <canvas id="net-canvas" aria-hidden="true"></canvas>
+  <div class="landing-wrap">
+    <div class="landing-hero">
+      <p class="lh-eyebrow">Mindanao State University · CICS</p>
+      <h1 class="lh-title">Stay connected.<br><span class="lh-accent">Even offline.</span></h1>
+      <p class="lh-sub">MSUkaIP keeps the college talking — messages, files, and live voice — over the campus network. No internet required, encrypted end to end at rest.</p>
+      <ul class="lh-feats">
+        <li><span class="lh-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>Encrypted at rest</li>
+        <li><span class="lh-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg></span>LAN-first, works offline</li>
+        <li><span class="lh-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg></span>Peer-to-peer voice calls</li>
+      </ul>
+    </div>
   <div class="auth-card">
     <div class="auth-logo-bar">
       <div class="auth-seal-frame"><img src="/msukaip-logo.png" alt="Mindanao State University"/></div>
-      <h1>MSUkaIP</h1>
+      <div class="auth-brand-name">MSUkaIP</div>
       <p class="auth-sub">CICS LAN Messenger</p>
       <p class="auth-sub2">Mindanao State University</p>
       <p class="auth-sub3">Main Campus</p>
@@ -721,7 +774,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
       <div class="form-group">
         <label>Password</label>
         <div class="pw-wrap">
-          <input type="password" id="reg-password" placeholder="Min 6 characters"/>
+          <input type="password" id="reg-password" placeholder="Min 8 characters"/>
           <button type="button" class="pw-toggle" aria-label="Show password" aria-pressed="false" onclick="togglePw(this,'reg-password')">
             <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             <svg class="icon-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a19.77 19.77 0 0 1 5.06-5.94"/><path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a19.86 19.86 0 0 1-3.17 4.19"/><path d="M14.12 14.12A3 3 0 1 1 9.88 9.88"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
@@ -750,6 +803,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
       <p class="adivider" style="margin-top:.8rem;">Already have an account? <a href="#" onclick="switchAuthTab('login')">Sign in</a></p>
     </div>
   </div>
+  </div><!-- /landing-wrap -->
 </div>
 
 <!-- MESSENGER APP -->
@@ -2262,6 +2316,77 @@ function logout(){
   document.getElementById('toast-container').innerHTML='';
   switchNav('global', document.getElementById('nav-global'));
 }
+
+// ── Landing network animation ─────────────────────────────────────────────
+// A living mesh drawn on #net-canvas: each node is a member on the LAN, links
+// join the near ones, and now and then a message pulse travels a link — the
+// app's own subject rendered as ambient motion behind the sign-in. Pure Canvas
+// (no library, so it runs on the offline LAN). It honours prefers-reduced-motion
+// (one static frame, no loop) and stops itself once the user signs in, when the
+// sign-in screen is hidden, or when the tab is in the background.
+(function networkBg(){
+  const canvas=document.getElementById('net-canvas');
+  if(!canvas || !canvas.getContext) return;
+  const ctx=canvas.getContext('2d');
+  const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const GOLD='212,160,23', LIGHT='255,240,200', LINK=140;   // LINK = px under which two nodes join
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  let w=0,h=0, nodes=[], pulses=[], raf=null;
+  const rnd=(a,b)=>a+Math.random()*(b-a);
+  const mkNode=()=>({x:Math.random()*w,y:Math.random()*h,vx:rnd(-.22,.22),vy:rnd(-.22,.22),r:rnd(1,2.6)});
+
+  function resize(){
+    const rect=canvas.getBoundingClientRect(); w=rect.width; h=rect.height;
+    canvas.width=Math.round(w*dpr); canvas.height=Math.round(h*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    const target=Math.min(60, Math.max(22, Math.round(w*h/24000)));   // node count scales with area, capped
+    nodes=[]; for(let i=0;i<target;i++) nodes.push(mkNode());
+    if(reduce) draw();                                                // repaint the static mesh after a resize
+  }
+  function draw(){
+    ctx.clearRect(0,0,w,h);
+    if(!reduce) for(const n of nodes){ n.x+=n.vx; n.y+=n.vy; if(n.x<0||n.x>w)n.vx*=-1; if(n.y<0||n.y>h)n.vy*=-1; }
+    for(let i=0;i<nodes.length;i++) for(let j=i+1;j<nodes.length;j++){
+      const a=nodes[i], b=nodes[j], d=Math.hypot(a.x-b.x,a.y-b.y);
+      if(d<LINK){ ctx.strokeStyle=`rgba(${GOLD},${(1-d/LINK)*.28})`; ctx.lineWidth=1;
+        ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); }
+    }
+    if(!reduce){
+      if(pulses.length<6 && Math.random()<.03){                       // occasionally launch a message pulse
+        const a=nodes[(Math.random()*nodes.length)|0];
+        const near=nodes.filter(b=>b!==a && Math.hypot(a.x-b.x,a.y-b.y)<LINK);
+        if(near.length) pulses.push({a,b:near[(Math.random()*near.length)|0],t:0});
+      }
+      for(let k=pulses.length-1;k>=0;k--){ const p=pulses[k]; p.t+=.02;
+        if(p.t>=1){ pulses.splice(k,1); continue; }
+        const x=p.a.x+(p.b.x-p.a.x)*p.t, y=p.a.y+(p.b.y-p.a.y)*p.t;   // brightest at the midpoint of its travel
+        ctx.beginPath(); ctx.arc(x,y,2.2,0,Math.PI*2);
+        ctx.fillStyle=`rgba(${LIGHT},${.2+.8*(1-Math.abs(.5-p.t)*2)})`; ctx.fill();
+      }
+    }
+    for(const n of nodes){ ctx.beginPath(); ctx.arc(n.x,n.y,n.r,0,Math.PI*2); ctx.fillStyle=`rgba(${GOLD},.7)`; ctx.fill(); }
+  }
+  function loop(){ draw(); raf=requestAnimationFrame(loop); }
+  function start(){ if(raf==null && !reduce) raf=requestAnimationFrame(loop); }
+  function stop(){ if(raf!=null){ cancelAnimationFrame(raf); raf=null; } }
+  function authVisible(){ const s=document.getElementById('auth-screen'); return s && getComputedStyle(s).display!=='none' && !document.hidden; }
+  // Re-measure then start/stop. Sizing here (not just at init) means the canvas
+  // gets its true dimensions whenever the page actually becomes visible — rAF
+  // and ResizeObserver are both paused while a tab is hidden, so a first paint
+  // can otherwise be skipped entirely.
+  function sync(){ if(authVisible()){ resize(); start(); } else stop(); }
+
+  sync();                                    // best-effort now
+  requestAnimationFrame(sync);               // correct size after first layout (when visible)
+  window.addEventListener('load', sync);     // and once all resources have loaded
+  window.addEventListener('resize', resize);
+  if(window.ResizeObserver){ new ResizeObserver(resize).observe(canvas); }
+  document.addEventListener('visibilitychange', sync);
+  // launchApp()/logout() flip the display style on these two — restart or stop accordingly.
+  const mo=new MutationObserver(sync);
+  ['auth-screen','app'].forEach(id=>{ const el=document.getElementById(id); if(el) mo.observe(el,{attributes:true,attributeFilter:['style']}); });
+  if(reduce) draw();                         // static mesh for reduced-motion users
+})();
 </script>
 </body>
 </html>
