@@ -163,6 +163,31 @@ test.describe('1. Authentication Tests', () => {
     console.log('✅ Agreement shown, accepted, chat unlocked');
   });
 
+  // Regression guard: .auth-card once had overflow:hidden with no height cap,
+  // which clipped the taller Create Account form on short viewports so the
+  // submit button could not be reached. The fix (max-height + overflow-y:auto)
+  // has been overwritten once by unrelated styling edits — this test fails if
+  // that happens again.
+  test('1.11 register submit stays reachable on a short viewport', async ({ page }) => {
+    await page.setViewportSize({ width: 420, height: 600 });
+    await page.goto(BASE_URL);
+    await page.click('#tab-register-btn');
+    // Without the height cap the card simply grows past the bottom of the
+    // screen (805px tall in a 600px window) and nothing can scroll to its
+    // footer. The cap is what keeps it on-screen and makes it scroll its own
+    // content, so assert the card fits the viewport.
+    const cardH = await page.locator('.auth-card')
+      .evaluate(el => el.getBoundingClientRect().height);
+    const viewportH = page.viewportSize().height;
+    expect(cardH, 'auth card is taller than the screen, so its footer is unreachable')
+      .toBeLessThanOrEqual(viewportH);
+    // And the submit button must be genuinely clickable once scrolled to.
+    const submit = page.locator('button.btn-register');
+    await submit.scrollIntoViewIfNeeded();
+    await submit.click({ trial: true });
+    console.log(`✅ Register submit reachable at 420x600 (card ${Math.round(cardH)}px in ${viewportH}px viewport)`);
+  });
+
   test('1.10 Declining the agreement signs the user out', async ({ page }) => {
     await page.goto(BASE_URL);
     await page.fill('#login-email', USER_EMAIL);

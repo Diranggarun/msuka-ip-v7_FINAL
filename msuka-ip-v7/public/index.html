@@ -166,7 +166,12 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    a faint gold tray-edge ring, and two diffused ambient shadows — one neutral,
    one maroon-tinted — so the glass card reads as sitting in a frame rather than
    pasted on. All within the maroon/gold identity. */
-.auth-card{background:rgba(255,255,255,.08);backdrop-filter:blur(10px) saturate(130%);-webkit-backdrop-filter:blur(10px) saturate(130%);border-radius:22px;width:400px;box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 0 0 1px rgba(212,160,23,.14),0 26px 60px -14px rgba(0,0,0,.52),0 10px 28px -10px rgba(74,0,0,.34);overflow:hidden;position:relative;z-index:1;animation:cardIn .6s .52s both var(--ease-overshoot);border:1px solid rgba(255,255,255,.2);}
+/* max-height + overflow-y:auto (from sahara's fix): without a height cap and
+   with overflow:hidden, the bottom of the taller Create Account form — submit
+   button included — was clipped on short viewports with no way to scroll to it.
+   Kept alongside the layered depth styling; overflow-x stays hidden so the
+   rounded corners still clip the header artwork. */
+.auth-card{background:rgba(255,255,255,.08);backdrop-filter:blur(10px) saturate(130%);-webkit-backdrop-filter:blur(10px) saturate(130%);border-radius:22px;width:400px;max-height:92vh;box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 0 0 1px rgba(212,160,23,.14),0 26px 60px -14px rgba(0,0,0,.52),0 10px 28px -10px rgba(74,0,0,.34);overflow-y:auto;overflow-x:hidden;position:relative;z-index:1;animation:cardIn .6s .52s both var(--ease-overshoot);border:1px solid rgba(255,255,255,.2);}
 @keyframes cardIn{from{opacity:0;transform:translateY(28px) scale(.96)}to{opacity:1;transform:none}}
 
 .auth-logo-bar{background:transparent;padding:1.6rem 1.5rem 1.3rem;text-align:center;position:relative;overflow:hidden;border-bottom:1px solid rgba(255,255,255,.12);}
