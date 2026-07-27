@@ -22,6 +22,17 @@
   --shadow-sm:0 2px 8px rgba(107,0,0,.12);
   --shadow-md:0 4px 20px rgba(107,0,0,.18);
   --shadow-lg:0 8px 40px rgba(107,0,0,.25);
+  /* ── Motion (Emil Kowalski curves) — see DESIGN.md ────────────────────────
+     --ease-out    entrances/hovers: strong, responsive
+     --ease-drawer on-screen movement, sheets (iOS-like)
+     --ease-overshoot  rare delight only (e.g. once-per-login card entry) */
+  --ease-out:cubic-bezier(.23,1,.32,1);
+  --ease-drawer:cubic-bezier(.32,.72,0,1);
+  --ease-overshoot:cubic-bezier(.34,1.56,.64,1);
+  --dur-fast:.12s; --dur-base:.18s; --dur-slow:.32s;
+  /* ── Spacing scale (8px base) and radius scale — the standard for new UI ── */
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-6:24px; --sp-8:32px; --sp-12:48px;
+  --r-sm:8px; --r-md:12px; --r-lg:18px; --r-xl:22px;
   /* Paper grain, defined once and reused. An inline SVG turbulence filter costs
      no HTTP request and no image file, which matters on an offline LAN.
      numOctaves:2 (not 3) and a 160px tile keep the one-off rasterization cheap;
@@ -124,10 +135,10 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 
 /* Staggered load-in — the hero assembles top-to-bottom, the card arrives last. */
 @keyframes lhUp{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:none;}}
-.lh-eyebrow{animation:lhUp .6s .05s both cubic-bezier(.23,1,.32,1);}
-.lh-title{animation:lhUp .7s .16s both cubic-bezier(.23,1,.32,1);}
-.lh-sub{animation:lhUp .7s .30s both cubic-bezier(.23,1,.32,1);}
-.lh-feats{animation:lhUp .7s .44s both cubic-bezier(.23,1,.32,1);}
+.lh-eyebrow{animation:lhUp .6s .05s both var(--ease-out);}
+.lh-title{animation:lhUp .7s .16s both var(--ease-out);}
+.lh-sub{animation:lhUp .7s .30s both var(--ease-out);}
+.lh-feats{animation:lhUp .7s .44s both var(--ease-out);}
 
 @media (max-width:900px){
   #auth-screen{align-items:flex-start;}
@@ -155,7 +166,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    a faint gold tray-edge ring, and two diffused ambient shadows — one neutral,
    one maroon-tinted — so the glass card reads as sitting in a frame rather than
    pasted on. All within the maroon/gold identity. */
-.auth-card{background:rgba(255,255,255,.08);backdrop-filter:blur(10px) saturate(130%);-webkit-backdrop-filter:blur(10px) saturate(130%);border-radius:22px;width:400px;box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 0 0 1px rgba(212,160,23,.14),0 26px 60px -14px rgba(0,0,0,.52),0 10px 28px -10px rgba(74,0,0,.34);overflow:hidden;position:relative;z-index:1;animation:cardIn .6s .52s both cubic-bezier(.34,1.56,.64,1);border:1px solid rgba(255,255,255,.2);}
+.auth-card{background:rgba(255,255,255,.08);backdrop-filter:blur(10px) saturate(130%);-webkit-backdrop-filter:blur(10px) saturate(130%);border-radius:22px;width:400px;box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 0 0 1px rgba(212,160,23,.14),0 26px 60px -14px rgba(0,0,0,.52),0 10px 28px -10px rgba(74,0,0,.34);overflow:hidden;position:relative;z-index:1;animation:cardIn .6s .52s both var(--ease-overshoot);border:1px solid rgba(255,255,255,.2);}
 @keyframes cardIn{from{opacity:0;transform:translateY(28px) scale(.96)}to{opacity:1;transform:none}}
 
 .auth-logo-bar{background:transparent;padding:1.6rem 1.5rem 1.3rem;text-align:center;position:relative;overflow:hidden;border-bottom:1px solid rgba(255,255,255,.12);}
@@ -195,7 +206,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 .pw-toggle.is-visible .icon-eye-off{display:block;}
 /* transition names exact properties (not `all`), and the strong ease-out curve
    gives the hover lift intention. */
-.btn{width:100%;padding:.78rem;border:none;border-radius:10px;font-size:.92rem;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;margin-top:.4rem;transition:transform .18s cubic-bezier(.23,1,.32,1),box-shadow .2s;letter-spacing:.02em;}
+.btn{width:100%;padding:.78rem;border:none;border-radius:10px;font-size:.92rem;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;margin-top:.4rem;transition:transform .18s var(--ease-out),box-shadow .2s;letter-spacing:.02em;}
 .btn-login{background:linear-gradient(135deg,var(--maroon-dark),var(--maroon-light));color:var(--gold-bright);box-shadow:var(--shadow-sm);}
 .btn-login:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);}
 .btn-register{background:linear-gradient(135deg,var(--gold-dark),var(--gold));color:var(--maroon-dark);box-shadow:var(--shadow-sm);}
@@ -207,7 +218,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    sitting naked next to the label, and glides right on hover — the "kinetic
    tension" that makes a primary action feel considered. */
 .btn-login,.btn-register{display:flex;align-items:center;justify-content:center;gap:11px;}
-.btn-arrow{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:transform .32s cubic-bezier(.23,1,.32,1),background .32s;}
+.btn-arrow{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:transform .32s var(--ease-out),background .32s;}
 .btn-arrow svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
 .btn-login .btn-arrow{background:rgba(212,160,23,.20);}
 .btn-register .btn-arrow{background:rgba(74,0,0,.14);}
@@ -401,9 +412,9 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 @keyframes msgInMine  {from{opacity:0;transform:translate(14px,6px);}to{opacity:1;transform:none;}}
 @keyframes msgInTheirs{from{opacity:0;transform:translate(-14px,6px);}to{opacity:1;transform:none;}}
 @keyframes msgInCenter{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
-.msg-row.is-new.mine  {animation:msgInMine   .18s cubic-bezier(.23,1,.32,1);}
-.msg-row.is-new.theirs{animation:msgInTheirs .18s cubic-bezier(.23,1,.32,1);}
-.msg-row.is-new.system,.msg-row.is-new.announcement{animation:msgInCenter .18s cubic-bezier(.23,1,.32,1);}
+.msg-row.is-new.mine  {animation:msgInMine   .18s var(--ease-out);}
+.msg-row.is-new.theirs{animation:msgInTheirs .18s var(--ease-out);}
+.msg-row.is-new.system,.msg-row.is-new.announcement{animation:msgInCenter .18s var(--ease-out);}
 .msg-row.mine{flex-direction:row-reverse;}
 .msg-row.theirs{flex-direction:row;}
 .msg-row.system,.msg-row.announcement{justify-content:center;margin:.5rem 0;}
@@ -482,7 +493,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 #msg-input{flex:1;padding:.65rem 1.05rem;background:var(--gray-100);border:1.5px solid transparent;border-radius:22px;font-size:.9rem;resize:none;max-height:120px;outline:none;font-family:'Nunito',sans-serif;line-height:1.45;color:var(--text-dark);transition:border-color .15s,background .15s,box-shadow .15s;}
 #msg-input:focus{border-color:var(--gold);background:var(--white);box-shadow:0 0 0 3px rgba(212,160,23,.12);}
 #msg-input::placeholder{color:var(--text-light);}
-.send-btn{width:42px;height:42px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--maroon),var(--maroon-light));color:var(--gold-bright);cursor:pointer;font-size:.95rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:transform .15s cubic-bezier(.23,1,.32,1),box-shadow .15s;box-shadow:0 3px 10px rgba(107,0,0,.25);}
+.send-btn{width:42px;height:42px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--maroon),var(--maroon-light));color:var(--gold-bright);cursor:pointer;font-size:.95rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:transform .15s var(--ease-out),box-shadow .15s;box-shadow:0 3px 10px rgba(107,0,0,.25);}
 .send-btn:active{transform:scale(.9);transition-duration:.06s;}
 .send-btn:hover{transform:translateY(-1px) scale(1.04);box-shadow:0 5px 14px rgba(107,0,0,.35);}
 .send-btn:active{transform:scale(.96);}
@@ -499,7 +510,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
   box-shadow:0 20px 50px rgba(74,0,0,.25),0 4px 14px rgba(107,0,0,.12),inset 0 1px 0 rgba(255,255,255,.6);
   border:1px solid rgba(255,255,255,.55);
   display:none;flex-direction:column;overflow:hidden;z-index:50;font-family:'Nunito',sans-serif;}
-.emoji-picker.show{display:flex;animation:emojiIn .22s cubic-bezier(.34,1.56,.64,1);}
+.emoji-picker.show{display:flex;animation:emojiIn .22s var(--ease-overshoot);}
 .emoji-picker::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(400px 200px at 100% 0%,rgba(212,160,23,.18),transparent 60%),radial-gradient(300px 200px at 0% 100%,rgba(107,0,0,.10),transparent 60%);border-radius:inherit;}
 @keyframes emojiIn{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
 .emoji-search{padding:11px 12px 9px;border-bottom:1px solid rgba(212,160,23,.22);position:relative;background:rgba(255,255,255,.25);}
@@ -527,7 +538,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 /* Full hairline border instead of a 4px maroon side-stripe (a flagged
    anti-pattern). The leading .toast-icon already carries the message type;
    the border just defines the card edge against the page. */
-.toast{background:var(--white);border-radius:12px;padding:.75rem 1rem;min-width:280px;max-width:340px;box-shadow:var(--shadow-lg);border:1px solid var(--gray-200);display:flex;align-items:flex-start;gap:10px;pointer-events:all;animation:toastIn .3s cubic-bezier(.34,1.56,.64,1);cursor:pointer;transition:transform .2s;}
+.toast{background:var(--white);border-radius:12px;padding:.75rem 1rem;min-width:280px;max-width:340px;box-shadow:var(--shadow-lg);border:1px solid var(--gray-200);display:flex;align-items:flex-start;gap:10px;pointer-events:all;animation:toastIn .3s var(--ease-overshoot);cursor:pointer;transition:transform .2s;}
 .toast:hover{transform:translateX(-4px);}
 .toast.out{animation:toastOut .3s ease forwards;}
 .toast-icon{font-size:1.4rem;flex-shrink:0;margin-top:1px;}
@@ -637,7 +648,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 #agree-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(74,0,0,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:20px;}
 #agree-overlay.show{display:flex;animation:agreeFade .2s ease;}
 @keyframes agreeFade{from{opacity:0}to{opacity:1}}
-.agree-card{background:var(--white);border-radius:18px;max-width:460px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.4);overflow:hidden;animation:agreeIn .28s cubic-bezier(.34,1.56,.64,1);}
+.agree-card{background:var(--white);border-radius:18px;max-width:460px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.4);overflow:hidden;animation:agreeIn .28s var(--ease-overshoot);}
 @keyframes agreeIn{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
 .agree-head{display:flex;align-items:center;gap:14px;padding:20px 22px;background:linear-gradient(135deg,var(--maroon-dark),var(--maroon));color:#fff;}
 .agree-head img{width:46px;height:46px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 2px 6px rgba(0,0,0,.35));}

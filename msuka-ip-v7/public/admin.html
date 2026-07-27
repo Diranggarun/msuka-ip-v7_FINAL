@@ -17,6 +17,11 @@
   --shadow-sm:0 2px 8px rgba(107,0,0,.12);
   --shadow-md:0 4px 20px rgba(107,0,0,.18);
   --shadow-lg:0 8px 40px rgba(107,0,0,.25);
+  /* Motion / spacing / radius tokens — shared design system, see DESIGN.md */
+  --ease-out:cubic-bezier(.23,1,.32,1); --ease-drawer:cubic-bezier(.32,.72,0,1); --ease-overshoot:cubic-bezier(.34,1.56,.64,1);
+  --dur-fast:.12s; --dur-base:.18s; --dur-slow:.32s;
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-6:24px; --sp-8:32px; --sp-12:48px;
+  --r-sm:8px; --r-md:12px; --r-lg:18px; --r-xl:22px;
   /* Paper grain — same tile as index.html so all three pages share one texture.
      Inline SVG: no HTTP request, no image file, works on an offline LAN. */
   --grain:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.42 0'/></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>");
