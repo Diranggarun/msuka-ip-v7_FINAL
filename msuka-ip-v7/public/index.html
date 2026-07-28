@@ -223,7 +223,14 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
                         --role-faculty 7.38  --role-student 7.33
      on --card-fill hovered  --ink 9.31  --ink-mut 5.63
      on --danger-fill (over a card)  --danger-ink 7.77
-     on --paper         --text-dark 15.88  --text-mid 8.02  --text-light 4.63
+     on --paper         --text-dark 16.24  --text-mid 8.14  --text-light 4.73
+                        --maroon (sender name) 12.50
+       ^ re-measured after --paper was warmed to #F8F0E1 and the grain + light
+         layers were added. These are NOT computed from the token: the surface
+         is uneven now, so they are scored against the LIGHTEST pixel the paper
+         actually renders, [254,251,243], sampled from a real screenshot. That
+         is the worst case for dark text. --text-light at 4.73:1 is the tightest
+         pair on the sheet and has the least room if the tone is warmed further.
      on --maroon        --ink 11.14  --paper 12.22  --gold-bright 9.21  --online 7.42
      on --gold          --maroon-dark 6.85   (active filter pill, unread badge)
    Method note: "worst = lightest" holds because every pair above is light text
@@ -269,7 +276,13 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
   --danger-fill:rgba(192,57,43,.22);
   --danger-line:rgba(192,57,43,.45);
   --danger-ink:#FFC9C0;
-  --paper:var(--off-white);            /* cream reading surface (chat) */
+  /* Warm parchment, not the cool near-white this used to inherit from
+     --off-white. It is set directly rather than by retuning --off-white,
+     because that token is still the correct cool white for the sign-in card
+     and the admin pages — only the chat surface is meant to read as aged
+     paper. Every ratio on this surface was re-measured after the change; see
+     the palette comment above. */
+  --paper:#F8F0E1;                     /* aged cream reading surface (chat) */
   --paper-line:rgba(107,0,0,.10);      /* hairline divider/border on paper */
   /* Backing shown by an image bubble before/instead of its picture. Paper
      warmed a little further towards maroon so it reads as an empty frame, not
@@ -278,15 +291,10 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
      against --paper, which is intended — it is a surface, not a control, so the
      3:1 non-text minimum does not apply; the filename carries the meaning. */
   --img-placeholder:#EAE0D2;
-  /* Floor width for a plain text bubble. It no longer exists to stop the
-     timestamp overhanging — the time is a child of the bubble now, so the
-     bubble sizes around it — but a two-character message still reads better as
-     a small card than as a blob. 7rem = 112px. */
+  /* Floor width for a plain text bubble. Nothing to do with the timestamp any
+     more — that sits outside the bubble now — but a two-character message still
+     reads better as a small card than as a blob. 7rem = 112px. */
   --bubble-min-w:7rem;
-  /* --ink at 78% — the timestamp once it sits ON the maroon outgoing bubble.
-     Muted so it stays secondary to the message. Composites to rgb(216,185,172)
-     over --maroon, measured 7.05:1 against it. */
-  --time-on-maroon:rgba(247,237,220,.78);
   /* --off-white painted OVER the seal watermark. The alpha is tuned against how
      much the seal shifts the paper's luminance, not against a pass-through
      percentage — the full reasoning sits on #messages-area below. */
@@ -303,10 +311,14 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
      ring tracing each card's edge. */
   --card-shadow:0 18px 44px rgba(0,0,0,.45),0 0 0 1px var(--chrome-edge);
   --focus-ring:0 0 0 3px rgba(212,160,23,.35);
-  /* Tinted disc behind the composer's attach / photo / mic buttons — a 6%
-     maroon wash on the white pill, so they read as controls without punching
-     coloured holes in it. --maroon on it measures 11.47:1. */
-  --composer-btn:rgba(107,0,0,.06);
+  /* ── Composer, built as three nested tones rather than one flat pill ──────
+     The bar is the warm tray; the field inside it is the lightest surface, so
+     the caret sits on the brightest thing in the row; the discs are warmer
+     than the bar so attach/mic read as raised controls on it. Ratios are
+     recorded on the rules that use them. */
+  --composer-bar:#FBF5EA;              /* outer tray, just above the paper */
+  --composer-field:#FFFCF6;            /* inner pill holding the textarea */
+  --composer-btn:#F1E4CE;              /* attach / photo / mic discs */
   /* ── Rail glass — the left navigation sidebar only ────────────────────────
      The rail is deliberately MORE transparent than the conversation list
      (.left-panel stays at --chrome/.90) so the gate photo reads through it as
@@ -494,30 +506,11 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 .rail-avatar .ra-online{display:flex;align-items:center;gap:5px;color:var(--online);font-size:.68rem;font-weight:700;}
 .rail-avatar .ra-online::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;}
 
-/* Institutional seal card closing the rail. aria-hidden in the markup — it is
-   decoration plus a printed-looking attribution, not navigation. */
-/* Institutional footer. A gradient rule (not a flat border) fades the division
-   out at both ends so it reads as engraved into the glass. The seal is given
-   more size and its own faint gold disc, and the type steps up from .5rem to
-   .55rem — small enough to stay a colophon, large enough to actually be read. */
-.rail-seal{display:flex;align-items:center;gap:10px;margin-top:10px;padding:11px 4px 2px;position:relative;}
-.rail-seal::before{content:'';position:absolute;top:0;left:4px;right:4px;height:1px;background:linear-gradient(90deg,transparent,var(--glass-edge) 25%,var(--glass-edge) 75%,transparent);}
-.rail-seal img{width:34px;height:34px;object-fit:contain;opacity:.92;flex-shrink:0;border-radius:50%;background:rgba(212,160,23,.08);padding:1px;}
-.rail-seal .rs-text{display:flex;flex-direction:column;gap:2px;min-width:0;}
-.rail-seal .rs-text span{font-family:'Cinzel',serif;font-size:.55rem;line-height:1.3;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-mut);}
-/* --gold-bright rather than --gold here is a hierarchy call, not a contrast
-   one: it ties the university's name to the wordmark at the top of the rail, so
-   the sidebar opens and closes on the same gold. Both pass on this backing —
-   measured --gold 8.05:1, --gold-bright 13.64:1. */
-.rail-seal .rs-text span:first-child{color:var(--gold-bright);font-weight:700;letter-spacing:.07em;}
-
-/* Collapsed rail (icons only). The seal card and the user's name have no room
-   at 68px, so they drop out; the avatar initial stays as the account marker. */
-/* Collapsed rail (icons only). The wordmark, labels, name and seal have no room
-   at 68px, so they drop out; the crest and the avatar initial remain as the
+/* Collapsed rail (icons only). The wordmark, labels and name have no room at
+   68px, so they drop out; the crest and the avatar initial remain as the
    institutional and account markers. The hover nudge is dropped too — sliding a
    centred icon sideways in a 68px column just looks like a misalignment. */
-@media (max-width:1100px){.icon-rail{width:68px;padding:14px 8px;align-items:center;}.rail-logo-text,.rail-btn .rlabel,.rail-btn .rbadge,.rail-avatar .ra-meta,.rail-seal{display:none;}.rail-logo-frame{width:48px;height:48px;padding:0;border-radius:50%;}.rail-logo::after{display:none;}.rail-btn{justify-content:center;padding:10px;}.rail-btn:hover,.rail-btn:active{transform:none;}.rail-avatar{background:transparent;border:none;box-shadow:none;padding:0;}}
+@media (max-width:1100px){.icon-rail{width:68px;padding:14px 8px;align-items:center;}.rail-logo-text,.rail-btn .rlabel,.rail-btn .rbadge,.rail-avatar .ra-meta{display:none;}.rail-logo-frame{width:48px;height:48px;padding:0;border-radius:50%;}.rail-logo::after{display:none;}.rail-btn{justify-content:center;padding:10px;}.rail-btn:hover,.rail-btn:active{transform:none;}.rail-avatar{background:transparent;border:none;box-shadow:none;padding:0;}}
 
 /* RIGHT CONTACTS PANEL */
 .contacts-panel{width:280px;background:var(--white);border-left:1px solid var(--gray-200);display:flex;flex-direction:column;flex-shrink:0;box-shadow:-2px 0 12px rgba(107,0,0,.05);}
@@ -884,12 +877,31 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    bubble, and the seal only ever darkens paper, which raises the contrast of
    the sender name that does sit there (--maroon on --paper, 12.22:1). So this
    is legibility-safe in both directions. */
+/* Four background layers, listed topmost first — one sentence each:
+     1. GRAIN     paper fibre, blended soft-light so it lightens and darkens
+                  the sheet evenly; overlay was tried first and read as dirt,
+                  because on a light surface overlay pushes the dark speckles
+                  much harder than the light ones.
+     2. LIGHT     one radial gradient: brighter toward the upper centre, fading
+                  through transparent, then warming and deepening at the edges
+                  into a soft corner vignette — a lit sheet, not a flat box.
+     3. VEIL      the near-opaque cream wash that keeps the seal a ghost.
+     4. SEAL      the watermark itself, centred.
+   Order matters: grain and light MUST sit above the veil or the veil erases
+   them, and the veil MUST stay directly above the seal or the seal comes back
+   to full strength. All four are background layers, which paint below the
+   element's content, so message text is never textured — that is why this is
+   done here rather than with an overlay pseudo-element on top. */
 #messages-area{flex:1;min-height:0;overflow-y:auto;padding:1.3rem 1.3rem .5rem;display:flex;flex-direction:column;gap:10px;
   background-color:var(--paper);
-  background-image:linear-gradient(var(--paper-veil),var(--paper-veil)),url('/msu-seal-watermark.png');
-  background-repeat:no-repeat,no-repeat;
-  background-position:center,center;
-  background-size:auto,min(48%,320px);}
+  background-image:var(--grain),
+                   radial-gradient(115% 85% at 50% 0%,rgba(255,252,246,.55),rgba(255,252,246,0) 52%,rgba(120,78,32,.13) 100%),
+                   linear-gradient(var(--paper-veil),var(--paper-veil)),
+                   url('/msu-seal-watermark.png');
+  background-repeat:repeat,no-repeat,no-repeat,no-repeat;
+  background-position:0 0,center,center,center;
+  background-size:160px 160px,auto,auto,min(48%,320px);
+  background-blend-mode:soft-light,normal,normal,normal;}
 /* margin-bottom is 0: the ~10px rhythm between bubbles comes from the flex gap
    on #messages-area, so there is ONE place that controls spacing rather than a
    gap and a margin adding up. .msg-row.grouped still tightens consecutive
@@ -914,7 +926,13 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 .msg-row.grouped{margin-top:-3px;}
 .msg-row.grouped .msg-avatar{visibility:hidden;}
 .msg-row.grouped .msg-sender-name{display:none;}
-.msg-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--maroon),var(--maroon-light));flex-shrink:0;border:2px solid var(--white);box-shadow:0 1px 3px rgba(0,0,0,.1);}
+.msg-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--maroon),var(--maroon-light));flex-shrink:0;border:2px solid var(--white);box-shadow:0 1px 3px rgba(0,0,0,.1);
+  /* .msg-row is align-items:flex-end, and .msg-content now ends with the
+     timestamp rather than with the bubble — so without this the avatar would
+     drop down level with the time instead of the bubble it belongs to. The
+     offset is the timestamp's own line box (.62rem × 1.35) plus its 4px
+     margin-top, i.e. exactly the height the time added below the bubble. */
+  margin-bottom:calc(.62rem * 1.35 + 4px);}
 .msg-content{display:flex;flex-direction:column;max-width:58%;}
 .msg-row.mine .msg-content{align-items:flex-end;}
 .msg-sender-name{font-size:.7rem;color:var(--maroon);margin-bottom:3px;padding:0 6px;font-weight:800;letter-spacing:.01em;}
@@ -926,36 +944,25 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 .msg-row.theirs .bubble{background:var(--white);color:var(--text-dark);border-bottom-left-radius:5px;box-shadow:0 2px 8px rgba(74,0,0,.08);border:1px solid var(--paper-line);}
 .msg-row.system .bubble{background:var(--white);color:var(--text-mid);font-size:.72rem;font-weight:700;padding:.3rem .9rem;box-shadow:0 1px 3px rgba(74,0,0,.06);border-radius:14px;border:1px solid var(--paper-line);letter-spacing:.02em;}
 .msg-row.announcement .bubble{background:var(--gold-soft);color:var(--maroon-dark);font-weight:700;border:1px solid rgba(212,160,23,.4);border-radius:12px;padding:.65rem 1.1rem;text-align:center;}
-/* ── Timestamp, now a child of the bubble ────────────────────────────────────
-   appendMessage() puts .msg-time INSIDE every bubble, so the old lane trick —
-   extra bottom padding on the bubble plus a negative margin dragging a sibling
-   up into it, gated behind four :has() selectors — is gone. It only ever
-   worked for plain text; media bubbles were left with the time dangling
-   underneath. Three short rules replace it, one per layout the bubble can have.
-   The delivered ticks stay on .mine only. */
-.msg-time{font-size:.62rem;font-weight:600;letter-spacing:.02em;line-height:1.35;}
-/* TEXT bubbles: float right. Because it is the LAST child, it settles beside
-   the final line when there is room and drops onto its own line when there is
-   not — which is exactly the behaviour the design shows. The bubble now sizes
-   itself around the timestamp, so no minimum width is needed to stop the two
-   colliding; --bubble-min-w survives only to keep a two-character message from
-   rendering as a cramped blob. */
-.bubble>.msg-time{float:right;margin:.3rem 0 0 .8rem;}
+/* ── Timestamp, a sibling BELOW the bubble ───────────────────────────────────
+   appendMessage() appends .msg-time to .msg-content, after .bubble-row, so it
+   is ONE element in ONE place for all four message types. The previous pass put
+   it inside the bubble, which needed a different rule per bubble layout (float
+   for text, flex item for file/voice, caption slot for image); outside the
+   bubble none of that applies.
+   No per-side rule is needed either: .msg-content is already a flex column that
+   right-aligns for .mine and left-aligns for .theirs, so the time inherits the
+   correct edge. The 6px inset matches .msg-sender-name, so the sender name above
+   the bubble and the time below it hang off the same line.
+   Colour is measured against --paper, not against a bubble: --text-light (the
+   old incoming-bubble colour) manages only 4.32:1 on this cream, under the
+   4.5:1 body minimum, so this steps up to --text-mid at 7.49:1. */
+.msg-time{font-size:.62rem;font-weight:600;letter-spacing:.02em;line-height:1.35;margin-top:4px;padding:0 6px;color:var(--text-mid);}
 .bubble-row>.bubble:not(.img-bubble,.file-bubble,.voice-bubble){min-width:var(--bubble-min-w);}
-/* FILE and VOICE bubbles are flex rows, where a float would be ignored; the
-   timestamp becomes the last flex item instead, pinned to the bottom edge so it
-   still reads as the bubble's bottom-right corner. */
-.file-bubble>.msg-time,.voice-bubble>.msg-time{align-self:flex-end;margin-left:.55rem;flex-shrink:0;}
-/* IMAGE bubbles already carry a caption bar along their bottom edge, so the
-   time joins that row rather than floating over the picture. color:inherit
-   keeps it on whatever the caption is already using, which differs per side. */
-.img-caption>.msg-time{flex-shrink:0;color:inherit;}
-/* Backings, measured. Outgoing text/file/voice bubbles are --maroon; incoming
-   are --white. The caption bar composites its own maroon over the cream paper,
-   so those two were measured as composites rather than as the token colour. */
-.msg-row.mine .bubble>.msg-time{color:var(--time-on-maroon);}
-.msg-row.theirs .bubble>.msg-time{color:var(--text-light);}
-.msg-row.mine .msg-time::after{content:' \2713\2713';color:var(--gold-bright);font-weight:800;}
+/* Delivered ticks, .mine only. --gold-bright read fine on the maroon bubble but
+   measures 1.24:1 on paper — invisible. --maroon is the sender's own colour and
+   measures 11.41:1 here. */
+.msg-row.mine .msg-time::after{content:' \2713\2713';color:var(--maroon);font-weight:800;}
 
 .bubble-row{display:flex;align-items:center;gap:6px;max-width:100%;}
 .msg-row.mine .bubble-row{flex-direction:row-reverse;}
@@ -1033,32 +1040,61 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    send. .input-row is the pill itself — there is no wrapper element in the
    markup and adding one would only exist to be styled. White on cream gives the
    separation; the gold hairline arrives on focus. */
-.input-row{background:var(--white);margin:var(--sp-2) var(--sp-3) var(--sp-3);padding:4px 6px;min-height:64px;border:1px solid var(--paper-line);border-radius:999px;box-shadow:0 2px 10px rgba(74,0,0,.07);display:flex;align-items:center;gap:8px;flex-shrink:0;position:relative;transition:border-color var(--dur-base) var(--ease-out),box-shadow var(--dur-base) var(--ease-out);}
-.input-row:focus-within{border-color:var(--gold);box-shadow:var(--focus-ring);}
-/* Attach and photo get their own tinted discs so the two "add something" actions
-   read as buttons rather than as glyphs floating in the pill. --composer-btn is
-   a 6% maroon wash on white; --maroon on it measures 11.47:1. */
-.attach-btn{width:46px;height:46px;border-radius:50%;border:none;background:var(--composer-btn);cursor:pointer;font-size:1rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background var(--dur-fast) var(--ease-out),color var(--dur-fast) var(--ease-out);color:var(--maroon);}
+/* OUTER BAR — the warm tray the whole composer sits in. align-items:flex-end so
+   that when the textarea grows to several lines the circular buttons stay on
+   the bottom edge beside the last line instead of being stretched into ovals. */
+.input-row{background:var(--composer-bar);margin:var(--sp-2) var(--sp-3) var(--sp-3);padding:10px 12px;min-height:72px;border:1px solid var(--paper-line);border-radius:32px;box-shadow:0 3px 14px rgba(74,0,0,.09);display:flex;align-items:flex-end;gap:10px;flex-shrink:0;position:relative;}
+/* ATTACH / PHOTO / MIC — circular discs, warmer than the bar so they read as
+   raised controls on it. --maroon on --composer-btn measures 10.29:1. */
+.attach-btn{width:52px;height:52px;border-radius:50%;border:none;background:var(--composer-btn);cursor:pointer;font-size:1rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background var(--dur-fast) var(--ease-out),color var(--dur-fast) var(--ease-out);color:var(--maroon);}
 .attach-btn:hover{background:var(--gold-soft);color:var(--maroon);}
-#msg-input{flex:1;min-width:0;padding:.5rem .8rem;background:transparent;border:none;font-size:.9rem;resize:none;max-height:120px;outline:none;font-family:'Nunito',sans-serif;line-height:1.45;color:var(--text-dark);}
-/* The pill is the focus indicator for the text field (see :focus-within above),
-   so the field must not draw a second ring inside it. Every other control keeps
-   the app-wide gold #app :focus-visible outline. */
+.attach-btn svg{width:21px;height:21px;}
+/* INNER PILL — the lightest surface in the row, holding the textarea and the
+   emoji button. flex:1 lets it take the free space; align-items:flex-end keeps
+   the emoji glyph on the last line as the field grows. */
+.input-field{flex:1;min-width:0;display:flex;align-items:flex-end;gap:4px;background:var(--composer-field);border:1px solid var(--paper-line);border-radius:24px;padding:4px 6px 4px 4px;
+  transition:border-color var(--dur-base) var(--ease-out),box-shadow var(--dur-base) var(--ease-out);}
+/* The focus ring now lives on the INNER pill, so it appears around the caret
+   rather than around the whole tray. The old .input-row:focus-within rule is
+   deleted rather than overridden — two rings would have fought each other. */
+.input-field:focus-within{border-color:var(--gold);box-shadow:var(--focus-ring);}
+/* field-sizing:content makes the textarea grow with what is typed, so the inner
+   pill and the tray grow with it — with no JS, which is why it is used here.
+   max-height caps it at ~4 lines and then it scrolls. Browsers without support
+   (Firefox at time of writing) simply keep the one-line box and scroll, which
+   is exactly the behaviour this field has always had — so nothing regresses,
+   the growth is just a progressive enhancement. */
+#msg-input{flex:1;min-width:0;padding:.6rem .7rem;background:transparent;border:none;font-size:.92rem;resize:none;field-sizing:content;min-height:1.45em;max-height:120px;outline:none;font-family:'Nunito',sans-serif;line-height:1.45;color:var(--text-dark);}
+/* The inner pill is the focus indicator for the text field, so the field must
+   not draw a second ring inside it. Every other control keeps the app-wide gold
+   #app :focus-visible outline. */
 #msg-input:focus-visible{outline:none;}
+/* Placeholders fail AA more often than any other text, so this one is measured
+   against the pill it actually sits on: --text-light on --composer-field is
+   4.78:1, above the 4.5:1 body minimum. */
 #msg-input::placeholder{color:var(--text-light);}
 /* Send is deliberately the heaviest thing in the row: largest, the only filled
    maroon disc, and the only gold glyph. --gold-bright on --maroon is 9.21:1. */
 .send-btn{width:56px;height:56px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--maroon),var(--maroon-light));color:var(--gold-bright);cursor:pointer;font-size:.95rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:transform .15s var(--ease-out),box-shadow .15s;box-shadow:0 3px 12px rgba(107,0,0,.3);}
-.send-btn svg{width:23px;height:23px;}
+/* The paper-plane is tilted slightly so it reads as in flight rather than as a
+   static icon. The rotation is on the glyph, not the button, so the disc stays
+   a true circle and the hover lift below is unaffected. */
+.send-btn svg{width:23px;height:23px;transform:rotate(-8deg);}
 .send-btn:hover{transform:translateY(-1px) scale(1.04);box-shadow:0 5px 14px rgba(107,0,0,.35);}
 .send-btn:active{transform:scale(.9);transition-duration:.06s;}
 /* Emoji is the one inline affordance in the row — no disc, muted, so it sits
    with the text rather than competing with the media buttons. The id beats
    .attach-btn's class, so no !important is involved.
    --text-light on --white measures 4.89:1. */
-#emoji-btn{background:transparent;color:var(--text-light);width:40px;height:40px;}
-#emoji-btn:hover{background:var(--gold-soft);color:var(--maroon);}
-#ptt-btn{width:46px;height:46px;border-radius:50%;border:none;background:var(--composer-btn);cursor:pointer;font-size:1rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background .15s,transform .15s;user-select:none;color:var(--maroon);}
+/* Emoji is the one inline affordance — it lives INSIDE the pill with no disc of
+   its own, so it reads as part of the field rather than as a fourth button. The
+   id beats .attach-btn's class, so no !important is involved.
+   --text-light on --composer-field measures 4.78:1. */
+#emoji-btn{background:transparent;color:var(--text-light);width:38px;height:38px;}
+#emoji-btn svg{width:19px;height:19px;}
+#emoji-btn:hover{background:transparent;color:var(--maroon);}
+#ptt-btn{width:52px;height:52px;border-radius:50%;border:none;background:var(--composer-btn);cursor:pointer;font-size:1rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background .15s,transform .15s;user-select:none;color:var(--maroon);}
+#ptt-btn svg{width:21px;height:21px;}
 #ptt-btn:hover{background:var(--gold-soft);color:var(--maroon);}
 #ptt-btn.recording{background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;border-radius:50%;transform:scale(1.08);box-shadow:0 0 0 4px rgba(239,68,68,.22),0 4px 12px rgba(239,68,68,.35);animation:pulse 1.4s ease-in-out infinite;}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 4px rgba(239,68,68,.22),0 4px 12px rgba(239,68,68,.35);}50%{box-shadow:0 0 0 8px rgba(239,68,68,.1),0 4px 12px rgba(239,68,68,.45);}}
@@ -1270,7 +1306,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
     padding-bottom:calc(4px + env(safe-area-inset-bottom));
     border-radius:0;flex-shrink:0;border-right:none;
     box-shadow:0 -4px 16px rgba(74,0,0,.18);}
-  .icon-rail .rail-logo,.icon-rail .rail-avatar,.icon-rail .rail-seal{display:none;}
+  .icon-rail .rail-logo,.icon-rail .rail-avatar{display:none;}
   /* The active-row indicator bar is a left edge; in a horizontal tab bar it
      belongs under the tab instead. animation:none is required, not cosmetic:
      the desktop keyframe animates transform to translateY(-50%), and an
@@ -1333,15 +1369,18 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
   .chat-header-info span{font-size:.7rem;}
   .chat-header-actions{gap:6px;}
   .header-action-btn{width:44px;height:44px;border-radius:12px;}
-  /* The desktop composer's 46px discs and 56px send would leave the text field
+  /* The desktop composer's 52px discs and 56px send would leave the text field
      too narrow on a phone. Everything drops to the 44px touch minimum and the
-     gaps tighten; on a 375px screen that leaves the field ~157px, above the
-     120px the Playwright phone test asserts. */
-  .input-row{margin:0 6px 6px;padding:4px 5px;gap:4px;min-height:0;}
+     gaps tighten; on a 375px screen that leaves the field ~150px, above the
+     120px the Playwright phone test asserts. The nested pill stays — it is what
+     the whole composition is built on — but its radii shrink with the bar so
+     the two curves still look concentric at the smaller size. */
+  .input-row{margin:0 6px 6px;padding:5px 6px;gap:5px;min-height:0;border-radius:26px;}
+  .input-field{border-radius:20px;padding:2px 4px 2px 2px;}
   .attach-btn,#ptt-btn{width:44px;height:44px;}
   .send-btn{width:48px;height:48px;}
   #emoji-btn{display:none;}
-  #msg-input{min-width:0;}
+  #msg-input{min-width:0;padding:.5rem .55rem;}
 }
 </style>
 </head>
@@ -1505,13 +1544,6 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
       <span class="ricon"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg></span>
       <span class="rlabel">Sign Out</span>
     </button>
-    <div class="rail-seal" aria-hidden="true">
-      <img src="/msu-seal-watermark.png" alt=""/>
-      <div class="rs-text">
-        <span>Mindanao State University</span>
-        <span>College of Information and Computing Sciences</span>
-      </div>
-    </div>
   </aside>
 
   <div class="left-panel">
@@ -1631,8 +1663,15 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
         <input type="file" id="image-input" accept="image/*" style="display:none" onchange="uploadFile()"/>
         <button class="attach-btn" id="attach-btn" onclick="document.getElementById('file-input').click()" title="Attach file"><svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></button>
         <button class="attach-btn" id="image-btn" onclick="document.getElementById('image-input').click()" title="Send photo"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></button>
-        <textarea id="msg-input" rows="1" placeholder="Type your message here…"></textarea>
-        <button class="attach-btn" id="emoji-btn" onclick="insertEmoji()" title="Emoji"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
+        <!-- The ONLY markup added in this pass: one wrapper so the textarea and
+             the emoji button share a single inner pill, which is what makes the
+             composer a nested composition rather than a flat row. The emoji
+             picker is deliberately NOT inside it — the picker is positioned
+             against .input-row, so moving it would break its anchoring. -->
+        <div class="input-field">
+          <textarea id="msg-input" rows="1" placeholder="Type your message here…"></textarea>
+          <button class="attach-btn" id="emoji-btn" onclick="insertEmoji()" title="Emoji"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
+        </div>
         <button id="ptt-btn" title="Hold to talk" type="button"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></button>
         <button class="send-btn" onclick="sendMessage()" title="Send"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
       </div>
@@ -2568,29 +2607,25 @@ function appendMessage(msg,key,isNew) {
     // fname is the user-supplied original filename — escaped for the text
     // content, and encodeURIComponent'd where it sits inside an attribute.
     const fname=esc(msg.file_name), fnameAttr=encodeURIComponent(msg.file_name||'');
-    // The timestamp is a CHILD of the bubble for every message type. It used to
-    // be a sibling below .bubble-row, which meant CSS had to fake "inside the
-    // bubble" with a :has() lane that only ever worked for plain text. Built
-    // once here and slotted into each variant, because every bubble type has a
-    // different internal layout to place it in:
-    //   text  -> floats on the last line
-    //   image -> joins the caption bar the bubble already has
-    //   file/voice -> becomes the last flex item, pinned bottom-right
+    // The timestamp sits OUTSIDE the bubble, below it. Built here but appended
+    // once after .bubble-row (see the row.innerHTML below) rather than slotted
+    // into each variant, so all four message types get the same element in the
+    // same position instead of four different in-bubble arrangements.
     const timeHtml=`<span class="msg-time">${formatTime(msg.timestamp)}</span>`;
     if(msg.type==='image') {
       const src=fileSrc(msg.file_url);
-      bubbleHtml=`<div class="bubble img-bubble"><img src="${src}" alt="${fname}" onclick="window.open('${src}','_blank')"/><div class="img-caption"><span class="img-caption-text">${fname} · ${formatFileSize(msg.file_size)}</span>${timeHtml}<a href="${src}" download="${fnameAttr}" class="img-dl" title="Download image" aria-label="Download image"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a></div></div>`;
+      bubbleHtml=`<div class="bubble img-bubble"><img src="${src}" alt="${fname}" onclick="window.open('${src}','_blank')"/><div class="img-caption"><span class="img-caption-text">${fname} · ${formatFileSize(msg.file_size)}</span><a href="${src}" download="${fnameAttr}" class="img-dl" title="Download image" aria-label="Download image"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a></div></div>`;
     } else if(msg.type==='voice') {
-      bubbleHtml=`<div class="bubble voice-bubble"><span class="voice-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></span><div class="voice-body"><audio controls src="${fileSrc(msg.file_url)}"></audio><div class="voice-size">${formatFileSize(msg.file_size)}</div></div>${timeHtml}</div>`;
+      bubbleHtml=`<div class="bubble voice-bubble"><span class="voice-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></span><div class="voice-body"><audio controls src="${fileSrc(msg.file_url)}"></audio><div class="voice-size">${formatFileSize(msg.file_size)}</div></div></div>`;
     } else if(msg.type==='file') {
       const icon=msg.file_type?.includes('pdf')?'📄':'📝';
-      bubbleHtml=`<div class="bubble file-bubble"><span class="file-icon">${icon}</span><div class="file-info"><div class="fname">${fname}</div><div class="fsize">${formatFileSize(msg.file_size)}</div></div><a href="${fileSrc(msg.file_url)}" download="${fnameAttr}" class="file-dl" title="Download" aria-label="Download file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a>${timeHtml}</div>`;
+      bubbleHtml=`<div class="bubble file-bubble"><span class="file-icon">${icon}</span><div class="file-info"><div class="fname">${fname}</div><div class="fsize">${formatFileSize(msg.file_size)}</div></div><a href="${fileSrc(msg.file_url)}" download="${fnameAttr}" class="file-dl" title="Download" aria-label="Download file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a></div>`;
     } else {
-      bubbleHtml=`<div class="bubble">${esc(msg.text)}${timeHtml}</div>`;
+      bubbleHtml=`<div class="bubble">${esc(msg.text)}</div>`;
     }
     const canDelete = msg.id && isMine;
     const actionsHtml = canDelete ? `<div class="msg-actions"><button class="msg-action-btn" title="Delete message" aria-label="Delete message" onclick="deleteMessage(${msg.id}, this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></div>` : '';
-    row.innerHTML=`${avatarHtml}<div class="msg-content">${nameHtml}<div class="bubble-row">${bubbleHtml}${actionsHtml}</div></div>`;
+    row.innerHTML=`${avatarHtml}<div class="msg-content">${nameHtml}<div class="bubble-row">${bubbleHtml}${actionsHtml}</div>${timeHtml}</div>`;
   }
   area.appendChild(row);
   area.scrollTop=area.scrollHeight;
