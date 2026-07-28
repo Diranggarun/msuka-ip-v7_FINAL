@@ -22,6 +22,19 @@
   --dur-fast:.12s; --dur-base:.18s; --dur-slow:.32s;
   --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-6:24px; --sp-8:32px; --sp-12:48px;
   --r-sm:8px; --r-md:12px; --r-lg:18px; --r-xl:22px;
+  /* ── Chrome / paper surfaces — shared with the chat restyle (index.html) ────
+     "Chrome" is the dark maroon glass used for navigation furniture (the rail):
+     light --ink text sits on it. "Paper" is the aged cream reading surface used
+     for content the user actually reads (cards, tables): dark --text-* stays on
+     it. Keeping those two pairings intact is what makes the language portable
+     without inverting any text/background relationship. */
+  --chrome:rgba(46,10,10,.90); --chrome-deep:rgba(26,5,5,.92);
+  --chrome-edge:rgba(212,160,23,.22); --chrome-hover:rgba(212,160,23,.10);
+  --chrome-hi:rgba(212,160,23,.18);
+  --ink:#F7EDDC; --ink-mut:#CDB89F;
+  --paper:#F8F0E1; --paper-line:rgba(107,0,0,.10); --paper-veil:rgba(253,248,240,.985);
+  --card-line:rgba(212,160,23,.12); --card-lift:0 1px 2px rgba(0,0,0,.22);
+  --role-faculty:#F0B45C; --role-student:#5FD3A0;
   /* Paper grain — same tile as index.html so all three pages share one texture.
      Inline SVG: no HTTP request, no image file, works on an offline LAN. */
   --grain:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.42 0'/></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>");
@@ -46,7 +59,8 @@ button,.tab,.rail-btn{touch-action:manipulation;}
 /* ── Glassmorphism for admin surfaces — warm cream tint, soft inset highlight ── */
 .admin-main,#app{position:relative;z-index:1;}
 .admin-rail{background:linear-gradient(180deg,rgba(90,15,15,.92),rgba(107,0,0,.88) 50%,rgba(90,15,15,.92))!important;backdrop-filter:blur(12px) saturate(140%);-webkit-backdrop-filter:blur(12px) saturate(140%);border-right:1px solid rgba(212,160,23,.15)!important;box-shadow:2px 0 12px rgba(107,0,0,.25);}
-.topbar{background:linear-gradient(135deg,rgba(74,0,0,.92),rgba(107,0,0,.88))!important;backdrop-filter:blur(12px) saturate(150%);-webkit-backdrop-filter:blur(12px) saturate(150%);}
+/* Chrome, like the rail — the top bar is navigation furniture, not content. */
+.topbar{background-image:var(--grain),linear-gradient(135deg,var(--chrome-deep),var(--chrome))!important;background-repeat:repeat,no-repeat;background-size:160px 160px,auto;background-blend-mode:overlay,normal;backdrop-filter:blur(14px) saturate(130%);-webkit-backdrop-filter:blur(14px) saturate(130%);border-bottom:1px solid var(--chrome-edge);color:var(--ink);}
 .card,.stat-card{background:linear-gradient(160deg,rgba(255,253,250,.78),rgba(252,246,236,.72))!important;backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border:1px solid rgba(255,255,255,.55)!important;box-shadow:0 8px 30px rgba(74,0,0,.10),inset 0 1px 0 rgba(255,255,255,.6)!important;border-radius:18px!important;}
 .tabs{background:linear-gradient(160deg,rgba(255,253,250,.78),rgba(252,246,236,.72))!important;backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);border:1px solid rgba(255,255,255,.55)!important;border-radius:14px!important;box-shadow:0 4px 16px rgba(74,0,0,.08)!important;}
 
@@ -55,26 +69,39 @@ button,.tab,.rail-btn{touch-action:manipulation;}
    texture sits under the content and never over table text. !important is
    required because the `background` shorthand above sets background-image,
    -repeat and -size to their initial values with !important. */
+/* Paper surface — the aged cream the chat uses for its reading area, so admin
+   content reads on the same material. Dark --text-* stays on it, unchanged. */
 .card,.tabs{
-  background-image:var(--grain),linear-gradient(160deg,rgba(255,253,250,.78),rgba(252,246,236,.72))!important;
+  /* !important: the `background:` shorthand above is itself !important and
+     resets background-color to transparent, so the paper never lands. */
+  background-color:var(--paper)!important;
+  background-image:var(--grain),linear-gradient(160deg,rgba(255,252,246,.55),rgba(248,240,225,.35))!important;
   background-repeat:repeat,no-repeat!important;
   background-size:160px 160px,auto!important;
   background-blend-mode:soft-light,normal;
+  border-color:var(--paper-line)!important;
 }
 /* stat cards get the grain too, but layered over their semantic tone tint (see
    the .stat-card rule below) — kept out of the shared rule so the tint shows. */
 .stat-card{
-  background-image:var(--grain),linear-gradient(135deg,var(--tone-soft),transparent 55%),linear-gradient(160deg,rgba(255,253,250,.85),rgba(252,246,236,.8))!important;
+  background-color:var(--paper)!important;
+  background-image:var(--grain),linear-gradient(135deg,var(--tone-soft),transparent 55%),linear-gradient(160deg,rgba(255,252,246,.6),rgba(248,240,225,.4))!important;
   background-repeat:repeat,no-repeat,no-repeat!important;
   background-size:160px 160px,auto,auto!important;
   background-blend-mode:soft-light,normal,normal;
 }
+/* Chrome surface — same recipe as the chat's icon-rail so the two pages read
+   as one product. Light --ink text on dark maroon glass. */
 .admin-rail{
-  background-image:var(--grain),linear-gradient(180deg,rgba(90,15,15,.92),rgba(107,0,0,.88) 50%,rgba(90,15,15,.92))!important;
+  background-color:transparent;
+  background-image:var(--grain),linear-gradient(180deg,var(--chrome),var(--chrome-deep))!important;
   background-repeat:repeat,no-repeat!important;
   background-size:160px 160px,auto!important;
   /* overlay, not soft-light — soft-light is invisible on the dark maroon */
   background-blend-mode:overlay,normal;
+  backdrop-filter:blur(14px) saturate(130%);
+  -webkit-backdrop-filter:blur(14px) saturate(130%);
+  color:var(--ink);
 }
 
 #auth-screen{display:flex;align-items:center;justify-content:center;height:100vh;background:url('/login-bg.jpg') center center / cover no-repeat fixed;position:relative;overflow:hidden;}

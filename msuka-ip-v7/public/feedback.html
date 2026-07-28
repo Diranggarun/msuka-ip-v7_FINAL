@@ -21,6 +21,17 @@
   --dur-fast:.12s; --dur-base:.18s; --dur-slow:.32s;
   --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-6:24px; --sp-8:32px; --sp-12:48px;
   --r-sm:8px; --r-md:12px; --r-lg:18px; --r-xl:22px;
+  /* ── Chrome / paper surfaces — shared with the chat restyle (index.html) ────
+     "Chrome" is the dark maroon glass used for navigation furniture (the top
+     bar): light --ink text sits on it. "Paper" is the aged cream reading
+     surface for content the respondent reads and fills in: dark --text-* stays
+     on it. Keeping those pairings intact ports the language without inverting
+     any text/background relationship. */
+  --chrome:rgba(46,10,10,.90); --chrome-deep:rgba(26,5,5,.92);
+  --chrome-edge:rgba(212,160,23,.22);
+  --ink:#F7EDDC; --ink-mut:#CDB89F;
+  --paper:#F8F0E1; --paper-line:rgba(107,0,0,.10); --paper-veil:rgba(253,248,240,.985);
+  --card-line:rgba(212,160,23,.12); --card-lift:0 1px 2px rgba(0,0,0,.22);
   /* Paper grain — same tile as index.html and admin.html. */
   --grain:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.42 0'/></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>");
 }
@@ -60,11 +71,18 @@ button,label{touch-action:manipulation;}
    respondents, so the Likert labels and question text must stay crisp.
    !important is required — the `background` shorthand above resets
    background-image/-repeat/-size with !important. */
+/* Paper surface — the same aged cream the chat uses for its reading area, so
+   the survey reads on the same material. Dark --text-* stays on it. */
 .info-card,.section-card,.submit-section{
-  background-image:var(--grain),linear-gradient(160deg,rgba(255,253,250,.78),rgba(252,246,236,.72))!important;
+  /* !important is required: the `background:` shorthand in the rule above is
+     itself !important, which resets background-color to transparent. Without
+     this the MSU gate photo behind the page shows straight through the form. */
+  background-color:var(--paper)!important;
+  background-image:var(--grain),linear-gradient(160deg,rgba(255,252,246,.55),rgba(248,240,225,.35))!important;
   background-repeat:repeat,no-repeat!important;
   background-size:160px 160px,auto!important;
   background-blend-mode:soft-light,normal;
+  border-color:var(--paper-line)!important;
 }
 .legend{background:linear-gradient(135deg,rgba(255,251,234,.85),rgba(255,247,220,.78))!important;backdrop-filter:blur(14px) saturate(150%);-webkit-backdrop-filter:blur(14px) saturate(150%);border:1px solid rgba(212,160,23,.4)!important;border-radius:16px!important;box-shadow:0 4px 14px rgba(212,160,23,.10),inset 0 1px 0 rgba(255,255,255,.5)!important;}
 .result-card{background:linear-gradient(160deg,rgba(255,253,250,.96),rgba(252,246,236,.92))!important;backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);border:1px solid rgba(255,255,255,.55)!important;box-shadow:0 20px 50px rgba(74,0,0,.25),inset 0 1px 0 rgba(255,255,255,.6)!important;}
@@ -76,7 +94,8 @@ button,label{touch-action:manipulation;}
 .section-icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
 
 /* TOPBAR */
-.topbar{background:linear-gradient(135deg,rgba(74,0,0,.78),rgba(107,0,0,.68));backdrop-filter:blur(12px) saturate(140%);-webkit-backdrop-filter:blur(12px) saturate(140%);padding:.75rem 1.5rem;display:flex;align-items:center;gap:12px;position:relative;}
+/* Chrome — navigation furniture, matching the chat rail and the admin top bar. */
+.topbar{background-color:transparent;background-image:var(--grain),linear-gradient(135deg,var(--chrome-deep),var(--chrome));background-repeat:repeat,no-repeat;background-size:160px 160px,auto;background-blend-mode:overlay,normal;backdrop-filter:blur(14px) saturate(130%);-webkit-backdrop-filter:blur(14px) saturate(130%);border-bottom:1px solid var(--chrome-edge);color:var(--ink);padding:.75rem 1.5rem;display:flex;align-items:center;gap:12px;position:relative;}
 .topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),var(--gold-bright),var(--gold),transparent);}
 .topbar img{width:40px;height:40px;border-radius:50%;object-fit:cover;object-position:center;filter:drop-shadow(0 2px 6px rgba(0,0,0,.4));background:#fff;}
 .topbar-title h1{font-family:'Cinzel',serif;font-size:.95rem;font-weight:700;color:var(--gold-bright);letter-spacing:.06em;}
