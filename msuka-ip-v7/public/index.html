@@ -156,7 +156,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 .auth-sub3{font-family:'Cinzel',serif;color:rgba(255,255,255,.6);font-size:.58rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;margin-top:2px;position:relative;z-index:1;}
 
 .tab-header{display:flex;border-bottom:1px solid rgba(255,255,255,.12);background:transparent;}
-.tab-header button{flex:1;padding:.8rem;border:none;background:transparent;color:rgba(255,255,255,.7);font-size:.85rem;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;border-bottom:2px solid transparent;transition:all .2s;}
+.tab-header button{flex:1;padding:.8rem;border:none;background:transparent;color:rgba(255,255,255,.7);font-size:.85rem;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;border-bottom:2px solid transparent;transition:background var(--dur-base) var(--ease-out),color var(--dur-base) var(--ease-out),border-color var(--dur-base) var(--ease-out);}
 .tab-header button.active{background:rgba(255,255,255,.15);color:var(--gold-bright);border-bottom-color:var(--gold);}
 .tab-body{padding:1.4rem;background:transparent;}
 .form-group{margin-bottom:.8rem;}
@@ -993,7 +993,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    because filling the bubble is right for the real photos that dominate use. */
 .img-bubble img{width:100%;max-height:320px;object-fit:cover;aspect-ratio:auto 4 / 3;
   background:var(--img-placeholder);color:var(--text-dark);
-  border-radius:13px;display:block;cursor:pointer;transition:transform .2s;}
+  border-radius:13px;display:block;cursor:pointer;transition:transform var(--dur-slow) var(--ease-out);}
 .img-bubble img:hover{transform:scale(1.01);}
 .img-caption{font-size:.72rem;padding:.35rem .55rem;margin-top:5px;font-weight:600;border-radius:8px;background:rgba(74,0,0,.78);color:var(--gold-bright);display:flex;align-items:center;gap:6px;max-width:100%;letter-spacing:.01em;}
 .img-caption-text{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
@@ -1075,7 +1075,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 #msg-input::placeholder{color:var(--text-light);}
 /* Send is deliberately the heaviest thing in the row: largest, the only filled
    maroon disc, and the only gold glyph. --gold-bright on --maroon is 9.21:1. */
-.send-btn{width:56px;height:56px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--maroon),var(--maroon-light));color:var(--gold-bright);cursor:pointer;font-size:.95rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:transform .15s var(--ease-out),box-shadow .15s;box-shadow:0 3px 12px rgba(107,0,0,.3);}
+.send-btn{width:56px;height:56px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--maroon),var(--maroon-light));color:var(--gold-bright);cursor:pointer;font-size:.95rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:transform var(--dur-base) var(--ease-out),box-shadow var(--dur-base) var(--ease-out);box-shadow:0 3px 12px rgba(107,0,0,.3);}
 /* The paper-plane is tilted slightly so it reads as in flight rather than as a
    static icon. The rotation is on the glyph, not the button, so the disc stays
    a true circle and the hover lift below is unaffected. */
@@ -1093,7 +1093,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 #emoji-btn{background:transparent;color:var(--text-light);width:38px;height:38px;}
 #emoji-btn svg{width:19px;height:19px;}
 #emoji-btn:hover{background:transparent;color:var(--maroon);}
-#ptt-btn{width:52px;height:52px;border-radius:50%;border:none;background:var(--composer-btn);cursor:pointer;font-size:1rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background .15s,transform .15s;user-select:none;color:var(--maroon);}
+#ptt-btn{width:52px;height:52px;border-radius:50%;border:none;background:var(--composer-btn);cursor:pointer;font-size:1rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background var(--dur-base) var(--ease-out),transform var(--dur-base) var(--ease-out);user-select:none;color:var(--maroon);}
 #ptt-btn svg{width:21px;height:21px;}
 #ptt-btn:hover{background:var(--gold-soft);color:var(--maroon);}
 #ptt-btn.recording{background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;border-radius:50%;transform:scale(1.08);box-shadow:0 0 0 4px rgba(239,68,68,.22),0 4px 12px rgba(239,68,68,.35);animation:pulse 1.4s ease-in-out infinite;}
@@ -1135,7 +1135,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 /* Full hairline border instead of a 4px maroon side-stripe (a flagged
    anti-pattern). The leading .toast-icon already carries the message type;
    the border just defines the card edge against the page. */
-.toast{background:var(--white);border-radius:12px;padding:.75rem 1rem;min-width:280px;max-width:340px;box-shadow:var(--shadow-lg);border:1px solid var(--gray-200);display:flex;align-items:flex-start;gap:10px;pointer-events:all;animation:toastIn .3s var(--ease-overshoot);cursor:pointer;transition:transform .2s;}
+.toast{background:var(--white);border-radius:12px;padding:.75rem 1rem;min-width:280px;max-width:340px;box-shadow:var(--shadow-lg);border:1px solid var(--gray-200);display:flex;align-items:flex-start;gap:10px;pointer-events:all;animation:toastIn .3s var(--ease-overshoot);cursor:pointer;transition:transform var(--dur-slow) var(--ease-out);}
 .toast:hover{transform:translateX(-4px);}
 .toast.out{animation:toastOut .3s ease forwards;}
 .toast-icon{font-size:1.4rem;flex-shrink:0;margin-top:1px;}
