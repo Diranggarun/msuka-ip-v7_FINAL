@@ -216,6 +216,84 @@ const upload = multer({ storage, limits:{fileSize:5*1024*1024}, fileFilter:(req,
 // SQLite (node:sqlite) — WAL mode, foreign_keys ON. See db.js.
 const db = require('./db');
 
+// ── Demo conversations (dev/demo only) ───────────────────────────────────────
+// Populates the left panel with realistic classmates and message history so the
+// list, its date groups and its unread badges can actually be seen and defended.
+// Called ONLY from inside the same `!IS_PROD || SEED_DEMO=1` guard as the demo
+// accounts — on a production boot neither runs, so no fake student ever exists
+// on a real deployment.
+//
+// It writes through the normal tables with the normal encryption, so everything
+// here is real data taking the real code path: nothing is hardcoded into the
+// markup. Timestamps are backdated across three days on purpose, because that
+// is what makes the TODAY / YESTERDAY / EARLIER grouping observable.
+async function seedDemoConversations() {
+  const peers = [
+    { name:'Kisha Ramos',        email:'kisha@cics.msu.edu',  role:'student' },
+    { name:'Tommy Uy',           email:'tommy@cics.msu.edu',  role:'student' },
+    { name:'Ghost Delos Reyes',  email:'ghost@cics.msu.edu',  role:'student' },
+    { name:'Dre Mangorsi',       email:'dre@cics.msu.edu',    role:'student' },
+    { name:'Prof. Santos',       email:'santos@cics.msu.edu', role:'faculty' },
+  ];
+  // A fixed password for demo peers. They are seeded approved so they appear in
+  // directories, but they are ordinary accounts with no elevated rights.
+  const hash = await bcrypt.hash('demo1234', 12);
+  const ids = {};
+  for (const p of peers) {
+    const [rows] = await db.query('SELECT id FROM users WHERE email=?',[p.email]);
+    if (rows.length === 0) {
+      const [r] = await db.query(
+        'INSERT INTO users (name,email,password_hash,role,account_status) VALUES (?,?,?,?,?)',
+        [p.name,p.email,hash,p.role,'approved']);
+      ids[p.email] = r.insertId;
+    } else ids[p.email] = rows[0].id;
+  }
+
+  const [me] = await db.query('SELECT id FROM users WHERE email=?',['student@cics.msu.edu']);
+  if (!me.length) return;
+  const myId = me[0].id;
+
+  // Idempotency: if any peer has already spoken, the seed has run before. This
+  // keeps a restart from stacking duplicate history, without wiping anything the
+  // real user has since written.
+  const peerIds = peers.map(p => ids[p.email]);
+  const [already] = await db.query(
+    `SELECT COUNT(*) AS n FROM messages WHERE sender_id IN (${peerIds.map(()=>'?').join(',')})`, peerIds);
+  if (already[0].n > 0) { console.log('ℹ️   Demo conversations already present — not reseeding'); return; }
+
+  // 'YYYY-MM-DD HH:MM:SS' localtime, matching the column's own default format.
+  const at = (daysAgo, hh, mm) => {
+    const d = new Date(); d.setDate(d.getDate() - daysAgo); d.setHours(hh, mm, 0, 0);
+    const p = n => String(n).padStart(2,'0');
+    return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:00`;
+  };
+  const say = async (senderId, convKey, text, when) => db.query(
+    'INSERT INTO messages (sender_id,conv_key,type,text,created_at) VALUES (?,?,?,?,?)',
+    [senderId, convKey, 'chat', encryptMessage(text), when]);
+
+  // Private threads. buildPrivateKey sorts the addresses, so the key matches
+  // exactly what the live send path would produce for the same two people.
+  const pk = e => buildPrivateKey('student@cics.msu.edu', e);
+  await say(ids['kisha@cics.msu.edu'], pk('kisha@cics.msu.edu'), 'Naka-submit ka na ba ng capstone chapter 2?', at(0,8,41));
+  await say(myId,                      pk('kisha@cics.msu.edu'), 'Hindi pa, tinatapos ko pa yung ERD ngayon.',  at(0,8,44));
+  await say(ids['kisha@cics.msu.edu'], pk('kisha@cics.msu.edu'), 'Alright! See you later.',                     at(0,8,47));
+
+  await say(ids['tommy@cics.msu.edu'], pk('tommy@cics.msu.edu'), 'Pakisend na lang yung defense schedule.',      at(0,8,28));
+  await say(ids['tommy@cics.msu.edu'], pk('tommy@cics.msu.edu'), 'Picking up the product now...',                at(0,8,30));
+
+  await say(ids['ghost@cics.msu.edu'], pk('ghost@cics.msu.edu'), 'Wassup, where you at??',                       at(0,8,12));
+
+  await say(myId,                      pk('dre@cics.msu.edu'),   'Send the file when you can.',                  at(1,21,15));
+
+  await say(ids['santos@cics.msu.edu'], pk('santos@cics.msu.edu'), 'Meeting moved to Thursday, 10:00 AM.',       at(2,18,45));
+
+  // A little life in the broadcast channel too, dated earlier so the Global
+  // Chat preview is not empty on first open.
+  await say(ids['santos@cics.msu.edu'], 'group_general', 'Reminder: system maintenance this weekend.',           at(2,10,20));
+
+  console.log(`✅  Seeded ${peers.length} demo classmates and their conversations`);
+}
+
 async function setupDatabase() {
   try {
     db.ensureSchema();
@@ -238,6 +316,7 @@ async function setupDatabase() {
         else { await db.query('UPDATE users SET password_hash=?,name=?,role=?,account_status=? WHERE email=?',[hash,acc.name,acc.role,acc.status,acc.email]); console.log(`🔄  Reset:   ${acc.email} / ${acc.password}`); }
       }
       console.log('\n🎉  Login:\n    student@cics.msu.edu / student123\n    admin@cics.msu.edu   / admin123\n');
+      await seedDemoConversations();
     } else {
       console.log('ℹ️   Demo account seeding skipped (NODE_ENV=production)');
     }
@@ -862,6 +941,61 @@ io.on('connection', async(socket)=>{
       socket.emit('groups:list',groups);
       groups.forEach(g=>socket.join('group_'+g.id));
     } catch(err){ console.error(err.message); }
+  });
+
+  // Conversation summaries for the left panel.
+  // Why this exists: nothing previously told the client which conversations a
+  // user already has. It learned of a private chat only when a message arrived
+  // live, or when the user opened it by hand — so on a fresh login the Private
+  // list was built from whoever happened to be online, and months of history
+  // were invisible. This returns ONE row per conversation (the newest message),
+  // which is all the list needs for its preview line, timestamp and ordering;
+  // full history stays with messages:get, which is fetched on demand.
+  // Access is decided here, never by the client: the key set is the general
+  // room, the groups this user belongs to, and private keys carrying its own
+  // address, so no conversation the caller cannot see is ever enumerated.
+  socket.on('conversations:get', async()=>{
+    try {
+      const [myGroups]=await db.query(
+        'SELECT g.id FROM groups_table g INNER JOIN group_members gm ON g.id=gm.group_id WHERE gm.user_id=?',[id]);
+      const keys=['group_general',...myGroups.map(g=>'group_'+g.id)];
+      // buildPrivateKey sorts the two addresses, so this user's email is on one
+      // side or the other — both patterns are checked.
+      const [privateKeys]=await db.query(
+        "SELECT DISTINCT conv_key FROM messages WHERE conv_key LIKE 'private\\_%' ESCAPE '\\' AND (conv_key LIKE ? OR conv_key LIKE ?)",
+        ['private_'+email+'__%','%__'+email]);
+      privateKeys.forEach(r=>keys.push(r.conv_key));
+
+      const summaries=[];
+      for(const key of keys){
+        const [rows]=await db.query(
+          `SELECT m.type,m.text,m.file_name,m.created_at,u.name AS sender_name
+             FROM messages m LEFT JOIN users u ON m.sender_id=u.id
+            WHERE m.conv_key=? ORDER BY m.id DESC LIMIT 1`,[key]);
+        if(!rows.length) continue;
+        const m=rows[0];
+        // The client addresses a private chat as `private_<other email>`, while
+        // the database stores the sorted canonical key — translate here so the
+        // client keeps using the key shape the rest of its code expects.
+        let clientKey=key, peer=null;
+        if(key.startsWith('private_')){
+          const pair=key.slice('private_'.length).split('__');
+          const otherEmail=pair[0]===email?pair[1]:pair[0];
+          const [u]=await db.query('SELECT name,email,role FROM users WHERE email=?',[otherEmail]);
+          peer=u[0]||{name:otherEmail,email:otherEmail,role:'student'};
+          clientKey='private_'+peer.email;
+        }
+        summaries.push({
+          convKey:clientKey, peer,
+          lastType:m.type,
+          // Only chat text is encrypted at rest; file rows store the filename.
+          lastText:m.type==='chat'?decryptMessage(m.text):(m.file_name||''),
+          lastSender:m.sender_name,
+          lastTime:m.created_at
+        });
+      }
+      socket.emit('conversations:summary',summaries);
+    } catch(err){ console.error('conversations:get failed:',err.message); }
   });
 
   // Always join general room
