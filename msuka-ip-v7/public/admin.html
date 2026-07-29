@@ -226,6 +226,42 @@ button,.tab,.rail-btn{touch-action:manipulation;}
 #main-chart .mc-badge::after{content:'';position:absolute;left:50%;bottom:-4px;transform:translateX(-50%) rotate(45deg);width:8px;height:8px;background:var(--gold);}
 #main-chart .mc-axis{position:absolute;left:0;right:0;bottom:-2px;display:flex;justify-content:space-between;
   font-size:.6rem;color:var(--ink-mut);font-weight:700;padding:0 2px;}
+/* Y-axis: without a scale the curve shows shape but no magnitude. */
+#main-chart .mc-yaxis{position:absolute;left:0;top:0;bottom:18px;width:100%;pointer-events:none;}
+#main-chart .mc-yaxis span{position:absolute;left:0;transform:translateY(-50%);font-size:.58rem;
+  color:var(--ink-mut);font-weight:700;opacity:.75;font-variant-numeric:tabular-nums;}
+/* Hover scrubbing — the interaction that makes a chart feel like an instrument
+   rather than a picture. A crosshair follows the pointer and the readout names
+   the exact bucket under it. */
+#main-chart .mc-hit{position:absolute;inset:0;cursor:crosshair;}
+#main-chart .mc-cross{position:absolute;top:0;bottom:18px;width:1px;background:rgba(255,210,74,.55);
+  opacity:0;pointer-events:none;transition:opacity var(--dur-fast) var(--ease-out);}
+#main-chart .mc-cross i{position:absolute;left:50%;width:9px;height:9px;border-radius:50%;
+  transform:translate(-50%,-50%);background:#FFD24A;box-shadow:0 0 0 3px rgba(255,210,74,.25);}
+#main-chart .mc-tip{position:absolute;transform:translate(-50%,-135%);background:var(--chrome-deep);
+  border:1px solid var(--chrome-edge);color:var(--ink);font-size:.7rem;font-weight:700;
+  padding:6px 10px;border-radius:8px;white-space:nowrap;pointer-events:none;opacity:0;z-index:5;
+  box-shadow:0 8px 22px rgba(0,0,0,.5);transition:opacity var(--dur-fast) var(--ease-out);}
+#main-chart .mc-tip b{color:#FFD24A;} #main-chart .mc-tip s{color:#E4A0A0;text-decoration:none;}
+#main-chart.scrub .mc-cross,#main-chart.scrub .mc-tip{opacity:1;}
+#main-chart.scrub .mc-badge{opacity:0;}
+#main-chart .mc-badge{transition:opacity var(--dur-fast) var(--ease-out);}
+
+/* Period-over-period delta — the context a bare figure is missing. */
+.sdelta{display:inline-flex;align-items:center;gap:3px;font-size:.62rem;font-weight:800;
+  padding:2px 6px;border-radius:20px;letter-spacing:.02em;white-space:nowrap;align-self:flex-start;
+  font-variant-numeric:tabular-nums;}
+.sdelta.up{background:rgba(30,122,68,.14);color:#1B7A44;}
+.sdelta.down{background:rgba(192,57,43,.13);color:#B23A2E;}
+.sdelta.flat{background:var(--gray-100);color:var(--text-light);}
+.stat-card .slabel{position:relative;}
+/* "Live" pulse on the panel header — signals the data is current. */
+.ov-live{display:inline-flex;align-items:center;gap:6px;font-size:.62rem;font-weight:800;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--ink-mut);}
+.ov-live i{width:7px;height:7px;border-radius:50%;background:#4ADE80;box-shadow:0 0 0 0 rgba(74,222,128,.6);
+  animation:ovPulse 2.4s var(--ease-out) infinite;}
+@keyframes ovPulse{0%{box-shadow:0 0 0 0 rgba(74,222,128,.55);}70%{box-shadow:0 0 0 7px rgba(74,222,128,0);}100%{box-shadow:0 0 0 0 rgba(74,222,128,0);}}
+@media (prefers-reduced-motion:reduce){.ov-live i{animation:none;}}
 
 /* Compact KPI tiles — two columns, the fifth spanning the row. */
 .ov-kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start;min-width:0;}
@@ -422,6 +458,82 @@ tr:hover td{background:var(--maroon-soft);}
      so it was a 28px-wide tap target. Give it the 44px minimum. */
   .topbar a[href="/"]{display:inline-flex;align-items:center;min-height:44px;padding:0 10px;}
 }
+
+/* ══ TOP BAR — Stage 1 ════════════════════════════════════════════════════════
+   MUST STAY LAST: media queries carry no specificity, so these only beat the
+   older .topbar rules by coming after them.
+   Three zones — who you are and when, the seal, and the tools. */
+.topbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:var(--sp-4);
+  padding:var(--sp-3) var(--sp-6)!important;}
+
+.tb-greet{display:flex;align-items:center;gap:var(--sp-3);min-width:0;}
+.tb-greet-ico{width:42px;height:42px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:rgba(212,160,23,.14);border:1px solid var(--chrome-edge);color:var(--gold-bright);}
+.tb-greet-ico svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+.tb-greet-txt{min-width:0;}
+.tb-hello{display:block;font-size:.66rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-mut);}
+.tb-greet-txt h1{font-family:'Cinzel',serif;font-size:1.32rem;font-weight:700;color:var(--gold-bright);
+  margin:1px 0 0;letter-spacing:.01em;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tb-when{display:flex;align-items:center;gap:7px;flex-shrink:0;margin-left:var(--sp-2);
+  background:rgba(0,0,0,.22);border:1px solid var(--chrome-edge);border-radius:99px;
+  padding:7px 13px;font-size:.74rem;color:var(--ink-mut);font-weight:600;white-space:nowrap;}
+.tb-when svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.tb-when b{color:var(--ink);font-weight:800;font-variant-numeric:tabular-nums;}
+
+/* The seal is the page's anchor mark, so it gets a light disc behind it — the
+   logo is dark-on-transparent and disappeared against the chrome — plus a gold
+   ring and outer glow, as in the reference. */
+.tb-seal{width:62px;height:62px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;background:radial-gradient(circle,#FFFDF8 0%,#FFF6E4 62%,rgba(255,246,228,0) 63%);
+  box-shadow:0 0 0 2px var(--gold),0 0 0 5px rgba(212,160,23,.22),0 6px 20px rgba(0,0,0,.45);}
+.tb-seal img{width:56px;height:56px;object-fit:contain;border-radius:50%;}
+
+.tb-tools{display:flex;align-items:center;justify-content:flex-end;gap:var(--sp-2);min-width:0;}
+.tb-search{display:flex;align-items:center;gap:9px;flex:1;max-width:290px;min-width:0;
+  background:rgba(0,0,0,.24);border:1px solid var(--chrome-edge);border-radius:99px;padding:0 14px;height:42px;
+  transition:border-color var(--dur-base) var(--ease-out),background var(--dur-base) var(--ease-out);}
+.tb-search:focus-within{border-color:var(--gold-line);background:rgba(0,0,0,.34);}
+.tb-search svg{width:16px;height:16px;flex-shrink:0;stroke:var(--ink-mut);fill:none;stroke-width:2;stroke-linecap:round;}
+.tb-search input{flex:1;min-width:0;background:none;border:none;outline:none;color:var(--ink);
+  font-family:'Nunito',sans-serif;font-size:.84rem;font-weight:600;}
+.tb-search input::placeholder{color:var(--ink-mut);}
+
+.tb-icon{position:relative;width:42px;height:42px;flex-shrink:0;border-radius:50%;border:1px solid var(--chrome-edge);
+  background:rgba(0,0,0,.20);color:var(--ink-mut);display:flex;align-items:center;justify-content:center;cursor:pointer;
+  text-decoration:none;transition:background var(--dur-base) var(--ease-out),color var(--dur-base) var(--ease-out),transform var(--dur-fast) var(--ease-out);}
+.tb-icon:hover{background:rgba(212,160,23,.16);color:var(--gold-bright);}
+.tb-icon:active{transform:scale(.94);}
+.tb-icon:focus-visible{outline:2px solid var(--gold-line);outline-offset:2px;}
+.tb-icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+.tb-dot{position:absolute;top:-2px;right:-2px;min-width:19px;height:19px;padding:0 5px;border-radius:99px;
+  background:#C0392B;color:#fff;font-size:.62rem;font-weight:900;display:flex;align-items:center;justify-content:center;
+  border:2px solid var(--chrome-deep);font-variant-numeric:tabular-nums;}
+
+.tb-me{display:flex;align-items:center;gap:9px;flex-shrink:0;padding:5px 13px 5px 5px;border-radius:99px;
+  background:rgba(0,0,0,.20);border:1px solid var(--chrome-edge);}
+.tb-av{width:32px;height:32px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,var(--gold-dark),var(--gold));color:var(--maroon-dark);
+  font-weight:900;font-size:.82rem;font-family:'Cinzel',serif;}
+.tb-me-txt{display:flex;flex-direction:column;line-height:1.15;min-width:0;}
+.tb-me-txt b{font-size:.8rem;color:var(--ink);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;}
+.tb-me-txt small{font-size:.62rem;color:var(--ink-mut);font-weight:700;letter-spacing:.04em;}
+
+/* Tablet: drop the seal, let the two live zones share the width. */
+@media (max-width:1100px){
+  .topbar{grid-template-columns:1fr auto;}
+  .tb-seal{display:none;}
+  .tb-when{display:none;}
+}
+/* Phone: stack, and keep every control at the 44px touch minimum. */
+@media (max-width:768px){
+  .topbar{grid-template-columns:1fr;gap:var(--sp-2);padding:var(--sp-3) var(--sp-4)!important;}
+  .tb-greet-txt h1{font-size:1.12rem;}
+  .tb-tools{justify-content:space-between;}
+  .tb-search{max-width:none;height:44px;}
+  .tb-icon{width:44px;height:44px;}
+  .tb-me-txt{display:none;}
+  .tb-me{padding:5px;}
+}
 </style>
 </head>
 <body>
@@ -508,16 +620,36 @@ tr:hover td{background:var(--maroon-soft);}
 
   <div class="admin-main">
   <div class="topbar">
-    <div class="topbar-title">
-      <h1>MSUkaIP — Admin Dashboard</h1>
-      <p>College of Information and Computing Sciences · Mindanao State University</p>
-    </div>
-    <div class="topbar-right">
-      <div class="topbar-admin-badge">
-        <div class="topbar-admin-av" id="admin-av">A</div>
-        <span class="topbar-admin-name" id="admin-name-label">Admin</span>
+    <div class="tb-greet">
+      <div class="tb-greet-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/></svg></div>
+      <div class="tb-greet-txt">
+        <span class="tb-hello" id="tb-hello">Good day,</span>
+        <h1 id="tb-name">Admin!</h1>
       </div>
-      <a href="/">← Back to Chat</a>
+      <div class="tb-when">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        <span id="tb-date">—</span><b id="tb-time">—</b>
+      </div>
+    </div>
+
+    <div class="tb-seal" aria-hidden="true"><img src="/msukaip-logo.png" alt=""/></div>
+
+    <div class="tb-tools">
+      <label class="tb-search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.2-3.2"/></svg>
+        <input type="search" id="tb-search-input" placeholder="Search users, messages…" aria-label="Search users and messages" oninput="globalSearch(this.value)"/>
+      </label>
+      <button class="tb-icon" id="tb-bell" aria-label="Pending account requests" onclick="switchTab('pending',null,document.getElementById('rail-pending'))">
+        <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        <span class="tb-dot" id="tb-bell-count" hidden>0</span>
+      </button>
+      <a class="tb-icon" href="/" aria-label="Back to chat" data-tip="Back to Chat">
+        <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+      </a>
+      <div class="tb-me" title="Signed in as admin">
+        <span class="tb-av" id="admin-av">A</span>
+        <span class="tb-me-txt"><b id="admin-name-label">Admin</b><small>Administrator</small></span>
+      </div>
     </div>
   </div>
 
@@ -698,6 +830,8 @@ async function login(){
     authToken=data.token;
     document.getElementById('admin-name-label').textContent=data.name;
     document.getElementById('admin-av').textContent=data.name.charAt(0).toUpperCase();
+    setGreeting(data.name);
+    startClock();
     document.getElementById('auth-screen').style.display='none';
     document.getElementById('app').style.display='flex';
     loadAll();
@@ -1147,12 +1281,16 @@ async function loadPending(){
     const el=document.getElementById('pending-list');
     const badge=document.getElementById('pending-count');
     const railBadge=document.getElementById('rail-pending-count');
+    const bell=document.getElementById('tb-bell-count');
     if(users.length>0){
       badge.textContent=users.length;badge.style.display='inline-block';
       railBadge.textContent=users.length;railBadge.style.display='inline-block';
+      // The top-bar bell counts the same queue, so it can't drift from the rail.
+      if(bell){ bell.textContent=users.length>99?'99+':users.length; bell.hidden=false; }
     } else {
       badge.style.display='none';
       railBadge.style.display='none';
+      if(bell) bell.hidden=true;
     }
     if(!users.length){
       el.innerHTML='<p class="empty">✅ No pending requests!<br><span style="font-size:.8rem;">When users register, their requests will appear here for approval.</span></p>';
@@ -1222,6 +1360,39 @@ function renderUsers(users){
 function filterUsers(){
   const q=document.getElementById('search-users').value.toLowerCase();
   renderUsers(allUsers.filter(u=>u.name.toLowerCase().includes(q)||u.email.toLowerCase().includes(q)));
+}
+
+// ── Top bar ────────────────────────────────────────────────────────────────
+// Greets by local time of day and shows the signed-in admin's real name.
+function setGreeting(name){
+  const h=new Date().getHours();
+  const hello = h<12 ? 'Good morning,' : h<18 ? 'Good afternoon,' : 'Good evening,';
+  const el=document.getElementById('tb-hello'); if(el) el.textContent=hello;
+  const n=document.getElementById('tb-name');
+  // First name only — the bar is tight, and "Admin!" reads better than a full name.
+  if(n) n.textContent=(String(name||'Admin').trim().split(/\s+/)[0])+'!';
+}
+// Live date + clock. Ticks each second; stored so a re-login can't stack timers.
+let _clockTimer=null;
+function startClock(){
+  const d=document.getElementById('tb-date'), t=document.getElementById('tb-time');
+  if(!d||!t) return;
+  const tick=()=>{ const now=new Date();
+    d.textContent=now.toLocaleDateString([], {month:'short', day:'numeric', year:'numeric'});
+    t.textContent=now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); };
+  tick();
+  clearInterval(_clockTimer);
+  _clockTimer=setInterval(tick, 1000);
+}
+// One search box over both tables: it drives the Users list and, when the
+// pending tab is showing, filters those cards too.
+function globalSearch(q){
+  const term=String(q||'').toLowerCase().trim();
+  const su=document.getElementById('search-users');
+  if(su){ su.value=q; filterUsers(); }
+  document.querySelectorAll('#pending-list .pending-card').forEach(card=>{
+    card.style.display = !term || card.textContent.toLowerCase().includes(term) ? '' : 'none';
+  });
 }
 
 async function addUser(){
