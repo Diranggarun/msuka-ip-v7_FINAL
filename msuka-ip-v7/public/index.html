@@ -1783,7 +1783,6 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
       <div id="notif-section-list" style="flex:1;"></div>
     </div>
 
-    <div id="section-global-spacer" style="flex:1;"></div>
     <!-- Icon-only, so the accessible name comes from aria-label; title gives the
          same text to mouse users as a tooltip. Reuses openNewGroupModal() — the
          one the rail button and the in-section button both already called. -->
@@ -2487,12 +2486,6 @@ function switchNav(name, btn) {
   // collapsed, #all-list's flex:1 did nothing, and the list grew past the
   // section and had its last rows clipped by overflow:hidden.
   document.getElementById('section-global').style.display         = name === 'global'      ? 'flex'  : 'none';
-  // The spacer is deliberately never shown any more. It was a flex:1 sibling
-  // that pushed the old, very short online list to the top of the panel — but
-  // it split the panel's height with #section-global, so once the All tab
-  // gained a full conversation list it was stealing half the space. The element
-  // is kept (its id is referenced here) rather than deleted.
-  document.getElementById('section-global-spacer').style.display  = 'none';
   document.getElementById('section-groups').style.display         = name === 'groups'      ? 'flex'  : 'none';
   document.getElementById('section-private').style.display        = name === 'private'     ? 'flex'  : 'none';
   document.getElementById('section-notif').style.display          = name === 'notif'       ? 'flex'  : 'none';
