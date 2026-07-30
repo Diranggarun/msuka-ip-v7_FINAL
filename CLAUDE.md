@@ -47,7 +47,7 @@ Project agents live in `.claude/agents/`: `planner` (read-only architect), `back
 
 ## Skills — routing for this project
 
-Design skills are installed in `.agents/skills/` (gitignored; reinstall with `npx skills@latest add <repo>` from `skills-lock.json`). Skills auto-trigger from their own descriptions, but most of these were written for React/Tailwind marketing sites, so this table decides what applies **here**. Consult it before invoking a design skill.
+Design skills are installed in `.agents/skills/` and symlinked from `.claude/skills/` (both gitignored; reinstall everything with `npx skills@latest experimental_install` from `skills-lock.json`). `frontend-design` is the exception — it comes from a plugin repo and sits directly in `.claude/skills/`. Skills auto-trigger from their own descriptions, but most of these were written for React/Tailwind marketing sites, so this table decides what applies **here**. Consult it before invoking a design skill.
 
 **Use freely — stack-agnostic judgement, applied by hand:**
 
@@ -55,6 +55,7 @@ Design skills are installed in `.agents/skills/` (gitignored; reinstall with `np
 |---|---|
 | `impeccable` | UI critique, hierarchy, a11y, spacing, states. Works on any stack. Ships hook scripts — leave them unregistered. |
 | `redesign-existing-projects` | Audits before changing. Explicitly supports vanilla CSS. |
+| `frontend-design` | Aesthetic direction, typography pairing, avoiding templated defaults. Prose guidance, no framework. Its "take an aesthetic risk" advice stops at the maroon/gold `:root` tokens and Cinzel/Nunito — those are fixed MSU identity. |
 | `apple-design` | Interaction/motion principles, reduced-motion, gesture and sheet behaviour. |
 | `emil-design-eng` | Small polish calls and "invisible details". |
 | `find-animation-opportunities` · `improve-animations` · `review-animations` | Motion audits. Read-only; they plan, they don't implement. |
