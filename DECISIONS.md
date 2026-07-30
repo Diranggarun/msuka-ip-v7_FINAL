@@ -156,6 +156,20 @@ _Newest entries first._
 
 ---
 
+## 2026-07-30 — Left rail cut from six destinations to three; New Group became a floating +
+
+**Decision:** Removed `#rail-groups`, `#rail-private` and the rail's New Group button. Groups and Private are reached from the `#nav-groups` / `#nav-private` filter pills that were already in the list header; New Group is now a floating gold **+** pinned bottom-right of the conversation list. The in-section `+ New Group` inside `#section-groups` was removed too. The rail is now Messages · Global Chat · Notifications · [Admin] — spacer — Feedback · Sign Out.
+
+**Context:** Three rail rows were exact duplicates of controls elsewhere in the same screen. `#rail-groups` fired `switchNav('groups', …)`, the identical call `#nav-groups` makes; `#rail-private` likewise; the rail's New Group called the same `openNewGroupModal()` as the button inside the Groups section. The phone CSS had already reached this conclusion for one of them — it hid the New Group row on narrow screens, with a comment reasoning that the Groups list has its own button so nothing becomes unreachable. This applies that same judgement at every screen size.
+
+**Reasoning:** Two controls that call the same function are two things to explain in a defense and two places to keep in sync, for no gain. Keeping the *pills* rather than the rail rows is the right direction because the pills sit directly above the list they filter, whereas the rail mixes filters and destinations in one column. Global Chat and Notifications stayed because they are views, not filters — `switchNav()` deliberately hides the pill track for them, so they have no pill to fall back on. Feedback and Sign Out stayed because they have no other entry point anywhere in the UI.
+
+**Trade-offs:** Group creation moved from a labelled row to an icon-only button, so it now depends on `aria-label` for its accessible name rather than visible text. Gold fill with a maroon glyph measures 5.44:1, past the 3:1 WCAG asks of non-text UI shapes. The lists needed 86px of bottom padding (52px button + 18px offset + breathing room) so the floating button never covers the last conversation row. `#compose-btn` in the list header was **kept** despite also calling `switchNav('private', …)`: a compose affordance is a different user intent from a filter, and the file already documents it that way.
+
+Two things this let us delete rather than maintain: the phone-only rule hiding the New Group row (its target no longer exists) and the rail's horizontal scroll. That scroll existed because seven 44px tabs did not fit a 320px screen; five now measure 60px each there, verified at 320/375/414px.
+
+---
+
 ## Stack divergence from the original plan
 
 The original capstone plan called for **FastAPI + React + Vite + Pydantic + Alembic migrations**. The actual build is **Node.js + Express + Socket.IO + vanilla HTML/JS + ad-hoc schema-init via `CREATE TABLE IF NOT EXISTS`**.

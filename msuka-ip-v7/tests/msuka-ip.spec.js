@@ -297,12 +297,16 @@ test.describe('2. Messenger UI Tests', () => {
     await studentLogin(page);
   });
 
+  // The rail carries only the destinations that have no filter-pill equivalent.
+  // Groups and Private moved to the #nav-groups / #nav-private pills, which fire
+  // the identical switchNav() calls the removed rail rows used to.
   test('2.1 Icon-rail navigation buttons are visible', async ({ page }) => {
     await expect(page.locator('#rail-global')).toBeVisible();
     await expect(page.locator('#rail-globalchat')).toBeVisible();
-    await expect(page.locator('#rail-groups')).toBeVisible();
-    await expect(page.locator('#rail-private')).toBeVisible();
-    console.log('✅ All rail navigation buttons visible');
+    await expect(page.locator('#rail-notif')).toBeVisible();
+    await expect(page.locator('#nav-groups')).toBeVisible();
+    await expect(page.locator('#nav-private')).toBeVisible();
+    console.log('✅ Rail destinations + list filter pills visible');
   });
 
   test('2.2 Global Chat opens from the rail', async ({ page }) => {
@@ -313,15 +317,18 @@ test.describe('2. Messenger UI Tests', () => {
     console.log('✅ Global Chat opens correctly');
   });
 
-  test('2.3 Groups section shows + New Group button', async ({ page }) => {
-    await page.click('#rail-groups');
+  // The New Group affordance is now the floating + in the conversation list, which
+  // is on screen for every tab rather than only inside the Groups section.
+  test('2.3 Groups section is reachable and the New Group + is available', async ({ page }) => {
+    await page.click('#nav-groups');
     await expect(page.locator('#section-groups')).toBeVisible();
-    await expect(page.locator('#section-groups button')).toContainText('New Group');
-    console.log('✅ Groups section with New Group button visible');
+    await expect(page.locator('.fab-new-group')).toBeVisible();
+    await expect(page.locator('.fab-new-group')).toHaveAttribute('aria-label', 'New group');
+    console.log('✅ Groups section visible with the floating New Group button');
   });
 
   test('2.4 Private section is reachable', async ({ page }) => {
-    await page.click('#rail-private');
+    await page.click('#nav-private');
     await expect(page.locator('#section-private')).toBeVisible();
     console.log('✅ Private section visible');
   });
@@ -344,23 +351,23 @@ test.describe('2. Messenger UI Tests', () => {
   });
 
   test('2.7 Search box accepts input', async ({ page }) => {
-    await page.click('#rail-groups');
+    await page.click('#nav-groups');
     await page.fill('#search-input', 'BSIT');
     await expect(page.locator('#search-input')).toHaveValue('BSIT');
     console.log('✅ Search box works');
   });
 
   test('2.8 New Group modal opens', async ({ page }) => {
-    await page.click('#rail-groups');
-    await page.click('#section-groups button');
+    await page.click('#nav-groups');
+    await page.click('.fab-new-group');
     await expect(page.locator('#modal-overlay')).toBeVisible();
     await expect(page.locator('#group-name-input')).toBeVisible();
     console.log('✅ New Group modal opens');
   });
 
   test('2.9 New Group modal can be closed', async ({ page }) => {
-    await page.click('#rail-groups');
-    await page.click('#section-groups button');
+    await page.click('#nav-groups');
+    await page.click('.fab-new-group');
     await expect(page.locator('#modal-overlay')).toBeVisible();
     await page.click('.btn-cancel');
     await expect(page.locator('#modal-overlay')).not.toBeVisible();

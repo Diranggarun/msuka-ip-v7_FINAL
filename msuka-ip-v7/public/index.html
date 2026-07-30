@@ -617,7 +617,29 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 
 /* LEFT PANEL — the conversation list. Background comes from the shared chrome
    rule in the APP section; only layout and text colour are set here. */
-.left-panel{width:320px;display:flex;flex-direction:column;flex-shrink:0;}
+/* position:relative is the containing block for .fab-new-group below — without it
+   the floating button would anchor to the viewport instead of this panel. */
+.left-panel{width:320px;display:flex;flex-direction:column;flex-shrink:0;position:relative;}
+/* Floating "New group" button. It sits in the conversation list rather than the
+   rail because creating a group belongs beside the conversations it produces, and
+   the rail row that used to do this was a straight duplicate of the in-section
+   button — the phone CSS further down had already reached that conclusion and
+   hidden the rail copy there. This extends that decision to every screen size.
+   Gold fill with a maroon glyph measures 5.44:1, well clear of the 3:1 WCAG asks
+   for non-text UI shapes (same style of note as --text-light in :root). */
+.fab-new-group{position:absolute;right:18px;bottom:86px;width:52px;height:52px;border-radius:50%;
+  border:none;background:var(--gold);color:var(--maroon);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-md);z-index:4;
+  transition:transform var(--dur-fast) var(--ease-out),box-shadow var(--dur-base) var(--ease-out),background var(--dur-fast) var(--ease-out);}
+.fab-new-group svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;}
+.fab-new-group:hover{background:var(--gold-bright);box-shadow:var(--shadow-lg);}
+/* Same press feel as .rail-btn:active, so controls in this card behave alike. */
+.fab-new-group:active{transform:scale(.94);transition-duration:.06s;}
+/* The lists scroll under the button, so each reserves its height (52) plus its
+   offset (86) plus breathing room — otherwise the last conversation row sits
+   permanently beneath it and cannot be tapped. These two values move together:
+   raising the button raises how much the lists must reserve. */
+#all-list,#groups-list,#private-list{padding-bottom:154px;}
 /* min-height matches .chat-header so the "MESSAGES" title and the open
    conversation's title sit on the same baseline across the two cards. */
 .left-header{padding:0 1.1rem;min-height:62px;display:flex;align-items:center;border-bottom:1px solid var(--chrome-edge);}
@@ -1448,19 +1470,17 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
   .icon-rail .rail-btn.active::before{left:50%;top:auto;bottom:2px;transform:translateX(-50%);
     width:18px;height:3px;border-radius:3px 3px 0 0;animation:none;}
   .icon-rail .rail-btn:hover,.icon-rail .rail-btn:active{transform:none;}
-  /* "New Group" comes out of the tab bar on phones: the Groups list already
-     has its own "+ New Group" button, so nothing becomes unreachable, and
-     dropping the duplicate lifts the remaining tabs from 42px to ~53px wide,
-     back over the 44px touch minimum.
-     Seven tabs is more than the ideal five, but Feedback and Sign Out have no
-     other entry point in the UI — hiding them would strand the user, which is
-     a worse failure than a slightly crowded bar. */
-  .icon-rail .rail-btn[onclick*="openNewGroupModal"]{display:none;}
-  /* flex-basis 44px + shrink:0 keeps every tab at the 44px touch minimum. On a
-     320px screen seven tabs no longer fit, so the bar scrolls horizontally
-     instead of squeezing targets down to 40px — an unreachable button is worse
-     than one that needs a small swipe. */
-  .icon-rail{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;}
+  /* The phone-only rule that hid "New Group" here is gone with the button: the
+     rail no longer carries it on any screen size, so there is nothing to hide.
+     The bar is now five tabs for a student (Messages, Global Chat, Notifications,
+     Feedback, Sign Out) and six for an admin. Feedback and Sign Out stay because
+     they have no other entry point in the UI — hiding them would strand the user.
+     flex-basis 44px + shrink:0 still holds every tab at the 44px touch minimum.
+     The horizontal scroll that used to sit here is dropped: it existed because
+     seven tabs did not fit a 320px screen, and six at 44px come to 264px inside a
+     316px content box, so they fit with room to grow. overflow-y:hidden is kept —
+     it stops the taller badges from bulging the bar vertically. */
+  .icon-rail{overflow-x:visible;overflow-y:hidden;}
   .icon-rail .rail-btn{flex:1 0 44px;min-width:44px;min-height:48px;padding:6px 2px;
     justify-content:center;border-radius:10px;}
   .icon-rail .rail-btn .rbadge,.icon-rail .rail-btn .notif-count{top:2px;right:50%;
@@ -1649,18 +1669,17 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
       <span class="rlabel">Global Chat</span>
       <span class="rbadge" id="rail-global-unread" style="display:none;">0</span>
     </button>
-    <button class="rail-btn" id="rail-groups" onclick="switchNav('groups',document.getElementById('nav-groups'))" title="Groups">
-      <span class="ricon"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5"/><path d="M15 19c0-2 2-3.5 4-3.5"/></svg></span>
-      <span class="rlabel">Groups</span>
-    </button>
-    <button class="rail-btn" id="rail-private" onclick="switchNav('private',document.getElementById('nav-private'))" title="Private">
-      <span class="ricon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
-      <span class="rlabel">Private</span>
-    </button>
-    <button class="rail-btn" onclick="openNewGroupModal()" title="New Group">
-      <span class="ricon"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>
-      <span class="rlabel">New Group</span>
-    </button>
+    <!-- Groups, Private and New Group used to sit here and were removed as exact
+         duplicates: the first two fired the same switchNav('groups'|'private')
+         calls as the #nav-groups / #nav-private filter pills in the list header,
+         and New Group called the same openNewGroupModal() as the floating + in the
+         conversation list. The phone CSS had already hidden the New Group row for
+         precisely this reason; this applies the same judgement on every screen.
+         What is left are the three destinations that have no pill equivalent —
+         switchNav() hides the pill track for Global Chat and Notifications — plus
+         Admin, Feedback and Sign Out, which have no other entry point at all.
+         switchNav() needed no change: its rail lookup is already null-guarded
+         (`const rb = ...; if (rb) ...`), so a missing #rail-groups is a no-op. -->
     <button class="rail-btn notif-btn" id="rail-notif" onclick="switchNav('notif', null)" title="Notifications">
       <span class="ricon"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>
       <span class="rlabel">Notifications</span>
@@ -1736,7 +1755,11 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
     </div>
 
     <div id="section-groups" class="list-scroll" style="display:none;flex:1;overflow-y:auto;flex-direction:column;">
-      <div class="section-label">My Groups <button onclick="openNewGroupModal()">+ New Group</button></div>
+      <!-- The "+ New Group" button that used to live in this label is gone: the
+           floating + is a sibling of every section, so it is on screen while this
+           one is open too. Keeping both would repeat one level down exactly the
+           duplication the rail cleanup removed. -->
+      <div class="section-label">My Groups</div>
       <div id="groups-list"></div>
     </div>
 
@@ -1761,6 +1784,12 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
     </div>
 
     <div id="section-global-spacer" style="flex:1;"></div>
+    <!-- Icon-only, so the accessible name comes from aria-label; title gives the
+         same text to mouse users as a tooltip. Reuses openNewGroupModal() — the
+         one the rail button and the in-section button both already called. -->
+    <button class="fab-new-group" onclick="openNewGroupModal()" title="New group" aria-label="New group">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
   </div>
 
   <div class="right-panel center-panel">
