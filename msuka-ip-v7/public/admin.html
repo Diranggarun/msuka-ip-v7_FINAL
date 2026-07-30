@@ -197,10 +197,10 @@ button,.tab,.rail-btn{touch-action:manipulation;}
    the "repeated card grid" anti-pattern. Now one hero chart carrying the two
    headline series, with the five metrics as compact tiles beside it: the shape
    of the data reads first, the exact numbers are one glance away. */
-/* Single column while the right-hand column is empty — the KPI tiles moved up
-   into their own row. Stage 4 puts Online Now / Approved Users beside the chart
-   and this goes back to two columns. */
-.ov-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:1.4rem;align-items:stretch;}
+/* Two columns: the chart takes the free space, the "who" column is a fixed
+   320px so the user rows never stretch into unreadable line lengths. The
+   @media below collapses it to one column on narrow screens. */
+.ov-grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:14px;margin-bottom:1.4rem;align-items:stretch;}
 
 /* Chrome surface for the chart — a dark instrument panel against the cream
    page, so the plotted lines carry the eye instead of the container. */
@@ -565,6 +565,90 @@ tr:hover td{background:var(--maroon-soft);}
   .tb-me-txt{display:none;}
   .tb-me{padding:5px;}
 }
+
+/* ═══ Stage 4 · the "who" column ══════════════════════════════════════════
+   The chart answers "how much"; this column answers "who". Paper surfaces
+   against the chart's chrome so the two read as different kinds of object:
+   an instrument to scan vs. a list to read.
+   Avatar colour encodes ROLE, reusing the same hues as the role badges. The
+   initials already tell people apart, so the colour is free to carry
+   information instead of being decorative. */
+.ov-side{display:grid;grid-template-rows:auto minmax(0,1fr);gap:14px;min-width:0;}
+.ov-panel{background-color:var(--paper);border:1px solid var(--paper-line);border-radius:18px;
+  padding:.9rem 1rem;display:flex;flex-direction:column;min-width:0;
+  box-shadow:0 10px 26px -18px rgba(74,0,0,.45);}
+.ov-panel-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:.75rem;}
+.ov-panel-title{font-family:'Cinzel',serif;font-size:.82rem;font-weight:700;color:var(--maroon-dark);
+  letter-spacing:.02em;margin:0;display:flex;align-items:baseline;gap:5px;}
+/* The count is data, not a title — sans-serif so it doesn't read as heading. */
+.ov-panel-title b{font-family:'Nunito',sans-serif;font-weight:800;font-size:.76rem;color:var(--text-light);}
+.ov-panel-link{background:none;border:0;font-family:inherit;font-size:.71rem;font-weight:800;
+  color:var(--maroon);cursor:pointer;padding:3px 5px;border-radius:6px;
+  transition:background var(--dur-fast) var(--ease-out),color var(--dur-fast) var(--ease-out);}
+.ov-panel-link:hover{background:var(--maroon-soft);color:var(--maroon-dark);}
+.ov-panel-link:focus-visible{outline:2px solid var(--gold-dark);outline-offset:1px;}
+
+.av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;
+  font-family:'Nunito',sans-serif;font-size:.71rem;font-weight:800;color:#fff;letter-spacing:.02em;
+  background:var(--text-mid);}
+.av[data-role="student"]{background:#1a6da3;}
+.av[data-role="faculty"]{background:var(--gold-dark);}
+.av[data-role="admin"]{background:#c0392b;}
+
+/* Online row — the green dot is bordered in the panel colour so it reads as
+   sitting on top of the avatar rather than being part of it. */
+.on-row{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:.85rem;}
+.on-av{position:relative;display:block;}
+.on-av .dot{position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;
+  background:#16a34a;border:2px solid var(--paper);}
+.on-more{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
+  font-family:'Nunito',sans-serif;font-size:.67rem;font-weight:800;color:var(--text-mid);
+  background:var(--gray-100);border:1px dashed var(--gray-200);}
+.on-empty{font-size:.76rem;color:var(--text-light);margin:0 0 .85rem;line-height:1.5;}
+
+/* 2x2 shortcuts + one wide primary — every one of these opens a real panel. */
+.qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.qa{display:flex;align-items:center;gap:7px;padding:.5rem .55rem;border-radius:12px;
+  background:var(--white);border:1px solid var(--paper-line);cursor:pointer;
+  font-family:inherit;font-size:.71rem;font-weight:700;color:var(--text-dark);text-align:left;
+  transition:transform var(--dur-fast) var(--ease-out),border-color var(--dur-fast) var(--ease-out),
+             box-shadow var(--dur-fast) var(--ease-out),background var(--dur-fast) var(--ease-out);}
+.qa:hover{border-color:var(--gold);box-shadow:var(--shadow-sm);}
+.qa:active{transform:scale(.97);transition-duration:.06s;}
+.qa:focus-visible{outline:2px solid var(--gold-dark);outline-offset:1px;}
+.qa svg{width:15px;height:15px;flex:0 0 auto;fill:none;stroke:var(--maroon);stroke-width:1.9;
+  stroke-linecap:round;stroke-linejoin:round;}
+.qa-wide{width:100%;justify-content:center;background:var(--maroon);color:var(--gold-bright);
+  border-color:var(--maroon-dark);font-size:.74rem;}
+.qa-wide svg{stroke:var(--gold-bright);}
+.qa-wide:hover{background:var(--maroon-dark);border-color:var(--gold-dark);}
+
+.au-tabs{display:flex;gap:4px;margin-bottom:.55rem;flex-wrap:wrap;}
+.au-tab{border:0;background:var(--gray-100);color:var(--text-mid);font-family:inherit;
+  font-size:.67rem;font-weight:800;padding:.3rem .62rem;border-radius:20px;cursor:pointer;
+  transition:background var(--dur-fast) var(--ease-out),color var(--dur-fast) var(--ease-out);}
+.au-tab:hover{background:var(--gray-200);}
+.au-tab.active{background:var(--maroon);color:var(--gold-bright);}
+.au-tab:focus-visible{outline:2px solid var(--gold-dark);outline-offset:1px;}
+/* Scrolls inside the panel so the page length stays fixed no matter how many
+   users exist — 216 students must not push the layout down the page. */
+.au-list{overflow-y:auto;min-height:0;max-height:236px;display:flex;flex-direction:column;}
+.au-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:9px;
+  padding:.42rem .1rem;}
+.au-row+.au-row{border-top:1px solid var(--paper-line);}
+.au-name{font-size:.78rem;font-weight:700;color:var(--text-dark);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.au-meta{font-size:.67rem;color:var(--text-light);display:flex;align-items:center;gap:5px;margin-top:1px;}
+.au-dot{width:7px;height:7px;border-radius:50%;background:var(--gray-200);flex:0 0 auto;}
+.au-dot.on{background:#16a34a;}
+.au-empty{font-size:.76rem;color:var(--text-light);padding:.5rem .1rem;margin:0;}
+.au-foot{margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--paper-line);
+  display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.au-shown{font-size:.66rem;color:var(--text-light);}
+@media (max-width:900px){
+  .ov-side{grid-template-rows:auto auto;}
+  .au-list{max-height:300px;}
+}
 </style>
 </head>
 <body>
@@ -617,23 +701,23 @@ tr:hover td{background:var(--maroon-soft);}
       <span class="rlabel">Pending</span>
       <span class="rail-badge" id="rail-pending-count">0</span>
     </button>
-    <button class="rail-tab" onclick="switchTab('users',null,this)" title="Users">
+    <button class="rail-tab" id="rail-users" onclick="switchTab('users',null,this)" title="Users">
       <span class="ricon"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5"/><path d="M15 19c0-2 2-3.5 4-3.5"/></svg></span>
       <span class="rlabel">Users</span>
     </button>
-    <button class="rail-tab" onclick="switchTab('add',null,this)" title="Add User">
+    <button class="rail-tab" id="rail-add" onclick="switchTab('add',null,this)" title="Add User">
       <span class="ricon"><svg viewBox="0 0 24 24"><circle cx="10" cy="8" r="3.5"/><path d="M3 21c0-3.5 3-6 7-6"/><path d="M17 14v6M14 17h6"/></svg></span>
       <span class="rlabel">Add User</span>
     </button>
-    <button class="rail-tab" onclick="switchTab('logs',null,this)" title="Audit Logs">
+    <button class="rail-tab" id="rail-logs" onclick="switchTab('logs',null,this)" title="Audit Logs">
       <span class="ricon"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span>
       <span class="rlabel">Audit Logs</span>
     </button>
-    <button class="rail-tab" onclick="switchTab('monitor',null,this)" title="Login Monitor">
+    <button class="rail-tab" id="rail-monitor" onclick="switchTab('monitor',null,this)" title="Login Monitor">
       <span class="ricon"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 7v5l3 2"/><path d="M22 4l-3 3-2-2"/></svg></span>
       <span class="rlabel">Login Monitor</span>
     </button>
-    <button class="rail-tab" onclick="switchTab('feedback',null,this)" title="Feedback">
+    <button class="rail-tab" id="rail-feedback" onclick="switchTab('feedback',null,this)" title="Feedback">
       <span class="ricon"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>
       <span class="rlabel">Feedback</span>
       <span class="rail-badge" id="rail-feedback-count" style="display:none;">0</span>
@@ -741,6 +825,47 @@ tr:hover td{background:var(--maroon-soft);}
         <div class="ov-figure" id="ov-figure">—</div>
         <div class="ov-figure-lbl">Messages this period</div>
         <div id="main-chart"></div>
+      </div>
+
+      <div class="ov-side">
+        <div class="ov-panel">
+          <div class="ov-panel-head">
+            <h3 class="ov-panel-title">Online Now <b id="on-count">(0)</b></h3>
+            <button type="button" class="ov-panel-link" onclick="switchTab('users',null,document.getElementById('rail-users'))">View all</button>
+          </div>
+          <div id="on-avatars" class="on-empty">Loading…</div>
+          <div class="qa-grid">
+            <button type="button" class="qa" onclick="switchTab('add',null,document.getElementById('rail-add'))">
+              <svg viewBox="0 0 24 24"><circle cx="10" cy="8" r="3.5"/><path d="M3 21c0-3.5 3-6 7-6"/><path d="M17 14v6M14 17h6"/></svg>Add user</button>
+            <button type="button" class="qa" onclick="switchTab('logs',null,document.getElementById('rail-logs'))">
+              <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Audit logs</button>
+            <button type="button" class="qa" onclick="switchTab('monitor',null,document.getElementById('rail-monitor'))">
+              <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 7v5l3 2"/><path d="M22 4l-3 3-2-2"/></svg>Logins</button>
+            <button type="button" class="qa" onclick="switchTab('feedback',null,document.getElementById('rail-feedback'))">
+              <svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7A8.4 8.4 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5z"/></svg>Feedback</button>
+          </div>
+          <!-- This is the only entry point to the Recent Messages panel — it has
+               no rail button, so before this it was unreachable. -->
+          <button type="button" class="qa qa-wide" onclick="switchTab('messages',null,null)">
+            <svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7A8.4 8.4 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5z"/></svg>View recent messages</button>
+        </div>
+
+        <div class="ov-panel">
+          <div class="ov-panel-head">
+            <h3 class="ov-panel-title">Approved Users <b id="au-count">(0)</b></h3>
+          </div>
+          <div class="au-tabs" role="group" aria-label="Filter users by role">
+            <button type="button" class="au-tab active" onclick="filterApproved('all',this)">All</button>
+            <button type="button" class="au-tab" onclick="filterApproved('student',this)">Students</button>
+            <button type="button" class="au-tab" onclick="filterApproved('faculty',this)">Faculty</button>
+            <button type="button" class="au-tab" onclick="filterApproved('admin',this)">Admins</button>
+          </div>
+          <div class="au-list" id="au-list"><p class="au-empty">Loading…</p></div>
+          <div class="au-foot">
+            <span class="au-shown" id="au-shown"></span>
+            <button type="button" class="ov-panel-link" onclick="switchTab('users',null,document.getElementById('rail-users'))">View All Users →</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -890,6 +1015,11 @@ async function login(){
     setGreeting(data.name);
     startClock();
     document.getElementById('auth-screen').style.display='none';
+    // The phone rules are written against #app.open (see the max-width:768px
+    // block). Without this class #app keeps flex-direction:row, the rail takes
+    // width:100% of that row and .admin-main collapses to 0px — the dashboard
+    // was invisible below 900px.
+    document.getElementById('app').classList.add('open');
     document.getElementById('app').style.display='flex';
     loadAll();
     setInterval(loadPending, 15000);
@@ -1442,7 +1572,67 @@ async function loadUsers(){
   try{
     const res=await fetch('/api/admin/users',{headers:{Authorization:`Bearer ${authToken}`}});
     allUsers=await res.json();renderUsers(allUsers);
+    renderOnline(allUsers);renderApproved(allUsers);
   }catch{}
+}
+
+// ── Stage 4 · the "who" column ─────────────────────────────────────────────
+// First letter of the first two words: "Juan dela Cruz" → "JD".
+function initials(name){
+  const words=String(name||'').trim().split(/\s+/).slice(0,2);
+  return (words.map(w=>w[0]||'').join('')||'?').toUpperCase();
+}
+
+function renderOnline(users){
+  const on=users.filter(u=>u.status==='online');
+  document.getElementById('on-count').textContent=`(${on.length})`;
+  const box=document.getElementById('on-avatars');
+  // An empty state, not a fake row — on a quiet LAN nobody online is normal.
+  if(!on.length){box.className='on-empty';box.textContent='Nobody is online right now.';return;}
+  box.className='on-row';
+  const SHOW=6;
+  box.innerHTML=on.slice(0,SHOW).map(u=>
+    `<span class="on-av" title="${esc(u.name)} — online"><span class="av" data-role="${esc(u.role)}">${esc(initials(u.name))}</span><i class="dot"></i></span>`
+  ).join('')+(on.length>SHOW?`<span class="on-more" title="${on.length-SHOW} more online">+${on.length-SHOW}</span>`:'');
+}
+
+let auFilter='all';
+// Only the first CAP rows are built: loadUsers() re-runs every 5s, and mapping
+// 200+ rows that often is wasted work for a panel you can only see ~6 of.
+// "View All Users →" is the way to the full table.
+const AU_CAP=40;
+
+function renderApproved(users){
+  // Online first, then the server's newest-first order (Array.sort is stable, so
+  // equal keys keep it). Without this the cap hides whoever is actually online:
+  // they're sorted by join date, so an older account never reaches the top 40.
+  const list=(auFilter==='all'?users:users.filter(u=>u.role===auFilter))
+    .slice()                       // copy — allUsers also feeds the main table
+    .sort((a,b)=>(b.status==='online')-(a.status==='online'));
+  const box=document.getElementById('au-list');
+  const keepScroll=box.scrollTop;           // the 5s refresh must not jump the list
+  document.getElementById('au-count').textContent=`(${list.length})`;
+  document.getElementById('au-shown').textContent=
+    list.length>AU_CAP?`Showing ${AU_CAP} of ${list.length}`:'';
+  if(!list.length){box.innerHTML='<p class="au-empty">No users in this group.</p>';return;}
+  box.innerHTML=list.slice(0,AU_CAP).map(u=>`
+    <div class="au-row">
+      <span class="av" data-role="${esc(u.role)}">${esc(initials(u.name))}</span>
+      <div style="min-width:0">
+        <div class="au-name">${esc(u.name)}</div>
+        <div class="au-meta"><span class="au-dot${u.status==='online'?' on':''}"></span>${u.status==='online'?'Online':'Offline'} · joined ${new Date(u.created_at).toLocaleDateString()}</div>
+      </div>
+      <span class="badge ${esc(u.role)}">${esc(u.role)}</span>
+    </div>`).join('');
+  box.scrollTop=keepScroll;
+}
+
+function filterApproved(role,btn){
+  auFilter=role;
+  document.querySelectorAll('.au-tab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.getElementById('au-list').scrollTop=0;   // new filter starts at the top
+  renderApproved(allUsers);
 }
 
 function renderUsers(users){
@@ -1707,6 +1897,8 @@ function switchTab(name,btn,railBtn){
   if(btn) btn.classList.add('active');
   if(railBtn) railBtn.classList.add('active');
   if(name==='monitor') loadLoginActivity();
+  // loadAll() never fetches messages, so the panel needs its own trigger.
+  if(name==='messages') loadMessages();
 }
 
 document.addEventListener('keydown',e=>{
