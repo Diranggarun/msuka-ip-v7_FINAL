@@ -197,7 +197,10 @@ button,.tab,.rail-btn{touch-action:manipulation;}
    the "repeated card grid" anti-pattern. Now one hero chart carrying the two
    headline series, with the five metrics as compact tiles beside it: the shape
    of the data reads first, the exact numbers are one glance away. */
-.ov-grid{display:grid;grid-template-columns:1.55fr 1fr;gap:14px;margin-bottom:1.4rem;align-items:stretch;}
+/* Single column while the right-hand column is empty — the KPI tiles moved up
+   into their own row. Stage 4 puts Online Now / Approved Users beside the chart
+   and this goes back to two columns. */
+.ov-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:1.4rem;align-items:stretch;}
 
 /* Chrome surface for the chart — a dark instrument panel against the cream
    page, so the plotted lines carry the eye instead of the container. */
@@ -224,8 +227,9 @@ button,.tab,.rail-btn{touch-action:manipulation;}
   font-weight:800;font-size:.72rem;padding:3px 9px;border-radius:8px;white-space:nowrap;pointer-events:none;
   box-shadow:0 6px 16px rgba(0,0,0,.4);}
 #main-chart .mc-badge::after{content:'';position:absolute;left:50%;bottom:-4px;transform:translateX(-50%) rotate(45deg);width:8px;height:8px;background:var(--gold);}
-#main-chart .mc-axis{position:absolute;left:0;right:0;bottom:-2px;display:flex;justify-content:space-between;
-  font-size:.6rem;color:var(--ink-mut);font-weight:700;padding:0 2px;}
+/* left inset matches the chart's PAD_L so a date sits under its own point */
+#main-chart .mc-axis{position:absolute;left:34px;right:10px;bottom:-2px;display:flex;justify-content:space-between;
+  font-size:.6rem;color:var(--ink-mut);font-weight:700;}
 /* Y-axis: without a scale the curve shows shape but no magnitude. */
 #main-chart .mc-yaxis{position:absolute;left:0;top:0;bottom:18px;width:100%;pointer-events:none;}
 #main-chart .mc-yaxis span{position:absolute;left:0;transform:translateY(-50%);font-size:.58rem;
@@ -459,6 +463,33 @@ tr:hover td{background:var(--maroon-soft);}
   .topbar a[href="/"]{display:inline-flex;align-items:center;min-height:44px;padding:0 10px;}
 }
 
+/* ══ KPI ROW — Stage 2 ════════════════════════════════════════════════════════
+   Five tiles across, following the stat-tile contract: sentence-case label,
+   a compact value, an optional signed delta against a named period, and a
+   low trend line.
+
+   Two deliberate departures from the rest of this page:
+   · the value is set in Nunito, not Cinzel. A serif display face on a figure
+     reads as decoration rather than data; Cinzel stays on panel titles.
+   · the value uses the font's proportional figures, NOT tabular-nums. Tabular
+     gives every digit a zero's width, which looks loose at display size —
+     tabular belongs in columns that must align (table rows, axis ticks). */
+.kpi-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:14px;}
+.kpi-row .stat-card{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto auto;
+  gap:2px 11px;align-items:center;padding:.85rem .95rem .5rem;min-height:0;}
+.kpi-ico{grid-row:1 / span 2;width:40px;height:40px;border-radius:13px;display:flex;align-items:center;
+  justify-content:center;background:var(--tone-soft);color:var(--tone);align-self:center;}
+.kpi-ico svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+.kpi-row .slabel{grid-column:2;font-size:.62rem;font-weight:800;color:var(--text-light);
+  text-transform:uppercase;letter-spacing:.07em;display:flex;flex-direction:column-reverse;gap:1px;}
+.kpi-row .slabel::after{content:attr(data-current);font-family:'Nunito',sans-serif;font-size:1.55rem;
+  font-weight:800;color:var(--tone);letter-spacing:-.01em;line-height:1.05;font-variant-numeric:normal;}
+.kpi-row .sdelta{grid-column:2;margin-top:1px;}
+.kpi-row .stat-spark{grid-column:1 / -1;height:26px;margin-top:4px;opacity:.85;}
+@media (max-width:1100px){ .kpi-row{grid-template-columns:repeat(3,minmax(0,1fr));} }
+@media (max-width:700px){ .kpi-row{grid-template-columns:repeat(2,minmax(0,1fr));} }
+@media (max-width:400px){ .kpi-row{grid-template-columns:1fr;} }
+
 /* ══ TOP BAR — Stage 1 ════════════════════════════════════════════════════════
    MUST STAY LAST: media queries carry no specificity, so these only beat the
    older .topbar rules by coming after them.
@@ -662,6 +693,39 @@ tr:hover td{background:var(--maroon-soft);}
         <button type="button" data-range="year">Year</button>
       </div>
     </div>
+    <div class="kpi-row">
+      <div class="stat-card" data-tone="maroon" data-good="up">
+        <span class="kpi-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5"/><path d="M15 19c0-2 2-3.5 4-3.5"/></svg></span>
+        <div class="slabel" id="lbl-total" data-current="—">Total users</div>
+        <div class="sdelta" id="delta-total" hidden></div>
+        <div class="stat-spark" id="spark-total"></div><div class="svalue" id="stat-total">—</div>
+      </div>
+      <div class="stat-card" data-tone="green" data-good="up">
+        <span class="kpi-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg></span>
+        <div class="slabel" id="lbl-online" data-current="—">Online now</div>
+        <div class="sdelta" id="delta-online" hidden></div>
+        <div class="stat-spark" id="spark-online"></div><div class="svalue" id="stat-online">—</div>
+      </div>
+      <div class="stat-card" data-tone="orange" data-good="up">
+        <span class="kpi-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7A8.4 8.4 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5z"/></svg></span>
+        <div class="slabel" id="lbl-messages" data-current="—">Messages</div>
+        <div class="sdelta" id="delta-messages" hidden></div>
+        <div class="stat-spark" id="spark-messages"></div><div class="svalue" id="stat-messages">—</div>
+      </div>
+      <div class="stat-card" data-tone="maroon" data-good="up">
+        <span class="kpi-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .3 1.9.6 2.8a2 2 0 0 1-.4 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.5 2.8.6A2 2 0 0 1 22 16.9z"/></svg></span>
+        <div class="slabel" id="lbl-calls" data-current="—">Voice calls</div>
+        <div class="sdelta" id="delta-calls" hidden></div>
+        <div class="stat-spark" id="spark-calls"></div><div class="svalue" id="stat-calls">—</div>
+      </div>
+      <div class="stat-card" data-tone="gold" data-good="up">
+        <span class="kpi-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9.5" cy="7" r="3.5"/><path d="M22 21v-2a4 4 0 0 0-3-3.8"/><path d="M16 3.2a4 4 0 0 1 0 7.6"/></svg></span>
+        <div class="slabel" id="lbl-groups" data-current="—">Group chats</div>
+        <div class="sdelta" id="delta-groups" hidden></div>
+        <div class="stat-spark" id="spark-groups"></div><div class="svalue" id="stat-groups">—</div>
+      </div>
+    </div>
+
     <div class="ov-grid">
       <div class="ov-chart">
         <div class="ov-head">
@@ -677,13 +741,6 @@ tr:hover td{background:var(--maroon-soft);}
         <div class="ov-figure" id="ov-figure">—</div>
         <div class="ov-figure-lbl">Messages this period</div>
         <div id="main-chart"></div>
-      </div>
-      <div class="ov-kpis">
-        <div class="stat-card" data-tone="maroon"><div class="slabel" id="lbl-total" data-current="—">Total Users</div><div class="stat-spark" id="spark-total"></div><div class="svalue" id="stat-total">—</div></div>
-        <div class="stat-card" data-tone="green"><div class="slabel" id="lbl-online" data-current="—">Online Now</div><div class="stat-spark" id="spark-online"></div><div class="svalue" id="stat-online">—</div></div>
-        <div class="stat-card" data-tone="gold"><div class="slabel" id="lbl-pending" data-current="—">Pending</div><div class="stat-spark" id="spark-pending"></div><div class="svalue" id="stat-pending">—</div></div>
-        <div class="stat-card" data-tone="orange"><div class="slabel" id="lbl-messages" data-current="—">Messages</div><div class="stat-spark" id="spark-messages"></div><div class="svalue" id="stat-messages">—</div></div>
-        <div class="stat-card" data-tone="maroon"><div class="slabel" id="lbl-calls" data-current="—">Calls</div><div class="stat-spark" id="spark-calls"></div><div class="svalue" id="stat-calls">—</div></div>
       </div>
     </div>
 
@@ -1099,17 +1156,24 @@ async function refreshSparklines(){
     }
     const mk = arr => data.labels.map((lb, i) => ({ t: parseBucketLabel(lb, data.range).getTime(), v: Number(arr[i])||0 }));
     const cards = [
-      { lblId:'lbl-total',    sparkId:'spark-total',    valId:'stat-total',    series: mk(data.totalUsers),    current: data.totalUsers.at(-1) ?? 0 },
-      { lblId:'lbl-online',   sparkId:'spark-online',   valId:'stat-online',   series: mk(data.onlineUsers),   current: data.onlineUsers.at(-1) ?? 0 },
-      { lblId:'lbl-pending',  sparkId:'spark-pending',  valId:'stat-pending',  series: mk(data.pendingUsers),  current: (lastStats?.pendingUsers ?? data.pendingUsers.at(-1) ?? 0) },
-      { lblId:'lbl-messages', sparkId:'spark-messages', valId:'stat-messages', series: mk(data.totalMessages), current: data.totalMessages.at(-1) ?? 0 },
-      { lblId:'lbl-calls',    sparkId:'spark-calls',    valId:'stat-calls',    series: mk(data.totalCalls),    current: data.totalCalls.at(-1) ?? 0 },
+      { lblId:'lbl-total',    sparkId:'spark-total',    valId:'stat-total',    deltaId:'delta-total',    good:'up', series: mk(data.totalUsers),    current: data.totalUsers.at(-1) ?? 0 },
+      { lblId:'lbl-online',   sparkId:'spark-online',   valId:'stat-online',   deltaId:'delta-online',   good:'up', series: mk(data.onlineUsers),   current: data.onlineUsers.at(-1) ?? 0 },
+      { lblId:'lbl-pending',  sparkId:'spark-pending',  valId:'stat-pending',  deltaId:'delta-pending',  good:'down', series: mk(data.pendingUsers),  current: (lastStats?.pendingUsers ?? data.pendingUsers.at(-1) ?? 0) },
+      { lblId:'lbl-messages', sparkId:'spark-messages', valId:'stat-messages', deltaId:'delta-messages', good:'up', series: mk(data.totalMessages), current: data.totalMessages.at(-1) ?? 0 },
+      { lblId:'lbl-calls',    sparkId:'spark-calls',    valId:'stat-calls',    deltaId:'delta-calls',    good:'up', series: mk(data.totalCalls),    current: data.totalCalls.at(-1) ?? 0 },
     ];
     for (const c of cards) {
-      const lbl = document.getElementById(c.lblId); if (lbl) lbl.dataset.current = c.current;
+      // data-current drives the visible figure via .slabel::after — compact it
+      // so a five-digit count can't widen the tile.
+      const lbl = document.getElementById(c.lblId); if (lbl) lbl.dataset.current = fmtCompact(c.current);
       const val = document.getElementById(c.valId); if (val) val.textContent = c.current;
       renderSpark(c.sparkId, c.series, c.current);
+      renderDelta(c.deltaId, c.series, c.good);
     }
+    // Group chats: /trends carries no group series, so this tile shows the live
+    // count from /stats with no delta rather than a made-up one.
+    const gl = document.getElementById('lbl-groups');
+    if (gl) gl.dataset.current = fmtCompact(lastStats?.totalGroups ?? 0);
     // Hero chart: messages is the headline activity series, users the context.
     renderMainChart(mk(data.totalMessages), mk(data.totalUsers));
   } catch (e) {
@@ -1152,14 +1216,16 @@ function renderMainChart(seriesA, seriesB){
   const rect = el.getBoundingClientRect();
   const W = Math.max(240, Math.round(rect.width || 620));
   const H = Math.max(150, Math.round(rect.height || 200));
-  const PAD_X = 10, PAD_TOP = 26, PAD_BOTTOM = 20;
+  // PAD_L is wider than PAD_X: the y-axis values live in that gutter, so the
+  // plot has to start clear of them rather than under them.
+  const PAD_L = 34, PAD_X = 10, PAD_TOP = 26, PAD_BOTTOM = 20;
   const all = A.concat(B).map(p => Number(p.v) || 0);
   const min = Math.min(...all), max = Math.max(...all);
   const flat = max === min, range = flat ? 1 : (max - min);
   const chartH = H - PAD_TOP - PAD_BOTTOM;
   const yFor = v => flat ? (PAD_TOP + chartH/2) : (PAD_TOP + (1 - ((Number(v)||0) - min) / range) * chartH);
-  const coordsOf = s => { const step = (W - PAD_X*2) / (s.length - 1 || 1);
-    return s.map((p,i) => ({ x: PAD_X + i*step, y: yFor(p.v) })); };
+  const coordsOf = s => { const step = (W - PAD_L - PAD_X) / (s.length - 1 || 1);
+    return s.map((p,i) => ({ x: PAD_L + i*step, y: yFor(p.v) })); };
   const pathOf = c => { let d = `M ${c[0].x} ${c[0].y}`;
     for (let i=1;i<c.length;i++){ const p0=c[i-1], p1=c[i], cx=(p0.x+p1.x)/2;
       d += ` C ${cx} ${p0.y}, ${cx} ${p1.y}, ${p1.x} ${p1.y}`; } return d; };
@@ -1169,7 +1235,15 @@ function renderMainChart(seriesA, seriesB){
   const areaOf = (d,c) => `${d} L ${c[c.length-1].x} ${base} L ${c[0].x} ${base} Z`;
   // Horizontal guide lines give the eye something to measure against.
   const grid = [0,.25,.5,.75,1].map(f => { const y = PAD_TOP + f*chartH;
-    return `<line x1="${PAD_X}" y1="${y}" x2="${W-PAD_X}" y2="${y}" stroke="rgba(247,237,220,.07)" stroke-width="1"/>`; }).join('');
+    return `<line x1="${PAD_L}" y1="${y}" x2="${W-PAD_X}" y2="${y}" stroke="rgba(247,237,220,.07)" stroke-width="1"/>`; }).join('');
+  // Y-axis values on the same fractions as the gridlines, so a reader can put a
+  // magnitude on the curve instead of only seeing its shape. Rounded because
+  // fractional counts are meaningless here; tabular so the column aligns.
+  const yTicks = [0,.25,.5,.75,1].map(f => {
+    const v = Math.round(flat ? max : (max - f*range));
+    const topPct = ((PAD_TOP + f*chartH) / H) * 100;
+    return `<span style="top:${topPct}%">${v}</span>`;
+  }).join('');
   const last = cA[cA.length-1];
   const lastVal = A[A.length-1].v;
   const dotsA = cA.map(c => `<circle cx="${c.x}" cy="${c.y}" r="3" fill="#2A1400" stroke="#FFD24A" stroke-width="2"/>`).join('');
@@ -1194,10 +1268,43 @@ function renderMainChart(seriesA, seriesB){
       <path d="${dA}" fill="none" stroke="#FFD24A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
       ${dotsA}
     </svg>
+    <div class="mc-yaxis">${yTicks}</div>
     <div class="mc-badge" style="left:${(last.x/W)*100}%;top:${(last.y/H)*100}%;">${lastVal}</div>
-    <div class="mc-axis">${axis}</div>`;
+    <div class="mc-cross" id="mc-cross"><i id="mc-cross-dot"></i></div>
+    <div class="mc-tip" id="mc-tip"></div>
+    <div class="mc-axis">${axis}</div>
+    <div class="mc-hit" id="mc-hit"></div>`;
   const fig = document.getElementById('ov-figure');
   if (fig) fig.textContent = lastVal;
+  wireScrub(el, A, B, cA, cB, W, H);
+}
+
+// Hover scrubbing: snap to the nearest bucket, move the crosshair there and
+// name both series in the readout. Snapping (rather than following the pointer
+// freely) means the number under the cursor is always a real data point.
+function wireScrub(el, A, B, cA, cB, W, H){
+  const hit = el.querySelector('#mc-hit');
+  const cross = el.querySelector('#mc-cross');
+  const dot = el.querySelector('#mc-cross-dot');
+  const tip = el.querySelector('#mc-tip');
+  if (!hit || !cross || !tip) return;
+  const fmt = (RANGE_CFG[currentRange] || RANGE_CFG.day).label;
+  const move = ev => {
+    const r = hit.getBoundingClientRect();
+    const px = ((ev.clientX - r.left) / (r.width || 1)) * W;   // pointer in viewBox units
+    let i = 0, best = Infinity;
+    cA.forEach((c, idx) => { const d = Math.abs(c.x - px); if (d < best) { best = d; i = idx; } });
+    const xPct = (cA[i].x / W) * 100;
+    cross.style.left = xPct + '%';
+    if (dot) dot.style.top = (cA[i].y / H) * 100 + '%';
+    tip.style.left = xPct + '%';
+    tip.style.top  = (cA[i].y / H) * 100 + '%';
+    tip.innerHTML = `${esc(fmt(A[i].t))} · <b>${A[i].v}</b> msg · <s>${(B[i]||{}).v ?? 0}</s> users`;
+    el.classList.add('scrub');
+  };
+  hit.addEventListener('pointermove', move);
+  hit.addEventListener('pointerdown', move);          // tap works on touch too
+  hit.addEventListener('pointerleave', () => el.classList.remove('scrub'));
 }
 
 function renderSpark(containerId, history, currentValue){
@@ -1360,6 +1467,41 @@ function renderUsers(users){
 function filterUsers(){
   const q=document.getElementById('search-users').value.toLowerCase();
   renderUsers(allUsers.filter(u=>u.name.toLowerCase().includes(q)||u.email.toLowerCase().includes(q)));
+}
+
+// ── KPI tiles ──────────────────────────────────────────────────────────────
+// Compact figures: exact up to 4 digits, then K/M so a tile never wraps.
+function fmtCompact(n){
+  const v = Number(n) || 0;
+  if (Math.abs(v) >= 1e6) return (v/1e6).toFixed(1).replace(/\.0$/,'') + 'M';
+  if (Math.abs(v) >= 1e4) return (v/1e3).toFixed(1).replace(/\.0$/,'') + 'K';
+  return v.toLocaleString();
+}
+// What the current range calls "the last bucket", for the delta caption.
+function periodWord(){
+  return currentRange === 'year' ? 'this year' : currentRange === 'month' ? 'this month' : 'today';
+}
+// Signed change against the previous bucket. Colour follows direction × whether
+// up is good for THAT metric (data-good on the tile), because "more pending
+// approvals" and "more messages" are not the same kind of news. A metric whose
+// change can't be computed shows nothing rather than a fabricated 0%.
+function renderDelta(id, series, goodDir){
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (!Array.isArray(series) || series.length < 2) { el.hidden = true; return; }
+  const curr = Number(series[series.length-1].v) || 0;
+  const prev = Number(series[series.length-2].v) || 0;
+  const diff = curr - prev;
+  if (diff === 0) {
+    el.hidden = false; el.className = 'sdelta flat';
+    el.textContent = `no change ${periodWord()}`;
+    return;
+  }
+  const rising = diff > 0;
+  const good = goodDir === 'down' ? !rising : rising;
+  el.hidden = false;
+  el.className = 'sdelta ' + (good ? 'up' : 'down');
+  el.textContent = `${rising ? '↑' : '↓'} ${fmtCompact(Math.abs(diff))} ${periodWord()}`;
 }
 
 // ── Top bar ────────────────────────────────────────────────────────────────
