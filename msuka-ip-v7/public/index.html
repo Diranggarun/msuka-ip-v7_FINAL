@@ -1338,26 +1338,77 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 #agree-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(74,0,0,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:20px;}
 #agree-overlay.show{display:flex;animation:agreeFade .2s ease;}
 @keyframes agreeFade{from{opacity:0}to{opacity:1}}
-.agree-card{background:var(--white);border-radius:18px;max-width:460px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.4);overflow:hidden;animation:agreeIn .28s var(--ease-overshoot);}
+/* Parchment card rather than white, and wider than the old 460px so the five
+   clauses can be labelled rows instead of a cramped bullet list. max-height with
+   the scroll on .agree-body is kept from the old card — the clauses do not fit a
+   short laptop screen, and the buttons must stay reachable without scrolling the
+   whole dialog away. */
+.agree-card{background:var(--off-white);border-radius:20px;max-width:720px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 70px rgba(0,0,0,.45),0 0 0 1px rgba(212,160,23,.25);overflow:hidden;animation:agreeIn .28s var(--ease-overshoot);}
 @keyframes agreeIn{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
-.agree-head{display:flex;align-items:center;gap:14px;padding:20px 22px;background:linear-gradient(135deg,var(--maroon-dark),var(--maroon));color:#fff;}
-.agree-head img{width:46px;height:46px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 2px 6px rgba(0,0,0,.35));}
-.agree-head h3{font-family:'Cinzel',serif;font-size:1.1rem;color:var(--gold-bright);letter-spacing:.02em;margin:0;}
-.agree-head p{font-size:.72rem;color:rgba(255,255,255,.75);margin:2px 0 0;letter-spacing:.03em;}
-.agree-body{padding:18px 22px;overflow-y:auto;color:var(--text-dark);font-size:.86rem;line-height:1.55;}
-.agree-body>p{margin:0 0 12px;}
-.agree-body ul{margin:0 0 12px;padding-left:18px;display:flex;flex-direction:column;gap:9px;}
-.agree-body li{color:var(--text-mid);}
-.agree-body li strong{color:var(--maroon-dark);}
-.agree-fine{font-size:.76rem;color:var(--text-light);font-style:italic;}
-.agree-actions{display:flex;gap:10px;padding:16px 22px;border-top:1px solid var(--gray-200);background:var(--off-white);}
-.agree-actions button{flex:1;padding:.72rem;border-radius:10px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem;cursor:pointer;border:none;transition:transform .12s,box-shadow .15s,background .15s;}
+/* The header now sits ON the parchment instead of a maroon band: seal in a gold
+   ring, a vertical hairline, then the title in Cinzel maroon. */
+.agree-head{display:flex;align-items:center;gap:22px;padding:26px 30px 0;flex-shrink:0;}
+.agree-seal{width:104px;height:104px;border-radius:50%;background:var(--white);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 14px rgba(107,0,0,.14);}
+.agree-seal img{width:76%;height:76%;object-fit:contain;}
+.agree-head-rule{width:1px;align-self:stretch;margin:10px 0;background:linear-gradient(180deg,transparent,var(--gray-200) 20%,var(--gray-200) 80%,transparent);}
+.agree-head h3{font-family:'Cinzel',serif;font-size:clamp(1.25rem,3.2vw,1.7rem);font-weight:700;color:var(--maroon-dark);letter-spacing:.01em;margin:0;line-height:1.15;}
+.agree-head p{font-size:.9rem;color:var(--text-mid);margin:6px 0 0;letter-spacing:.02em;}
+/* Gold rule with a centred diamond — the same ceremonial divider the login card
+   uses, so the dialog reads as part of the same system. */
+.agree-orn{display:flex;align-items:center;gap:14px;padding:20px 30px 2px;flex-shrink:0;}
+.agree-orn::before,.agree-orn::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.agree-orn i{color:var(--gold);font-size:.62rem;font-style:normal;line-height:1;}
+.agree-body{padding:14px 30px 6px;overflow-y:auto;color:var(--text-dark);font-size:.92rem;line-height:1.55;scrollbar-width:thin;scrollbar-color:var(--gold) transparent;}
+.agree-body::-webkit-scrollbar{width:6px;}
+.agree-body::-webkit-scrollbar-thumb{background:var(--gold);border-radius:3px;}
+.agree-welcome{margin:0 0 4px;font-size:1.02rem;}
+.agree-welcome strong{color:var(--maroon);}
+.agree-lead{margin:0 0 18px;color:var(--text-mid);}
+/* Clause rows: numbered heading + icon badge, hairline-separated inside one
+   bordered panel. */
+.agree-clauses{border:1px solid var(--gray-200);border-radius:14px;overflow:hidden;background:var(--white);}
+.agree-clause{display:flex;gap:18px;padding:16px 18px;border-bottom:1px solid var(--gray-200);}
+.agree-clause:last-child{border-bottom:none;}
+.agree-ico{width:58px;height:58px;border-radius:50%;background:var(--maroon-soft);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.agree-ico svg{width:27px;height:27px;stroke:var(--maroon);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+.agree-clause h4{font-family:'Cinzel',serif;font-size:1rem;font-weight:700;color:var(--maroon);margin:0 0 4px;letter-spacing:.01em;}
+.agree-clause p{margin:0;color:var(--text-mid);font-size:.87rem;line-height:1.5;}
+.agree-consent{display:flex;gap:14px;align-items:flex-start;margin:16px 30px 0;padding:16px 18px;border:1px solid var(--gray-200);border-radius:14px;background:var(--white);flex-shrink:0;}
+.agree-consent input{width:22px;height:22px;flex-shrink:0;margin-top:1px;accent-color:var(--maroon);cursor:pointer;}
+.agree-consent label{font-size:.88rem;color:var(--text-mid);line-height:1.5;cursor:pointer;}
+.agree-consent strong{color:var(--maroon);}
+.agree-actions{display:flex;gap:14px;padding:20px 30px 12px;flex-shrink:0;}
+.agree-actions button{display:flex;align-items:center;justify-content:center;gap:10px;padding:.9rem;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.95rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;border:none;transition:transform .12s,box-shadow .15s,background .15s;}
+.agree-actions button svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
 .agree-actions button:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
-.agree-decline{background:var(--white);color:var(--maroon);border:1.5px solid var(--gray-200)!important;}
+/* I Agree is the primary action, so it carries more width as well as the fill. */
+.agree-decline{flex:1;background:var(--white);color:var(--maroon);border:1.5px solid var(--gray-200)!important;}
 .agree-decline:hover{background:var(--maroon-soft);}
-.agree-accept{background:linear-gradient(135deg,var(--maroon),var(--maroon-light));color:var(--gold-bright);box-shadow:var(--shadow-sm);}
+.agree-accept{flex:1.6;background:var(--maroon);color:var(--gold-bright);box-shadow:var(--shadow-sm);}
 .agree-accept:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);}
-@media (max-width:480px){.agree-actions{flex-direction:column-reverse;}}
+.agree-foot{display:flex;align-items:center;justify-content:center;gap:8px;padding:0 30px 20px;font-size:.8rem;color:var(--text-light);flex-shrink:0;}
+.agree-foot svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+@media (max-width:560px){
+  .agree-head{flex-direction:column;text-align:center;gap:12px;padding:20px 18px 0;}
+  .agree-head-rule{display:none;}
+  .agree-seal{width:72px;height:72px;}
+  .agree-body,.agree-orn,.agree-actions,.agree-foot{padding-left:18px;padding-right:18px;}
+  .agree-consent{margin-left:18px;margin-right:18px;padding:13px 15px;}
+  .agree-clause{gap:13px;padding:14px;}
+  .agree-ico{width:46px;height:46px;}
+  .agree-ico svg{width:22px;height:22px;}
+  .agree-actions{flex-direction:column-reverse;}
+  .agree-actions button{flex:1 1 auto;}
+  /* On a phone the fixed-height header, consent row, buttons and footer together
+     leave .agree-body almost no room — it collapsed to a sliver showing a fragment
+     of the first clause. So the whole card scrolls here instead of only the body:
+     nothing is squeezed, and every clause is reachable by scrolling the dialog,
+     which is the normal phone pattern. The buttons move below the fold, which is
+     the accepted cost. */
+  .agree-card{overflow-y:auto;}
+  .agree-body{overflow-y:visible;}
+  .agree-head,.agree-orn,.agree-consent,.agree-actions,.agree-foot{flex-shrink:1;}
+}
 
 /* ══ PHONE LAYOUT (≤768px) — single pane ══════════════════════════════════════
    MUST STAY LAST IN THIS STYLESHEET. Media queries carry no extra specificity,
@@ -1779,26 +1830,69 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 <div id="agree-overlay" role="dialog" aria-modal="true" aria-labelledby="agree-title">
   <div class="agree-card">
     <div class="agree-head">
-      <img src="/msukaip-logo.png" alt="MSU seal"/>
+      <div class="agree-seal"><img src="/msukaip-logo.png" alt="MSU seal"/></div>
+      <div class="agree-head-rule"></div>
       <div>
         <h3 id="agree-title">Terms of Use &amp; Data Privacy</h3>
         <p>MSUkaIP — CICS LAN Messenger</p>
       </div>
     </div>
+    <div class="agree-orn"><i>&#9670;</i></div>
     <div class="agree-body">
-      <p>Welcome, <strong id="agree-name">user</strong>. Before you continue, please read and accept the following:</p>
-      <ul>
-        <li><strong>Institutional use only.</strong> This system is for official communication within the College of Information and Computing Sciences. Access is limited to verified MSU institutional accounts.</li>
-        <li><strong>Respectful conduct.</strong> Harassment, spam, and sharing of offensive or unlawful content are prohibited and may lead to account suspension.</li>
-        <li><strong>Privacy (RA 10173).</strong> Your messages and files are encrypted at rest. Administrators can see account and login activity for security, but <em>cannot</em> read your message contents.</li>
-        <li><strong>Monitoring.</strong> Login attempts and security-relevant actions are recorded in an audit log for accountability.</li>
-        <li><strong>No misuse.</strong> Attempting to bypass authentication, access other accounts, or disrupt the service is a violation of this agreement.</li>
-      </ul>
-      <p class="agree-fine">By selecting “I Agree” you confirm you have read and accept these terms. Declining will sign you out.</p>
+      <p class="agree-welcome">Welcome, <strong id="agree-name">user</strong>.</p>
+      <p class="agree-lead">Before you continue, please read and accept the following terms and conditions.</p>
+      <div class="agree-clauses">
+        <div class="agree-clause">
+          <span class="agree-ico"><svg viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V10"/><path d="M9 21V10"/><path d="M15 21V10"/><path d="M19 21V10"/><path d="M12 3 3 8h18Z"/></svg></span>
+          <div>
+            <h4>1. Institutional Use Only</h4>
+            <p>This system is for official communication within the College of Information and Computing Sciences. Access is limited to verified MSU institutional accounts.</p>
+          </div>
+        </div>
+        <div class="agree-clause">
+          <span class="agree-ico"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><rect x="9.4" y="10.6" width="5.2" height="4.6" rx="1"/><path d="M10.7 10.6V9.6a1.3 1.3 0 0 1 2.6 0v1"/></svg></span>
+          <div>
+            <h4>2. Privacy (RA 10173)</h4>
+            <p>Your messages and files are encrypted at rest. Administrators can see account and login activity for security, but <em>cannot</em> read your message contents.</p>
+          </div>
+        </div>
+        <div class="agree-clause">
+          <span class="agree-ico"><svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M9.5 3.5h5"/><path d="M9 9h6"/><path d="M9 13h6"/><path d="M9 17h3"/></svg></span>
+          <div>
+            <h4>3. Monitoring</h4>
+            <p>Login attempts and security-relevant actions are recorded in an audit log for accountability.</p>
+          </div>
+        </div>
+        <div class="agree-clause">
+          <span class="agree-ico"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5"/><path d="M15 19c0-2 2-3.5 4-3.5"/></svg></span>
+          <div>
+            <h4>4. Respectful Conduct</h4>
+            <p>Harassment, spam, and sharing of offensive or unlawful content are prohibited and may lead to account suspension.</p>
+          </div>
+        </div>
+        <div class="agree-clause">
+          <span class="agree-ico"><svg viewBox="0 0 24 24"><path d="M12 3 2.5 20h19L12 3z"/><path d="M12 9.5v4.5"/><path d="M12 17h.01"/></svg></span>
+          <div>
+            <h4>5. No Misuse</h4>
+            <p>Attempting to bypass authentication, access other accounts, or disrupt the service is a violation of this agreement.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Outside .agree-body on purpose: the body scrolls, and the consent line
+         belongs with the buttons where it stays visible rather than below the
+         fold at the end of the clause list. -->
+    <div class="agree-consent">
+      <input type="checkbox" id="agree-check"/>
+      <label for="agree-check">I have read, understood, and agree to the <strong>Terms of Use</strong> and <strong>Data Privacy Policy</strong> of MSUkaIP.</label>
     </div>
     <div class="agree-actions">
-      <button class="agree-decline" onclick="declineAgreement()">Decline</button>
-      <button class="agree-accept" onclick="acceptAgreement()">I Agree</button>
+      <button class="agree-decline" onclick="declineAgreement()"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>Decline</button>
+      <button class="agree-accept" onclick="acceptAgreement()"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>I Agree</button>
+    </div>
+    <div class="agree-foot">
+      <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      Your security and privacy are our priority.
     </div>
   </div>
 </div>
