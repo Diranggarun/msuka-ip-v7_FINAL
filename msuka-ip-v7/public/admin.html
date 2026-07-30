@@ -345,13 +345,6 @@ tr:hover td{background:var(--maroon-soft);}
 .btn-warning{background:var(--gold-soft);color:var(--gold-dark);border:1px solid rgba(212,160,23,.3);}
 .btn-warning:hover{background:#fde68a;}
 
-.pending-card{border:1.5px solid var(--gold);border-radius:16px;padding:1rem 1.2rem;margin-bottom:.75rem;background:linear-gradient(135deg,var(--gold-soft),var(--off-white));display:flex;align-items:center;gap:1rem;transition:all .15s;box-shadow:0 2px 8px rgba(212,160,23,.1);}
-.pending-card:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(212,160,23,.2);}
-.pending-avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--maroon),var(--maroon-light));color:var(--gold-bright);display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:800;flex-shrink:0;border:2px solid var(--gold);box-shadow:var(--shadow-sm);}
-.pending-info{flex:1;}
-.pending-info h4{font-size:.92rem;color:var(--maroon-dark);margin-bottom:3px;font-weight:700;}
-.pending-info p{font-size:.76rem;color:var(--text-mid);}
-.pending-actions{display:flex;gap:8px;flex-shrink:0;}
 
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .form-group{display:flex;flex-direction:column;gap:5px;}
@@ -649,6 +642,38 @@ tr:hover td{background:var(--maroon-soft);}
   .ov-side{grid-template-rows:auto auto;}
   .au-list{max-height:300px;}
 }
+
+/* ═══ Stage 5 · pending requests table + pager ════════════════════════════
+   139 requests as stacked cards was ~19000px of page. A table puts one
+   request per row, and the pager keeps the panel a fixed height whatever
+   the queue size. */
+.pu{display:flex;align-items:center;gap:9px;min-width:0;}
+.pu .av{width:30px;height:30px;font-size:.66rem;}
+.pu strong{color:var(--maroon-dark);font-weight:700;white-space:nowrap;}
+.row-actions{display:flex;gap:5px;}
+
+.pager{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  margin-top:.85rem;padding-top:.7rem;border-top:1px solid var(--paper-line);}
+.pager:empty{display:none;}
+.pager-info{font-size:.72rem;color:var(--text-light);}
+.pager-btns{display:flex;gap:4px;align-items:center;}
+.pg{min-width:32px;height:32px;padding:0 8px;border:1px solid var(--paper-line);
+  background:var(--white);border-radius:9px;font-family:inherit;font-size:.74rem;font-weight:700;
+  color:var(--text-dark);cursor:pointer;
+  transition:border-color var(--dur-fast) var(--ease-out),background var(--dur-fast) var(--ease-out),
+             transform var(--dur-fast) var(--ease-out);}
+.pg:hover:not(:disabled){border-color:var(--gold);background:var(--gold-soft);}
+.pg:active:not(:disabled){transform:scale(.95);transition-duration:.06s;}
+.pg:focus-visible{outline:2px solid var(--gold-dark);outline-offset:1px;}
+.pg:disabled{opacity:.38;cursor:default;}
+.pg.current{background:var(--maroon);color:var(--gold-bright);border-color:var(--maroon-dark);}
+.pg-gap{color:var(--text-light);font-size:.74rem;padding:0 2px;}
+@media (max-width:768px){
+  /* Pager buttons are the one control here you tap repeatedly — 32px is under
+     the 44px touch minimum the rest of the phone layout already honours. */
+  .pg{min-width:44px;height:44px;}
+  .pager{justify-content:center;}
+}
 </style>
 </head>
 <body>
@@ -879,7 +904,11 @@ tr:hover td{background:var(--maroon-soft);}
           <h3><svg class="hi" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Pending Account Requests</h3>
           <button class="btn-sm btn-warning" onclick="loadPending()"><svg class="bi" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Refresh</button>
         </div>
-        <div id="pending-list"><p class="empty">Loading…</p></div>
+        <table>
+          <thead><tr><th>#</th><th>User</th><th>Email</th><th>Role</th><th>Status</th><th>Date Joined</th><th>Actions</th></tr></thead>
+          <tbody id="pending-tbody"><tr><td colspan="7" class="empty">Loading…</td></tr></tbody>
+        </table>
+        <div class="pager" id="pending-pager"></div>
       </div>
     </div>
 
@@ -1514,8 +1543,7 @@ async function loadStats(){
 async function loadPending(){
   try{
     const res=await fetch('/api/admin/pending',{headers:{Authorization:`Bearer ${authToken}`}});
-    const users=await res.json();
-    const el=document.getElementById('pending-list');
+    const users=pendingUsers=await res.json();
     const badge=document.getElementById('pending-count');
     const railBadge=document.getElementById('rail-pending-count');
     const bell=document.getElementById('tb-bell-count');
@@ -1529,24 +1557,74 @@ async function loadPending(){
       railBadge.style.display='none';
       if(bell) bell.hidden=true;
     }
-    if(!users.length){
-      el.innerHTML='<p class="empty">✅ No pending requests!<br><span style="font-size:.8rem;">When users register, their requests will appear here for approval.</span></p>';
-      return;
-    }
-    el.innerHTML=users.map(u=>`
-      <div class="pending-card">
-        <div class="pending-avatar">${esc(String(u.name).charAt(0).toUpperCase())}</div>
-        <div class="pending-info">
-          <h4>${esc(u.name)}</h4>
-          <p>${esc(u.email)} · <span class="badge ${esc(u.role)}">${esc(u.role)}</span> · Registered: ${new Date(u.created_at).toLocaleString()}</p>
-        </div>
-        <div class="pending-actions">
-          <button class="btn-sm btn-approve" onclick="approveUser(${u.id})"><svg class="bi" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Approve</button>
-          <button class="btn-sm btn-reject"  onclick="rejectUser(${u.id})"><svg class="bi" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Reject</button>
-        </div>
-      </div>`).join('');
+    renderPending();
   }catch(err){console.error(err);}
 }
+
+// ── Stage 5 · pending requests table ───────────────────────────────────────
+let pendingUsers=[], pendingPage=1, pendingTerm='';
+const PENDING_PER_PAGE=10;
+
+// The search filters the DATA, not the visible rows. Hiding rows would only
+// ever search the page you happen to be on.
+function pendingFiltered(){
+  if(!pendingTerm) return pendingUsers;
+  return pendingUsers.filter(u=>
+    `${u.name} ${u.email} ${u.role}`.toLowerCase().includes(pendingTerm));
+}
+
+function renderPending(){
+  const list=pendingFiltered();
+  const pages=Math.max(1,Math.ceil(list.length/PENDING_PER_PAGE));
+  // Approving the last row on the final page would otherwise strand the admin
+  // on an empty page, since loadPending() re-renders straight after.
+  if(pendingPage>pages) pendingPage=pages;
+  const start=(pendingPage-1)*PENDING_PER_PAGE;
+  const slice=list.slice(start,start+PENDING_PER_PAGE);
+  const tb=document.getElementById('pending-tbody');
+  const pager=document.getElementById('pending-pager');
+
+  if(!list.length){
+    tb.innerHTML=`<tr><td colspan="7" class="empty">${pendingTerm
+      ?'No pending requests match this search.'
+      :'✅ No pending requests!<br><span style="font-size:.8rem;">When users register, their requests will appear here for approval.</span>'}</td></tr>`;
+    pager.innerHTML='';
+    return;
+  }
+
+  tb.innerHTML=slice.map((u,i)=>`
+    <tr>
+      <td style="color:var(--text-light);font-size:.8rem">${start+i+1}</td>
+      <td><div class="pu"><span class="av" data-role="${esc(u.role)}">${esc(initials(u.name))}</span><strong>${esc(u.name)}</strong></div></td>
+      <td style="color:var(--text-mid);font-size:.82rem">${esc(u.email)}</td>
+      <td><span class="badge ${esc(u.role)}">${esc(u.role)}</span></td>
+      <td><span class="badge pending">pending</span></td>
+      <td style="color:var(--text-light);font-size:.78rem">${new Date(u.created_at).toLocaleDateString()}</td>
+      <td><div class="row-actions">
+        <button class="btn-sm btn-approve" onclick="approveUser(${u.id})"><svg class="bi" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Approve</button>
+        <button class="btn-sm btn-reject"  onclick="rejectUser(${u.id})"><svg class="bi" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Reject</button>
+      </div></td>
+    </tr>`).join('');
+
+  // First and last page stay reachable; the rest is a window of two either
+  // side of the current page, so 16 pages don't become 16 buttons.
+  const nums=[];
+  for(let p=1;p<=pages;p++){
+    if(p===1||p===pages||Math.abs(p-pendingPage)<=2) nums.push(p);
+    else if(nums[nums.length-1]!=='…') nums.push('…');
+  }
+  pager.innerHTML=`
+    <span class="pager-info">Showing ${start+1}–${start+slice.length} of ${list.length}</span>
+    <span class="pager-btns">
+      <button class="pg" ${pendingPage===1?'disabled':''} onclick="gotoPending(${pendingPage-1})" aria-label="Previous page">‹</button>
+      ${nums.map(n=>n==='…'
+        ?'<span class="pg-gap">…</span>'
+        :`<button class="pg${n===pendingPage?' current':''}"${n===pendingPage?' aria-current="page"':''} onclick="gotoPending(${n})">${n}</button>`).join('')}
+      <button class="pg" ${pendingPage===pages?'disabled':''} onclick="gotoPending(${pendingPage+1})" aria-label="Next page">›</button>
+    </span>`;
+}
+
+function gotoPending(p){ pendingPage=p; renderPending(); }
 
 async function approveUser(id){
   try{
@@ -1722,9 +1800,11 @@ function globalSearch(q){
   const term=String(q||'').toLowerCase().trim();
   const su=document.getElementById('search-users');
   if(su){ su.value=q; filterUsers(); }
-  document.querySelectorAll('#pending-list .pending-card').forEach(card=>{
-    card.style.display = !term || card.textContent.toLowerCase().includes(term) ? '' : 'none';
-  });
+  // Pending is paginated now, so filtering has to happen in the data and reset
+  // to page 1 — hiding rows would only search the page currently displayed.
+  pendingTerm=term;
+  pendingPage=1;
+  renderPending();
 }
 
 async function addUser(){

@@ -600,6 +600,68 @@ test.describe('5. Admin Dashboard Tests', () => {
     console.log('✅ Scripted display name renders as inert text in the panels');
   });
 
+  test('5.12 Pending requests paginate ten to a page', async ({ page }) => {
+    await page.waitForSelector('#pending-tbody tr td', { timeout: 8000 });
+    // eslint-disable-next-line no-undef -- evaluated in the browser page context
+    const total = await page.evaluate(() => pendingUsers.length);
+    test.skip(total <= 10, 'needs more than one page of pending requests');
+
+    const rows = await page.locator('#pending-tbody tr').count();
+    expect(rows).toBe(10);
+    await expect(page.locator('.pager-info')).toHaveText(`Showing 1–10 of ${total}`);
+    // On page 1 there is nowhere back to go.
+    await expect(page.locator('.pager-btns .pg').first()).toBeDisabled();
+
+    // The final page holds the remainder, and Next is spent.
+    const pages = Math.ceil(total / 10);
+    // eslint-disable-next-line no-undef -- evaluated in the browser page context
+    await page.evaluate((p) => gotoPending(p), pages);
+    const lastRows = await page.locator('#pending-tbody tr').count();
+    expect(lastRows).toBe(total - (pages - 1) * 10);
+    await expect(page.locator('.pager-btns .pg').last()).toBeDisabled();
+    console.log(`✅ Pending paginates — ${total} requests over ${pages} pages, last page has ${lastRows}`);
+  });
+
+  test('5.13 Search reaches pending requests that are not on the current page', async ({ page }) => {
+    await page.waitForSelector('#pending-tbody tr td', { timeout: 8000 });
+    // eslint-disable-next-line no-undef -- evaluated in the browser page context
+    const total = await page.evaluate(() => pendingUsers.length);
+    test.skip(total <= 10, 'needs more than one page of pending requests');
+
+    // Deliberately target the very last record while sitting on page 1: a
+    // filter that only hid visible rows could never find it.
+    // eslint-disable-next-line no-undef -- evaluated in the browser page context
+    const target = await page.evaluate(() => pendingUsers[pendingUsers.length - 1].email);
+    // eslint-disable-next-line no-undef -- evaluated in the browser page context
+    await page.evaluate(() => gotoPending(1));
+    await page.fill('#tb-search-input', target);
+    await expect(page.locator('#pending-tbody tr')).toHaveCount(1);
+    await expect(page.locator('#pending-tbody tr').first()).toContainText(target);
+    console.log('✅ Search finds a pending request from a later page');
+  });
+
+  test('5.14 Pager clamps when the queue shrinks under the current page', async ({ page }) => {
+    await page.waitForSelector('#pending-tbody tr td', { timeout: 8000 });
+    // eslint-disable-next-line no-undef -- evaluated in the browser page context
+    const total = await page.evaluate(() => pendingUsers.length);
+    test.skip(total <= 10, 'needs more than one page of pending requests');
+
+    // Sit on the last page, then shrink the queue to one — what approving a
+    // page's worth of requests does. Without the clamp the admin is left
+    // staring at an empty page with no way back.
+    const state = await page.evaluate(() => {
+      /* eslint-disable no-undef -- evaluated in the browser page context */
+      gotoPending(Math.ceil(pendingUsers.length / 10));
+      pendingUsers = pendingUsers.slice(0, 1);
+      renderPending();
+      return { page: pendingPage, rows: document.querySelectorAll('#pending-tbody tr').length };
+      /* eslint-enable no-undef */
+    });
+    expect(state.page).toBe(1);
+    expect(state.rows).toBe(1);
+    console.log('✅ Pager clamps to the last real page instead of stranding on an empty one');
+  });
+
 });
 
 // ═══════════════════════════════════════════════════════════════════
