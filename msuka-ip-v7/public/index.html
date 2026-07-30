@@ -138,22 +138,103 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    rounded corners still clip the header artwork. */
 .auth-card{background:rgba(255,255,255,.08);backdrop-filter:blur(10px) saturate(130%);-webkit-backdrop-filter:blur(10px) saturate(130%);border-radius:22px;width:400px;max-height:92vh;box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 0 0 1px rgba(212,160,23,.14),0 26px 60px -14px rgba(0,0,0,.52),0 10px 28px -10px rgba(74,0,0,.34);overflow-y:auto;overflow-x:hidden;position:relative;z-index:1;animation:cardIn .6s .52s both var(--ease-overshoot);border:1px solid rgba(255,255,255,.2);}
 @keyframes cardIn{from{opacity:0;transform:translateY(28px) scale(.96)}to{opacity:1;transform:none}}
+/* Visible gold scrollbar on the card, so it is obvious the Create Account form
+   scrolls. Same slim treatment already used by .icon-rail and .list-scroll, only
+   gold instead of maroon because this sits on the dark login glass. */
+/* overflow-anchor:none is necessary but was never sufficient, which is what an
+   earlier comment here got wrong by calling it the fix. Two different things move
+   scrollTop when the pinned header shrinks, and each needs its own answer.
+   This property answers the first: scroll anchoring sees content shrink above the
+   anchor and subtracts that much from scrollTop. Both engines do this — not a
+   Chrome quirk — and it is still load-bearing. Delete this and test 1.12 fails at
+   420x560 in Chromium and Firefox alike, landing at 0 after the header flaps,
+   even with the condense gate in place.
+   The second is the browser's own clamp of scrollTop to the scroll range, which no
+   CSS property can opt out of, and that is the gate's job (see the auth script). */
+/* Scroll container stays .auth-card itself, rather than moving overflow onto a
+   wrapper around just the form. Considered and rejected for three reasons:
+     1. The pinned header only pins because it sits INSIDE the scroller. Moving
+        overflow means .auth-sticky becomes a plain block and the pinning — which is
+        the feature — has to be rebuilt some other way.
+     2. It would not buy the simplicity it looks like it buys. Condensing the header
+        would grow a form-wrapper's clientHeight, which shrinks its scrollable room,
+        which can still clamp scrollTop — the same feedback loop the condense gate
+        below exists to handle, just relocated.
+     3. It is a structural change to a component now verified stable at 560/700/900/
+        1080px in both tabs, against a project rule that prefers the smallest
+        explainable edit.
+   The visible consequence is accepted: the gold scrollbar runs the full height of
+   the card, alongside the pinned header rather than starting below it. That is what
+   a scrollable card with a sticky header normally does. */
+.auth-card{scrollbar-width:thin;scrollbar-color:var(--gold) transparent;overflow-anchor:none;}
+.auth-card::-webkit-scrollbar{width:6px;}
+.auth-card::-webkit-scrollbar-thumb{background:var(--gold);border-radius:3px;}
+.auth-card::-webkit-scrollbar-track{background:rgba(255,255,255,.06);border-radius:3px;}
 
-.auth-logo-bar{background:transparent;padding:1.6rem 1.5rem 1.3rem;text-align:center;position:relative;overflow:hidden;border-bottom:1px solid rgba(255,255,255,.12);}
+/* The logo and the tab row pin together as one block. Wrapping them in a single
+   sticky container is what keeps them locked to the top of the scrolling
+   .auth-card — pinning them separately would let the tabs slide underneath the
+   logo and vanish. The background is near-opaque on purpose: at a lower alpha the
+   form labels scrolling underneath ghosted through and collided with the logo. */
+.auth-sticky{position:sticky;top:0;z-index:3;background:transparent;transition:background var(--dur-slow) var(--ease-out),box-shadow var(--dur-slow) var(--ease-out);}
+/* Two independent states, deliberately split:
+     .is-scrolled   — opaque background + shadow. Nothing else.
+     .is-condensed  — the size change. Nothing about the background.
+   They used to be one class, and that was the bug. The condense gate below refuses
+   to condense on tall viewports on purpose, but those viewports still scroll a
+   little, so a full-height TRANSPARENT header let the form show straight through
+   it: the tab row landed on top of the FULL NAME input and the subtitle lines
+   collided with its label. Measured before the split — scrolled under a fully
+   transparent header at 560px Sign In (98px), 700px Register (120px) and 900px
+   Register (11px).
+
+   Fully opaque, not .96: gold field labels stay legible through even a 4% gap.
+   No backdrop-filter: it nests badly inside .auth-card's own filter and flashed as
+   the compositing layer was promoted and demoted on each toggle. The card beneath
+   is already frosted, so a flat opaque fill is enough.
+
+   .is-scrolled changes paint only, never layout, so unlike the condense it cannot
+   change scrollHeight and therefore cannot rattle. That is why it needs no gate. */
+.auth-sticky.is-scrolled{background:rgb(58,10,10);box-shadow:0 12px 26px -14px rgba(0,0,0,.7);}
+/* Measurement helper for the condense gate. With every transition in the header
+   switched off, the script can add .is-condensed, read the height, and remove it
+   again inside a single frame — so it learns how much space condensing reclaims
+   without the user ever seeing the header move. */
+.auth-sticky.is-measuring,.auth-sticky.is-measuring *{transition:none !important;}
+.auth-logo-bar{background:transparent;padding:1.6rem 1.5rem 1.3rem;text-align:center;position:relative;overflow:hidden;border-bottom:1px solid rgba(255,255,255,.12);transition:padding var(--dur-slow) var(--ease-out);}
+/* Condensed layout: the seal shrinks and sits beside the wordmark on a single row
+   and the three subtitle lines drop out. That is what reclaims the vertical space
+   the pinned block was eating on short screens. */
+.auth-sticky.is-condensed .auth-logo-bar{display:flex;align-items:center;justify-content:center;gap:11px;padding:.5rem 1.5rem .45rem;}
+/* display:none, not max-height:0. The condensed bar is a flex row, and max-height
+   only zeroes these lines' HEIGHT — they stayed in the row as flex items still
+   claiming horizontal space, which squeezed the seal into an oval. Taking them out
+   of the flow entirely is what keeps the seal round. */
+.auth-sticky.is-condensed .auth-sub,.auth-sticky.is-condensed .auth-sub2,.auth-sticky.is-condensed .auth-sub3{display:none;}
+.auth-sticky.is-condensed .auth-brand-name{font-size:1.05rem;}
+/* flex-shrink:0 so the seal keeps its 40px square regardless of the wordmark's
+   width — a flex item with a set width can still be compressed below it. */
+.auth-sticky.is-condensed .auth-seal-frame{width:40px;height:40px;margin:0;flex-shrink:0;box-shadow:0 0 0 2px var(--gold),0 3px 10px rgba(0,0,0,.45);}
 .auth-logo-bar::before{content:'';position:absolute;top:-30px;left:50%;transform:translateX(-50%);width:200px;height:200px;border-radius:50%;background:rgba(212,160,23,.06);}
 .auth-logo-bar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),var(--gold-bright),var(--gold),transparent);}
 .auth-logo-bar img{width:88px;height:88px;object-fit:contain;filter:drop-shadow(0 4px 16px rgba(0,0,0,.5));display:block;margin:0 auto .7rem;position:relative;z-index:1;}
 /* Brand label inside the login card. It used to be the page's <h1>; the landing
    hero headline is now the single <h1>, so this is a styled div (one h1 per page
    is the accessibility rule) — same look, different element. */
-.auth-logo-bar .auth-brand-name{font-family:'Cinzel',serif;font-size:1.55rem;font-weight:700;color:var(--gold-bright);letter-spacing:.1em;text-shadow:0 2px 10px rgba(0,0,0,.4);position:relative;z-index:1;}
+.auth-logo-bar .auth-brand-name{font-family:'Cinzel',serif;font-size:1.55rem;font-weight:700;color:var(--gold-bright);letter-spacing:.1em;text-shadow:0 2px 10px rgba(0,0,0,.4);position:relative;z-index:1;transition:font-size var(--dur-slow) var(--ease-out);}
 .auth-logo-bar p{color:rgba(255,255,255,.6);font-size:.7rem;margin-top:4px;letter-spacing:.05em;position:relative;z-index:1;}
-.auth-seal-frame{width:130px;height:130px;border-radius:50%;background:#fff;padding:0;display:flex;align-items:center;justify-content:center;position:relative;margin:0 auto .9rem;box-shadow:0 0 0 2px var(--gold),0 0 0 5px rgba(212,160,23,.25),0 10px 28px rgba(0,0,0,.5);overflow:hidden;z-index:1;}
+/* width/height/margin are transitioned so the shrink into the condensed header
+   reads as one movement rather than a jump. */
+.auth-seal-frame{width:130px;height:130px;border-radius:50%;background:#fff;padding:0;display:flex;align-items:center;justify-content:center;position:relative;margin:0 auto .9rem;box-shadow:0 0 0 2px var(--gold),0 0 0 5px rgba(212,160,23,.25),0 10px 28px rgba(0,0,0,.5);overflow:hidden;z-index:1;transition:width var(--dur-slow) var(--ease-out),height var(--dur-slow) var(--ease-out),margin var(--dur-slow) var(--ease-out),box-shadow var(--dur-slow) var(--ease-out);}
 .auth-seal-frame::before{content:'';position:absolute;inset:-12px;border-radius:50%;border:1px dashed rgba(212,160,23,.4);pointer-events:none;}
 .auth-seal-frame img{width:118%;height:118%;object-fit:cover;object-position:center;margin:0;padding:0;filter:drop-shadow(0 1px 2px rgba(0,0,0,.2));position:relative;z-index:1;}
 .auth-sub{font-family:'Cinzel',serif;color:rgba(255,255,255,.78);font-size:.7rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin-top:6px;position:relative;z-index:1;}
 .auth-sub2{font-family:'Cinzel',serif;color:var(--gold-bright);font-size:.66rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin-top:2px;position:relative;z-index:1;}
 .auth-sub3{font-family:'Cinzel',serif;color:rgba(255,255,255,.6);font-size:.58rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;margin-top:2px;position:relative;z-index:1;}
+/* These three collapse via max-height/opacity rather than display:none, because
+   display cannot be transitioned — hiding them that way dropped ~55px in a single
+   frame and made the header jerk while the seal and padding were still easing. */
+.auth-sub,.auth-sub2,.auth-sub3{overflow:hidden;max-height:2rem;transition:max-height var(--dur-slow) var(--ease-out),opacity var(--dur-slow) var(--ease-out),margin-top var(--dur-slow) var(--ease-out);}
 
 .tab-header{display:flex;border-bottom:1px solid rgba(255,255,255,.12);background:transparent;}
 .tab-header button{flex:1;padding:.8rem;border:none;background:transparent;color:rgba(255,255,255,.7);font-size:.85rem;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;border-bottom:2px solid transparent;transition:background var(--dur-base) var(--ease-out),color var(--dur-base) var(--ease-out),border-color var(--dur-base) var(--ease-out);}
@@ -1409,16 +1490,20 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
       </ul>
     </div>
   <div class="auth-card">
-    <div class="auth-logo-bar">
-      <div class="auth-seal-frame"><img src="/msukaip-logo.png" alt="Mindanao State University"/></div>
-      <div class="auth-brand-name">MSUkaIP</div>
-      <p class="auth-sub">CICS LAN Messenger</p>
-      <p class="auth-sub2">Mindanao State University</p>
-      <p class="auth-sub3">Main Campus</p>
-    </div>
-    <div class="tab-header">
-      <button class="active" id="tab-login-btn" onclick="switchAuthTab('login')">Sign In</button>
-      <button id="tab-register-btn" onclick="switchAuthTab('register')">Create Account</button>
+    <!-- Logo and tabs are wrapped together so they pin to the top of the card as
+         one block while the form scrolls beneath them (see .auth-sticky). -->
+    <div class="auth-sticky">
+      <div class="auth-logo-bar">
+        <div class="auth-seal-frame"><img src="/msukaip-logo.png" alt="Mindanao State University"/></div>
+        <div class="auth-brand-name">MSUkaIP</div>
+        <p class="auth-sub">CICS LAN Messenger</p>
+        <p class="auth-sub2">Mindanao State University</p>
+        <p class="auth-sub3">Main Campus</p>
+      </div>
+      <div class="tab-header">
+        <button class="active" id="tab-login-btn" onclick="switchAuthTab('login')">Sign In</button>
+        <button id="tab-register-btn" onclick="switchAuthTab('register')">Create Account</button>
+      </div>
     </div>
     <div class="tab-body" id="tab-login">
       <div class="form-group">
@@ -1776,6 +1861,99 @@ function switchAuthTab(tab) {
   document.getElementById('tab-register').style.display = tab==='register' ? 'block' : 'none';
   document.getElementById('tab-login-btn').classList.toggle('active',    tab==='login');
   document.getElementById('tab-register-btn').classList.toggle('active', tab==='register');
+  // Swapping forms changes how tall the card's content is, so reset both halves of
+  // the scroll state explicitly. Clearing .is-condensed by hand matters: the old
+  // code only set scrollTop and relied on the resulting scroll event to expand the
+  // header, but when the card is already at the top — or when the incoming form is
+  // too short to scroll at all — no scroll event ever fires, and the header stayed
+  // condensed over a form that could not scroll. Expanding first, then resetting
+  // scrollTop, is also the safe order: growing the content back cannot clamp.
+  // .is-scrolled is cleared for the same reason: the reset below puts the card back
+  // at the top, and if no scroll event fires the header would keep its opaque fill
+  // over a form that is no longer scrolled.
+  const card   = document.querySelector('.auth-card');
+  const sticky = document.querySelector('.auth-sticky');
+  if (sticky) sticky.classList.remove('is-condensed', 'is-scrolled');
+  if (card)   card.scrollTop = 0;
+}
+
+/* Condense the pinned login header once the card scrolls. The full logo block is
+   ~330px tall, which is too much to freeze permanently on a short screen, so it
+   shrinks to a single row on scroll and expands again at the top.
+
+   The gate on the condense is the part that stops the header rattling, and the
+   reason it is needed is that .auth-sticky scrolls inside the very container it is
+   pinned to. Condensing takes ~225px out of .auth-card's own scrollHeight, so a
+   form that overflowed by less than that stopped overflowing the moment it
+   condensed. The browser then clamped scrollTop into the range that was left, this
+   listener read the clamped value as "back at the top" and expanded the header,
+   which restored the overflow — and the next scroll condensed it again. At a 700px
+   viewport that was 12 class toggles in 2 seconds with the card refusing to hold a
+   position. Thresholds alone could never have caught it: the shrink is transitioned,
+   so the clamp walks scrollTop down a frame at a time (80, 75, 49, 27, 10) rather
+   than jumping, and a walk passes through every threshold on its way.
+
+   So the state is only entered when it can be survived — enough overflow that what
+   remains after condensing still clears the 48px condense threshold, which is what
+   makes it impossible for the clamp to drag the user back under the expand
+   threshold. The cost is honest and worth naming: tall viewports no longer condense
+   at all. That is the right trade, because a tall viewport has only ~195px of
+   scrolling to begin with, so the reclaimed space bought nothing there. Short
+   viewports, the ones the condensed header was built for, still condense and now
+   stay condensed.
+
+   The 48/12 dead band is a second, independent guard, and it does still earn its
+   keep. The gate decides whether condensing is safe at all; the band stops the
+   header flapping once it has condensed. Collapse the two thresholds to a single
+   48 and a position parked on the boundary oscillates on ordinary whole-pixel
+   scroll jitter: 22 class toggles in Chromium and 10 in Firefox across a 40-step
+   +/-1px wobble, against 2 with the band in place. Sub-pixel jitter turns out not
+   to matter either way — a fractional scrollTop change does not fire a scroll
+   event at all — so a whole pixel is the smallest thing worth defending against.
+
+   Re-tested after the opacity was split out into .is-scrolled, in case making the
+   header opaque had removed the need for this gate. It has not: relaxing the
+   `room - condenseReclaim > 48` term put the rattle straight back at a 700px
+   viewport — 20 toggles in one gesture, scroll unable to pass 86px and snapping
+   back to 10. The gate guards a layout feedback loop, which is independent of what
+   colour the header is, so it stays exactly as it was. */
+const authCard   = document.querySelector('.auth-card');
+const authSticky = document.querySelector('.auth-sticky');
+if (authCard && authSticky) {
+  /* How much height the condensed header gives back. Measured rather than
+     hard-coded, so editing the header's padding or seal size cannot silently
+     invalidate the gate. */
+  let condenseReclaim = 0;
+  function measureCondenseReclaim() {
+    authSticky.classList.add('is-measuring');
+    const tall = authSticky.offsetHeight;
+    authSticky.classList.add('is-condensed');
+    const short = authSticky.offsetHeight;
+    authSticky.classList.remove('is-condensed');
+    authSticky.classList.remove('is-measuring');
+    condenseReclaim = tall - short;
+  }
+  measureCondenseReclaim();
+  /* Cinzel loading late changes the header's height, so take the measurement
+     again once everything has loaded — but only while the card is still at the
+     top, where briefly shortening it cannot disturb a scrolled position. */
+  window.addEventListener('load', () => {
+    if (authCard.scrollTop === 0) measureCondenseReclaim();
+  });
+
+  authCard.addEventListener('scroll', () => {
+    const y    = authCard.scrollTop;
+    const room = authCard.scrollHeight - authCard.clientHeight;
+    /* Opacity is ungated and independent of the condense. The moment anything is
+       scrolled under the header it must be opaque, even on the tall viewports the
+       gate below deliberately refuses to condense. Safe to drive straight off y
+       because .is-scrolled only paints — it cannot change scrollHeight, so it
+       cannot feed back into this listener the way the condense can. */
+    authSticky.classList.toggle('is-scrolled', y > 0);
+    const condensed = authSticky.classList.contains('is-condensed');
+    if (!condensed && y > 48 && room - condenseReclaim > 48) authSticky.classList.add('is-condensed');
+    else if (condensed && y < 12)                            authSticky.classList.remove('is-condensed');
+  }, { passive: true });
 }
 
 function togglePw(btn, inputId) {

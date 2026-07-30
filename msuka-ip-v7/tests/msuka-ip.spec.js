@@ -201,6 +201,91 @@ test.describe('1. Authentication Tests', () => {
     console.log('✅ Declining the agreement logs the user out');
   });
 
+  // Regression guard: the pinned login header (.auth-sticky) condenses on scroll,
+  // and it lives *inside* the element it scrolls. Condensing therefore shrinks
+  // .auth-card's own scrollHeight, and if that takes the content below the point
+  // where it still overflows, the browser clamps scrollTop back toward 0 — which
+  // reads to the user as the Create Account form refusing to stay scrolled.
+  //
+  // Two separate mechanisms could re-introduce that, so both viewports matter:
+  //   420x700 guards the condense gate in the scroll listener. Remove the
+  //           `room - condenseReclaim > 48` term and this drops 150 -> 10.
+  //   420x560 guards `overflow-anchor:none` on .auth-card. Restore Chrome's
+  //           scroll anchoring and this drops to 0 after a few header flips.
+  // Deleting either one fails this test on the viewport that covers it.
+  for (const vh of [560, 700]) {
+    test(`1.12 register form holds its scroll position at 420x${vh}`, async ({ page }) => {
+      // Waiting out the card's entry animation plus the settle window costs ~19s
+      // in Firefox with video capture on — over the 15s default. Triple it.
+      test.slow();
+      await page.setViewportSize({ width: 420, height: vh });
+      await page.goto(BASE_URL);
+      // .auth-card animates in (cardIn, .6s after a .52s delay). Scrolling before
+      // that settles measures a still-transforming box and gives a bogus result.
+      await page.waitForFunction(() => {
+        // eslint-disable-next-line no-undef -- evaluated in the browser page context
+        const c = document.querySelector('.auth-card');
+        return c && c.getAnimations().every(a => a.playState === 'finished');
+      });
+      await page.click('#tab-register-btn');
+
+      const card = page.locator('.auth-card');
+      // The form must actually overflow, or the test proves nothing.
+      const room = await card.evaluate(el => el.scrollHeight - el.clientHeight);
+      expect(room, 'register form does not overflow, so there is nothing to hold')
+        .toBeGreaterThan(100);
+
+      await card.evaluate(el => { el.scrollTop = 150; });
+      // The collapse is not instant: the header shrink is transitioned, so the
+      // clamp walks scrollTop down over several frames. Wait it out, then sample
+      // twice to confirm the position is settled and not still drifting.
+      await page.waitForTimeout(1200);
+      const settled = await card.evaluate(el => Math.round(el.scrollTop));
+      await page.waitForTimeout(400);
+      const stillThere = await card.evaluate(el => Math.round(el.scrollTop));
+
+      expect(settled, 'scroll position collapsed back toward the top')
+        .toBeGreaterThan(48);
+      expect(stillThere, 'scroll position was still drifting after settling')
+        .toBe(settled);
+      console.log(`✅ Register scroll holds at 420x${vh} (asked for 150, settled at ${settled}, room ${room}px)`);
+    });
+  }
+
+  // Switching tabs changes how tall the form is, so both halves of the scroll
+  // state have to reset together. Clearing .is-condensed matters on its own: if
+  // only scrollTop were reset, a card already at the top fires no scroll event,
+  // and the header would stay condensed over a form that cannot scroll.
+  test('1.13 switching auth tabs resets the card scroll state', async ({ page }) => {
+    test.slow();   // same entry-animation + settle cost as 1.12
+    await page.setViewportSize({ width: 420, height: 560 });
+    await page.goto(BASE_URL);
+    await page.waitForFunction(() => {
+      // eslint-disable-next-line no-undef -- evaluated in the browser page context
+      const c = document.querySelector('.auth-card');
+      return c && c.getAnimations().every(a => a.playState === 'finished');
+    });
+    await page.click('#tab-register-btn');
+    const card = page.locator('.auth-card');
+    await card.evaluate(el => { el.scrollTop = 150; });
+    await page.waitForTimeout(1200);
+    // Sanity: we are genuinely scrolled and condensed before switching away.
+    expect(await card.evaluate(el => Math.round(el.scrollTop))).toBeGreaterThan(48);
+    expect(await page.locator('.auth-sticky').getAttribute('class')).toContain('is-condensed');
+
+    await page.click('#tab-login-btn');
+    expect(await card.evaluate(el => Math.round(el.scrollTop)),
+      'card kept its old scroll offset after switching tabs').toBe(0);
+    // Both header state classes have to clear. Switching to a form that is too
+    // short to scroll fires no scroll event, so nothing else would ever reset them.
+    const cls = await page.locator('.auth-sticky').getAttribute('class');
+    expect(cls, 'header stayed condensed over the shorter Sign In form')
+      .not.toContain('is-condensed');
+    expect(cls, 'header kept its scrolled fill over a card back at the top')
+      .not.toContain('is-scrolled');
+    console.log('✅ Tab switch resets scrollTop and clears both header states');
+  });
+
 });
 
 // ═══════════════════════════════════════════════════════════════════
