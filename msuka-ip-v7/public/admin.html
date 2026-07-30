@@ -197,7 +197,10 @@ button,.tab,.rail-btn{touch-action:manipulation;}
    the "repeated card grid" anti-pattern. Now one hero chart carrying the two
    headline series, with the five metrics as compact tiles beside it: the shape
    of the data reads first, the exact numbers are one glance away. */
-.ov-grid{display:grid;grid-template-columns:1.55fr 1fr;gap:14px;margin-bottom:1.4rem;align-items:stretch;}
+/* Single column while the right-hand column is empty — the KPI tiles moved up
+   into their own row. Stage 4 puts Online Now / Approved Users beside the chart
+   and this goes back to two columns. */
+.ov-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:1.4rem;align-items:stretch;}
 
 /* Chrome surface for the chart — a dark instrument panel against the cream
    page, so the plotted lines carry the eye instead of the container. */
@@ -224,8 +227,9 @@ button,.tab,.rail-btn{touch-action:manipulation;}
   font-weight:800;font-size:.72rem;padding:3px 9px;border-radius:8px;white-space:nowrap;pointer-events:none;
   box-shadow:0 6px 16px rgba(0,0,0,.4);}
 #main-chart .mc-badge::after{content:'';position:absolute;left:50%;bottom:-4px;transform:translateX(-50%) rotate(45deg);width:8px;height:8px;background:var(--gold);}
-#main-chart .mc-axis{position:absolute;left:0;right:0;bottom:-2px;display:flex;justify-content:space-between;
-  font-size:.6rem;color:var(--ink-mut);font-weight:700;padding:0 2px;}
+/* left inset matches the chart's PAD_L so a date sits under its own point */
+#main-chart .mc-axis{position:absolute;left:34px;right:10px;bottom:-2px;display:flex;justify-content:space-between;
+  font-size:.6rem;color:var(--ink-mut);font-weight:700;}
 /* Y-axis: without a scale the curve shows shape but no magnitude. */
 #main-chart .mc-yaxis{position:absolute;left:0;top:0;bottom:18px;width:100%;pointer-events:none;}
 #main-chart .mc-yaxis span{position:absolute;left:0;transform:translateY(-50%);font-size:.58rem;
@@ -1212,14 +1216,16 @@ function renderMainChart(seriesA, seriesB){
   const rect = el.getBoundingClientRect();
   const W = Math.max(240, Math.round(rect.width || 620));
   const H = Math.max(150, Math.round(rect.height || 200));
-  const PAD_X = 10, PAD_TOP = 26, PAD_BOTTOM = 20;
+  // PAD_L is wider than PAD_X: the y-axis values live in that gutter, so the
+  // plot has to start clear of them rather than under them.
+  const PAD_L = 34, PAD_X = 10, PAD_TOP = 26, PAD_BOTTOM = 20;
   const all = A.concat(B).map(p => Number(p.v) || 0);
   const min = Math.min(...all), max = Math.max(...all);
   const flat = max === min, range = flat ? 1 : (max - min);
   const chartH = H - PAD_TOP - PAD_BOTTOM;
   const yFor = v => flat ? (PAD_TOP + chartH/2) : (PAD_TOP + (1 - ((Number(v)||0) - min) / range) * chartH);
-  const coordsOf = s => { const step = (W - PAD_X*2) / (s.length - 1 || 1);
-    return s.map((p,i) => ({ x: PAD_X + i*step, y: yFor(p.v) })); };
+  const coordsOf = s => { const step = (W - PAD_L - PAD_X) / (s.length - 1 || 1);
+    return s.map((p,i) => ({ x: PAD_L + i*step, y: yFor(p.v) })); };
   const pathOf = c => { let d = `M ${c[0].x} ${c[0].y}`;
     for (let i=1;i<c.length;i++){ const p0=c[i-1], p1=c[i], cx=(p0.x+p1.x)/2;
       d += ` C ${cx} ${p0.y}, ${cx} ${p1.y}, ${p1.x} ${p1.y}`; } return d; };
@@ -1229,7 +1235,15 @@ function renderMainChart(seriesA, seriesB){
   const areaOf = (d,c) => `${d} L ${c[c.length-1].x} ${base} L ${c[0].x} ${base} Z`;
   // Horizontal guide lines give the eye something to measure against.
   const grid = [0,.25,.5,.75,1].map(f => { const y = PAD_TOP + f*chartH;
-    return `<line x1="${PAD_X}" y1="${y}" x2="${W-PAD_X}" y2="${y}" stroke="rgba(247,237,220,.07)" stroke-width="1"/>`; }).join('');
+    return `<line x1="${PAD_L}" y1="${y}" x2="${W-PAD_X}" y2="${y}" stroke="rgba(247,237,220,.07)" stroke-width="1"/>`; }).join('');
+  // Y-axis values on the same fractions as the gridlines, so a reader can put a
+  // magnitude on the curve instead of only seeing its shape. Rounded because
+  // fractional counts are meaningless here; tabular so the column aligns.
+  const yTicks = [0,.25,.5,.75,1].map(f => {
+    const v = Math.round(flat ? max : (max - f*range));
+    const topPct = ((PAD_TOP + f*chartH) / H) * 100;
+    return `<span style="top:${topPct}%">${v}</span>`;
+  }).join('');
   const last = cA[cA.length-1];
   const lastVal = A[A.length-1].v;
   const dotsA = cA.map(c => `<circle cx="${c.x}" cy="${c.y}" r="3" fill="#2A1400" stroke="#FFD24A" stroke-width="2"/>`).join('');
@@ -1254,10 +1268,43 @@ function renderMainChart(seriesA, seriesB){
       <path d="${dA}" fill="none" stroke="#FFD24A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
       ${dotsA}
     </svg>
+    <div class="mc-yaxis">${yTicks}</div>
     <div class="mc-badge" style="left:${(last.x/W)*100}%;top:${(last.y/H)*100}%;">${lastVal}</div>
-    <div class="mc-axis">${axis}</div>`;
+    <div class="mc-cross" id="mc-cross"><i id="mc-cross-dot"></i></div>
+    <div class="mc-tip" id="mc-tip"></div>
+    <div class="mc-axis">${axis}</div>
+    <div class="mc-hit" id="mc-hit"></div>`;
   const fig = document.getElementById('ov-figure');
   if (fig) fig.textContent = lastVal;
+  wireScrub(el, A, B, cA, cB, W, H);
+}
+
+// Hover scrubbing: snap to the nearest bucket, move the crosshair there and
+// name both series in the readout. Snapping (rather than following the pointer
+// freely) means the number under the cursor is always a real data point.
+function wireScrub(el, A, B, cA, cB, W, H){
+  const hit = el.querySelector('#mc-hit');
+  const cross = el.querySelector('#mc-cross');
+  const dot = el.querySelector('#mc-cross-dot');
+  const tip = el.querySelector('#mc-tip');
+  if (!hit || !cross || !tip) return;
+  const fmt = (RANGE_CFG[currentRange] || RANGE_CFG.day).label;
+  const move = ev => {
+    const r = hit.getBoundingClientRect();
+    const px = ((ev.clientX - r.left) / (r.width || 1)) * W;   // pointer in viewBox units
+    let i = 0, best = Infinity;
+    cA.forEach((c, idx) => { const d = Math.abs(c.x - px); if (d < best) { best = d; i = idx; } });
+    const xPct = (cA[i].x / W) * 100;
+    cross.style.left = xPct + '%';
+    if (dot) dot.style.top = (cA[i].y / H) * 100 + '%';
+    tip.style.left = xPct + '%';
+    tip.style.top  = (cA[i].y / H) * 100 + '%';
+    tip.innerHTML = `${esc(fmt(A[i].t))} · <b>${A[i].v}</b> msg · <s>${(B[i]||{}).v ?? 0}</s> users`;
+    el.classList.add('scrub');
+  };
+  hit.addEventListener('pointermove', move);
+  hit.addEventListener('pointerdown', move);          // tap works on touch too
+  hit.addEventListener('pointerleave', () => el.classList.remove('scrub'));
 }
 
 function renderSpark(containerId, history, currentValue){
