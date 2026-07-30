@@ -405,7 +405,11 @@ test.describe('5. Admin Dashboard Tests', () => {
     // is a hidden data holder — see .stat-card .svalue{display:none} in CSS).
     await expect(page.locator('#lbl-total')).toBeVisible();
     await expect(page.locator('#lbl-online')).toBeVisible();
-    await expect(page.locator('#lbl-pending')).toBeVisible();
+    await expect(page.locator('#lbl-messages')).toBeVisible();
+    // The KPI row now shows Group chats as its fifth tile instead of Pending —
+    // the pending queue already has the rail badge and the top-bar bell, so a
+    // third copy was redundant. #lbl-pending is no longer in the DOM.
+    await expect(page.locator('#lbl-groups')).toBeVisible();
     console.log('✅ Stats cards visible');
   });
 

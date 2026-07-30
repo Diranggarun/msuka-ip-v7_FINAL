@@ -621,9 +621,10 @@ app.get('/api/admin/stats',verifyToken,adminOnly,async(req,res)=>{
     const [[{pendingUsers}]]=await db.query("SELECT COUNT(*) AS pendingUsers FROM users WHERE account_status='pending'");
     const [[{totalMessages}]]=await db.query('SELECT COUNT(*) AS totalMessages FROM messages');
     const [[{totalCalls}]]=await db.query('SELECT COUNT(*) AS totalCalls FROM calls');
+    const [[{totalGroups}]]=await db.query('SELECT COUNT(*) AS totalGroups FROM groups_table');
     // Use real-time in-memory map for accurate online count
     const onlineCount = onlineUsers.size;
-    res.json({totalUsers, onlineUsers:onlineCount, pendingUsers, totalMessages, totalCalls});
+    res.json({totalUsers, onlineUsers:onlineCount, pendingUsers, totalMessages, totalCalls, totalGroups});
   } catch { res.status(500).json({error:'Server error'}); }
 });
 // Time-bucketed history for the admin sparkline cards.
