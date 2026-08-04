@@ -34,6 +34,12 @@ memory/
 # reproducible from skills-lock.json — treated like node_modules, not committed.
 .agents/
 
+# Skill scratch output (impeccable critiques) and throwaway design mockups —
+# working material for a redesign, not part of the shipped app.
+.impeccable/
+admin-redesign-mockup.html
+ADMIN-REDESIGN-PROMPT.md
+
 # Logs
 *.log
 npm-debug.log*
