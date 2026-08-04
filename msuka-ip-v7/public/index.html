@@ -13,6 +13,9 @@
   --maroon:#6B0000; --maroon-dark:#4a0000; --maroon-light:#8B1A1A;
   --maroon-soft:#f9f0f0; --gold:#D4A017; --gold-bright:#FFD700;
   --gold-dark:#B8860B; --gold-soft:#fffbea;
+  /* Warm ivory used by the Create Group card — a shade warmer than --off-white,
+     which is tuned for the chat paper surface. */
+  --cream:#FDF6EA;
   --white:#ffffff; --off-white:#fdf8f0;
   --gray-100:#f5f0ec; --gray-200:#e8e0d8; --gray-400:#b0a090;
   /* --text-light darkened from #9a8a7a to meet WCAG AA. The old value measured
@@ -1336,19 +1339,70 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 .g-btn.mute-g{background:rgba(212,160,23,.2);color:var(--gold-bright);border:1px solid rgba(212,160,23,.3);}
 .g-btn.leave-g{background:#e74c3c;color:#fff;}
 
-#modal-overlay{display:none;position:fixed;inset:0;background:rgba(74,0,0,.5);z-index:400;align-items:center;justify-content:center;}
+/* ── Create Group modal ──────────────────────────────────────────────────── */
+/* The blur drops the maroon page behind into soft focus so the cream card is the
+   only thing that reads sharply. */
+#modal-overlay{display:none;position:fixed;inset:0;background:rgba(74,0,0,.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:400;align-items:center;justify-content:center;padding:20px;}
 #modal-overlay.open{display:flex;}
-.modal{background:var(--white);border-radius:16px;padding:1.5rem;width:400px;max-height:80vh;display:flex;flex-direction:column;box-shadow:var(--shadow-lg);border-top:4px solid var(--gold);}
-.modal h3{margin-bottom:1rem;color:var(--maroon-dark);font-family:'Cinzel',serif;font-size:1rem;}
-.modal input{width:100%;padding:.62rem .9rem;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.88rem;margin-bottom:.75rem;outline:none;font-family:'Nunito',sans-serif;color:var(--text-dark);}
+/* overflow stays visible so the badge can hang over the top edge — the members
+   list further down owns the scrolling instead of the card. The 48px top padding
+   is what keeps the title clear of that overhanging badge. */
+.modal{position:relative;overflow:visible;background:var(--cream);border:1px solid var(--gold);border-radius:24px;
+  padding:48px 26px 22px;width:clamp(320px,92vw,440px);max-height:82vh;display:flex;flex-direction:column;
+  box-shadow:0 26px 60px -18px rgba(74,0,0,.45),0 8px 24px -12px rgba(74,0,0,.3);
+  animation:modalIn .26s var(--ease-out);}
+@keyframes modalIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+/* -38px is exactly half the badge's 76px height, so it sits half on, half off. */
+.modal-badge{position:absolute;top:-38px;left:50%;transform:translateX(-50%);width:76px;height:76px;border-radius:50%;
+  background:var(--white);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;
+  box-shadow:0 6px 18px rgba(74,0,0,.18);}
+.modal-badge svg{width:34px;height:34px;stroke:var(--gold);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+.modal-close{position:absolute;top:16px;right:16px;width:38px;height:38px;border-radius:50%;background:var(--cream);
+  border:1px solid var(--gray-200);color:var(--maroon-dark);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background var(--dur-fast) var(--ease-out),border-color var(--dur-fast) var(--ease-out);}
+.modal-close:hover{background:var(--maroon-soft);border-color:var(--gold);}
+.modal-close svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round;}
+.modal h3{margin:0;text-align:center;color:var(--maroon-dark);font-family:'Cinzel',serif;font-size:1.35rem;}
+.modal-sub{margin:6px 0 0;text-align:center;color:var(--text-mid);font-size:.85rem;line-height:1.45;}
+/* Same gold rule + diamond the agreement dialog uses, so the two read as a set. */
+.modal-orn{display:flex;align-items:center;justify-content:center;gap:10px;margin:14px 0 16px;}
+.modal-orn::before,.modal-orn::after{content:'';width:64px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.modal-orn i{color:var(--gold);font-size:.55rem;font-style:normal;line-height:1;}
+.field-label{display:block;font-size:.7rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--maroon-dark);margin-bottom:6px;}
+/* The glyph is positioned inside the wrapper and the input padded past it, so it
+   can never sit underneath typed text. */
+.field-wrap{position:relative;margin-bottom:14px;}
+.field-wrap .field-ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:18px;height:18px;
+  stroke:var(--gold-dark);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;pointer-events:none;}
+.modal input{width:100%;padding:.72rem .9rem .72rem 40px;border:1.5px solid var(--gray-200);border-radius:12px;
+  font-size:.88rem;outline:none;font-family:'Nunito',sans-serif;color:var(--text-dark);background:var(--white);}
 .modal input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,160,23,.12);}
-.members-list{flex:1;overflow-y:auto;max-height:250px;margin-bottom:.75rem;}
-.member-check{display:flex;align-items:center;gap:10px;padding:.5rem .4rem;border-radius:8px;cursor:pointer;}
+/* Chips wrap onto more lines rather than scrolling sideways — a selection you
+   cannot see is worse than a taller row. :empty keeps the gap out when none. */
+.chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+.chip-row:empty{display:none;}
+.chip{display:inline-flex;align-items:center;gap:8px;padding:4px 8px 4px 4px;border:1px solid var(--gray-200);
+  border-radius:999px;background:var(--white);font-size:.82rem;color:var(--text-dark);}
+.chip .avatar-circle{width:26px;height:26px;font-size:.6rem;}
+.chip button{border:none;background:transparent;padding:2px;border-radius:50%;cursor:pointer;color:var(--text-mid);display:flex;}
+.chip button:hover{color:var(--maroon);background:var(--maroon-soft);}
+.chip button svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;}
+/* The only scrolling region in the card, so the title, fields and actions hold
+   still while a long roster moves under them. */
+.members-list{flex:1;min-height:80px;overflow-y:auto;margin-bottom:10px;}
+.member-check{display:flex;align-items:center;gap:10px;padding:.45rem .5rem;border-radius:10px;cursor:pointer;}
 .member-check:hover{background:var(--maroon-soft);}
-.member-check input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--maroon);}
-.modal-actions{display:flex;gap:8px;justify-content:flex-end;}
-.btn-cancel{padding:.55rem 1rem;border:1.5px solid var(--gray-200);background:var(--white);border-radius:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;color:var(--text-mid);}
-.btn-confirm{padding:.55rem 1rem;background:linear-gradient(135deg,var(--maroon),var(--maroon-light));color:var(--gold-bright);border:none;border-radius:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;box-shadow:var(--shadow-sm);}
+.member-check input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--maroon);flex-shrink:0;}
+.mc-text{display:flex;flex-direction:column;min-width:0;}
+.mc-text b{font-size:.86rem;font-weight:700;color:var(--text-dark);}
+.mc-text em{font-size:.74rem;font-style:normal;color:var(--text-light);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.modal-hint{display:flex;align-items:flex-start;gap:8px;font-size:.78rem;color:var(--text-mid);margin-bottom:16px;}
+.modal-hint svg{width:15px;height:15px;flex-shrink:0;margin-top:1px;stroke:var(--gold-dark);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;}
+.btn-cancel{padding:.68rem 1.3rem;border:1.5px solid var(--gray-200);background:var(--cream);border-radius:12px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;color:var(--text-mid);}
+.btn-cancel:hover{background:var(--maroon-soft);}
+.btn-confirm{display:inline-flex;align-items:center;gap:9px;padding:.68rem 1.3rem;background:linear-gradient(135deg,var(--maroon),var(--maroon-dark));color:var(--gold-bright);border:none;border-radius:12px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;box-shadow:var(--shadow-sm);transition:transform var(--dur-fast) var(--ease-out),box-shadow var(--dur-base) var(--ease-out);}
+.btn-confirm svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
 .btn-confirm:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);}
 
 ::-webkit-scrollbar{width:4px;}
@@ -1948,13 +2002,36 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 
 <!-- NEW GROUP MODAL -->
 <div id="modal-overlay">
-  <div class="modal">
-    <h3 style="display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Create Group Chat</h3>
-    <input type="text" id="group-name-input" placeholder="Group name (e.g. BSIT 3-A)"/>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-badge"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.5"/><path d="M2.5 19c0-3.2 3-5.2 6.5-5.2s6.5 2 6.5 5.2"/><path d="M16 19c0-2.1 2-3.7 4.2-3.7"/></svg></div>
+    <button class="modal-close" onclick="closeModal()" title="Close" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3 id="modal-title">Create Group Chat</h3>
+    <p class="modal-sub">Start a new group conversation with your selected members.</p>
+    <div class="modal-orn"><i>&#9670;</i></div>
+
+    <label class="field-label" for="group-name-input">Group name</label>
+    <div class="field-wrap">
+      <svg class="field-ico" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.5"/><path d="M2.5 19c0-3.2 3-5.2 6.5-5.2s6.5 2 6.5 5.2"/><path d="M16 19c0-2.1 2-3.7 4.2-3.7"/></svg>
+      <input type="text" id="group-name-input" placeholder="Enter group name (e.g. BSIT 3-A)"/>
+    </div>
+
+    <label class="field-label" for="member-search">Add members (optional)</label>
+    <div class="field-wrap">
+      <svg class="field-ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="text" id="member-search" placeholder="Search users by name or email…" oninput="filterMembers()"/>
+    </div>
+
+    <!-- Chips are a view of the checkboxes below, not a second source of truth:
+         syncMemberChips() rebuilds this from whatever is currently checked. -->
+    <div class="chip-row" id="member-chips"></div>
     <div class="members-list" id="members-checklist"></div>
+    <div class="modal-hint">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>
+      You can add members later after creating the group.
+    </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-      <button class="btn-confirm" onclick="createGroup()">Create Group</button>
+      <button class="btn-confirm" onclick="createGroup()"><svg viewBox="0 0 24 24"><path d="M15 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>Create Group</button>
     </div>
   </div>
 </div>
@@ -3077,8 +3154,34 @@ document.addEventListener('DOMContentLoaded',()=>{
 //  GROUP CREATION
 // ══════════════════════════════════════════
 function openNewGroupModal() {
-  document.getElementById('members-checklist').innerHTML=onlineUsers.map(u=>`<label class="member-check"><input type="checkbox" value="${esc(u.email)}" data-name="${esc(u.name)}"/><div class="avatar-circle ${colorFor(u.name)}" style="width:32px;height:32px;font-size:.72rem;">${esc(initials(u.name))}</div><span style="font-size:.88rem;">${esc(u.name)}</span></label>`).join('');
+  // data-search carries name+email lowercased so filterMembers() can match either
+  // without re-reading the DOM text on every keystroke.
+  document.getElementById('members-checklist').innerHTML=onlineUsers.map(u=>`<label class="member-check" data-search="${esc((u.name+' '+u.email).toLowerCase())}"><input type="checkbox" value="${esc(u.email)}" data-name="${esc(u.name)}" onchange="syncMemberChips()"/><div class="avatar-circle ${colorFor(u.name)}" style="width:32px;height:32px;font-size:.72rem;">${esc(initials(u.name))}</div><span class="mc-text"><b>${esc(u.name)}</b><em>${esc(u.email)}</em></span></label>`).join('');
+  document.getElementById('member-search').value='';
+  filterMembers();
+  syncMemberChips();
   document.getElementById('modal-overlay').classList.add('open');
+}
+// Hide non-matching rows rather than re-rendering the list, so a checkbox ticked
+// before searching stays ticked (and still counts) while it is filtered out.
+function filterMembers(){
+  const q=document.getElementById('member-search').value.trim().toLowerCase();
+  document.querySelectorAll('#members-checklist .member-check').forEach(row=>{
+    row.style.display = !q || row.dataset.search.includes(q) ? 'flex' : 'none';
+  });
+}
+// The checkboxes stay the single source of truth — createGroup() still reads
+// '#members-checklist input:checked'. This only paints them as chips.
+function syncMemberChips(){
+  const chips=[...document.querySelectorAll('#members-checklist input:checked')].map(c=>{
+    const n=c.dataset.name;
+    return `<span class="chip"><span class="avatar-circle ${colorFor(n)}">${esc(initials(n))}</span>${esc(n)}<button type="button" onclick="removeMemberChip('${esc(c.value)}')" title="Remove ${esc(n)}" aria-label="Remove ${esc(n)}"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span>`;
+  }).join('');
+  document.getElementById('member-chips').innerHTML=chips;
+}
+function removeMemberChip(email){
+  const box=[...document.querySelectorAll('#members-checklist input')].find(c=>c.value===email);
+  if(box){ box.checked=false; syncMemberChips(); }
 }
 function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
 function createGroup(){
