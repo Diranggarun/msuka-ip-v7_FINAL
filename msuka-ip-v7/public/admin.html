@@ -184,7 +184,17 @@ button,.tab,.rail-btn{touch-action:manipulation;}
 .topbar-right button{padding:.38rem .9rem;background:rgba(212,160,23,.15);border:1px solid rgba(212,160,23,.3);color:var(--gold-bright);border-radius:7px;cursor:pointer;font-size:.8rem;font-family:'Nunito',sans-serif;font-weight:700;transition:all .15s;}
 .topbar-right button:hover{background:rgba(212,160,23,.3);}
 
-.container{max-width:1150px;margin:0 auto;padding:1.4rem;}
+/* 1150px left ~190px of dead cream either side on a 1650px screen and ~320px
+   at 1920px. A dashboard is scanned, not read line by line, so the prose
+   line-length argument for a narrow column doesn't apply — the width goes to
+   the chart and the tables. Still capped so it can't stretch absurdly on an
+   ultrawide; beyond ~1600px the extra room only pads the gaps.
+
+   width:100% is load-bearing: .admin-main is a flex column, and `margin:0 auto`
+   on a flex item makes it shrink to fit-content and centre, so max-width alone
+   did nothing — the box sized to its contents (1058px) no matter what the cap
+   said. Safe with the global box-sizing:border-box on line 42. */
+.container{width:100%;max-width:1600px;margin:0 auto;padding:1.4rem;}
 
 .stats-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;gap:1rem;flex-wrap:wrap;}
 .stats-toolbar h2{font-family:'Cinzel',serif;font-size:.95rem;color:var(--maroon-dark);font-weight:800;letter-spacing:.04em;display:inline-flex;align-items:center;gap:8px;}
@@ -477,7 +487,10 @@ tr:hover td{background:var(--maroon-soft);}
   text-transform:uppercase;letter-spacing:.07em;display:flex;flex-direction:column-reverse;gap:1px;}
 .kpi-row .slabel::after{content:attr(data-current);font-family:'Nunito',sans-serif;font-size:1.55rem;
   font-weight:800;color:var(--tone);letter-spacing:-.01em;line-height:1.05;font-variant-numeric:normal;}
-.kpi-row .sdelta{grid-column:2;margin-top:1px;}
+/* justify-self:start because a grid item stretches to its column by default,
+   which beat the .sdelta inline-flex and painted the pill background across
+   the whole tile. Only visible once the tiles got wide. */
+.kpi-row .sdelta{grid-column:2;margin-top:1px;justify-self:start;}
 .kpi-row .stat-spark{grid-column:1 / -1;height:26px;margin-top:4px;opacity:.85;}
 @media (max-width:1100px){ .kpi-row{grid-template-columns:repeat(3,minmax(0,1fr));} }
 @media (max-width:700px){ .kpi-row{grid-template-columns:repeat(2,minmax(0,1fr));} }
