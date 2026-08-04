@@ -170,6 +170,24 @@ Two things this let us delete rather than maintain: the phone-only rule hiding t
 
 ---
 
+## Admin dashboard rebuilt as an overview, not a stack of cards
+
+**Decision:** Rebuilt `admin.html`'s landing view in five stages: a top bar with greeting, live clock and global search; a five-tile KPI row with period deltas; one hero traffic chart with a real y-axis and hover scrubbing; a right column carrying Online Now and Approved Users; and the pending queue as a paginated table.
+
+**Context:** The page was five full-width stat cards stacked vertically — roughly 600px of near-identical rows before any content — followed by 157 pending requests rendered as individual cards, which alone made the page about 19,000px tall. Everything was equally loud, so nothing read first.
+
+**Reasoning:** The shape of the data belongs at the top (one chart), the exact numbers one glance away (compact tiles), and the roster beside them rather than below. Filtering and paging happen client-side because `/api/admin/users` and `/api/admin/pending` already return the full set in one request; adding `?page=` parameters would mean new server routes, new SQL and new tests for a dataset that is a few hundred rows on a single-campus LAN. If the roster ever outgrows that, the endpoints are the place to change, not the panels.
+
+**Trade-offs:**
+
+- **Avatars are initials in a role-coloured circle.** There is no photo storage in this system and adding it was out of scope. Colour encodes role using the same hues as the role badges — the initials already distinguish people, so the colour is free to carry information instead of being decorative.
+- **The Approved Users panel builds at most 40 rows.** `loadUsers()` re-runs every 5 seconds; mapping 200+ rows that often is wasted work for a panel showing six at a time. The full table is one click away, and the panel says "Showing 40 of N" rather than implying it is complete. Rows sort online-first: without that the cap hid whoever was actually online, since the server orders by join date and the one online account sat at index 77.
+- **The role tabs are All / Students / Faculty / Admins.** The mockup asked for a "Staff" tab, but the `users.role` column only holds `student`, `faculty` and `admin`. A Staff tab would always have been empty.
+- **The pending table's Status column is constant.** Every row reads `pending`, because `/api/admin/pending` filters on exactly that. It is kept because it was specified and it does confirm the queue's state at a glance, but it carries no information that distinguishes one row from another.
+- **Pending search filters the data, not the DOM.** The previous implementation hid `.pending-card` elements. With pagination that would only ever search the page currently displayed, so the filter moved into the data and resets to page 1.
+
+---
+
 ## Stack divergence from the original plan
 
 The original capstone plan called for **FastAPI + React + Vite + Pydantic + Alembic migrations**. The actual build is **Node.js + Express + Socket.IO + vanilla HTML/JS + ad-hoc schema-init via `CREATE TABLE IF NOT EXISTS`**.

@@ -551,6 +551,117 @@ test.describe('5. Admin Dashboard Tests', () => {
     console.log('✅ Admin can add new user');
   });
 
+  test('5.9 Online Now and Approved Users panels populate', async ({ page }) => {
+    await expect(page.locator('.au-row').first()).toBeVisible({ timeout: 8000 });
+
+    // The heading count must match the rows the panel actually built (or the
+    // "Showing N of M" caption when the 40-row cap kicks in).
+    const total = Number((await page.locator('#au-count').textContent()).replace(/\D/g, ''));
+    const rows = await page.locator('.au-row').count();
+    expect(total).toBeGreaterThan(0);
+    expect(rows).toBe(Math.min(total, 40));
+    if (total > 40) await expect(page.locator('#au-shown')).toHaveText(`Showing 40 of ${total}`);
+
+    // Online Now renders either avatars or an explicit empty state — never blank.
+    const onText = (await page.locator('#on-avatars').textContent()).trim();
+    const onAvatars = await page.locator('#on-avatars .av').count();
+    expect(onAvatars > 0 || /Nobody is online/.test(onText)).toBeTruthy();
+    console.log(`✅ Panels populated — ${rows}/${total} user rows, ${onAvatars} online avatar(s)`);
+  });
+
+  test('5.10 Role filter tabs split the user list without losing anyone', async ({ page }) => {
+    await expect(page.locator('.au-row').first()).toBeVisible({ timeout: 8000 });
+    const countFor = async (label) => {
+      await page.click(`.au-tab:text-is("${label}")`);
+      return Number((await page.locator('#au-count').textContent()).replace(/\D/g, ''));
+    };
+    const all = await countFor('All');
+    const parts = (await countFor('Students')) + (await countFor('Faculty')) + (await countFor('Admins'));
+    // Every approved account holds one of the three roles, so the parts must
+    // sum to the whole — a mismatch means a role is unreachable in the UI.
+    expect(parts).toBe(all);
+    console.log(`✅ Role tabs partition the list exactly — ${parts} = ${all}`);
+  });
+
+  test('5.11 Panel escapes user-controlled names', async ({ page }) => {
+    await expect(page.locator('.au-row').first()).toBeVisible({ timeout: 8000 });
+    // Display names reach both panels; a scripted name must stay inert text.
+    const injected = await page.evaluate(() => {
+      // eslint-disable-next-line no-undef -- evaluated in the browser page context
+      window.__xss = false;
+      // eslint-disable-next-line no-undef
+      renderApproved([{ id: 1, name: '<img src=x onerror="window.__xss=true">', email: 'x@cics.msu.edu',
+        role: 'student', account_status: 'approved', status: 'offline', created_at: '2026-01-01 00:00:00' }]);
+      // eslint-disable-next-line no-undef
+      return { fired: window.__xss, imgs: document.querySelectorAll('.au-row img').length };
+    });
+    expect(injected.fired).toBe(false);
+    expect(injected.imgs).toBe(0);
+    console.log('✅ Scripted display name renders as inert text in the panels');
+  });
+
+  test('5.12 Pending requests paginate ten to a page', async ({ page }) => {
+    await page.waitForSelector('#pending-tbody tr td', { timeout: 8000 });
+    // eslint-disable-next-line no-undef -- evaluated in the browser page context
+    const total = await page.evaluate(() => pendingUsers.length);
+    test.skip(total <= 10, 'needs more than one page of pending requests');
+
+    const rows = await page.locator('#pending-tbody tr').count();
+    expect(rows).toBe(10);
+    await expect(page.locator('.pager-info')).toHaveText(`Showing 1–10 of ${total}`);
+    // On page 1 there is nowhere back to go.
+    await expect(page.locator('.pager-btns .pg').first()).toBeDisabled();
+
+    // The final page holds the remainder, and Next is spent.
+    const pages = Math.ceil(total / 10);
+    // eslint-disable-next-line no-undef -- evaluated in the browser page context
+    await page.evaluate((p) => gotoPending(p), pages);
+    const lastRows = await page.locator('#pending-tbody tr').count();
+    expect(lastRows).toBe(total - (pages - 1) * 10);
+    await expect(page.locator('.pager-btns .pg').last()).toBeDisabled();
+    console.log(`✅ Pending paginates — ${total} requests over ${pages} pages, last page has ${lastRows}`);
+  });
+
+  test('5.13 Search reaches pending requests that are not on the current page', async ({ page }) => {
+    await page.waitForSelector('#pending-tbody tr td', { timeout: 8000 });
+    // eslint-disable-next-line no-undef -- evaluated in the browser page context
+    const total = await page.evaluate(() => pendingUsers.length);
+    test.skip(total <= 10, 'needs more than one page of pending requests');
+
+    // Deliberately target the very last record while sitting on page 1: a
+    // filter that only hid visible rows could never find it.
+    // eslint-disable-next-line no-undef -- evaluated in the browser page context
+    const target = await page.evaluate(() => pendingUsers[pendingUsers.length - 1].email);
+    // eslint-disable-next-line no-undef -- evaluated in the browser page context
+    await page.evaluate(() => gotoPending(1));
+    await page.fill('#tb-search-input', target);
+    await expect(page.locator('#pending-tbody tr')).toHaveCount(1);
+    await expect(page.locator('#pending-tbody tr').first()).toContainText(target);
+    console.log('✅ Search finds a pending request from a later page');
+  });
+
+  test('5.14 Pager clamps when the queue shrinks under the current page', async ({ page }) => {
+    await page.waitForSelector('#pending-tbody tr td', { timeout: 8000 });
+    // eslint-disable-next-line no-undef -- evaluated in the browser page context
+    const total = await page.evaluate(() => pendingUsers.length);
+    test.skip(total <= 10, 'needs more than one page of pending requests');
+
+    // Sit on the last page, then shrink the queue to one — what approving a
+    // page's worth of requests does. Without the clamp the admin is left
+    // staring at an empty page with no way back.
+    const state = await page.evaluate(() => {
+      /* eslint-disable no-undef -- evaluated in the browser page context */
+      gotoPending(Math.ceil(pendingUsers.length / 10));
+      pendingUsers = pendingUsers.slice(0, 1);
+      renderPending();
+      return { page: pendingPage, rows: document.querySelectorAll('#pending-tbody tr').length };
+      /* eslint-enable no-undef */
+    });
+    expect(state.page).toBe(1);
+    expect(state.rows).toBe(1);
+    console.log('✅ Pager clamps to the last real page instead of stranding on an empty one');
+  });
+
 });
 
 // ═══════════════════════════════════════════════════════════════════
@@ -675,7 +786,15 @@ test.describe('6. Performance & Availability Tests', () => {
     // The side rail becomes a bottom tab bar, so it spans the full width.
     const railBox = await page.locator('.admin-rail').boundingBox();
     expect(Math.round(railBox.width)).toBeGreaterThan(300);
-    console.log(`✅ Admin usable on phone — no overflow, rail is a ${Math.round(railBox.width)}px bottom bar`);
+
+    // The two assertions above both passed while the dashboard was unusable:
+    // #app kept flex-direction:row, so the full-width rail squeezed
+    // .admin-main to 0px. Nothing overflowed and the rail was still wide —
+    // the content was simply gone. Measure the content itself.
+    const mainBox = await page.locator('.admin-main').boundingBox();
+    expect(Math.round(mainBox.width), '.admin-main collapsed — dashboard content is not visible')
+      .toBeGreaterThan(300);
+    console.log(`✅ Admin usable on phone — content ${Math.round(mainBox.width)}px, rail is a ${Math.round(railBox.width)}px bottom bar`);
   });
 
   test('6.10 phone: survey answer targets meet the 44px touch minimum', async ({ page }) => {

@@ -146,6 +146,14 @@ Or change `PORT=3001` in `.env`.
 
 ---
 
+### Admin dashboard content is invisible on a phone or tablet (rail fills the screen)
+
+**Cause:** `admin.html`'s phone rules live in a `@media (max-width:768px)` block written against `#app.open`, but `login()` only set an inline `style.display='flex'` and never added the class. Without it `#app` kept `flex-direction:row`, so the rail — which the same media block sets to `width:100%!important` — consumed the entire row and `.admin-main` collapsed to **0px**. Nothing overflowed and no error was thrown; the content was simply not there.
+
+**Fix:** `login()` now calls `document.getElementById('app').classList.add('open')` before setting the inline style.
+
+**Why it went unnoticed:** test 6.12 asserted no horizontal scroll and a full-width rail. Both were true the whole time the page was unusable. It now measures `.admin-main`'s own width, which reads 0 against the unfixed page. When a responsive test passes, check that it measures the thing that would actually be missing.
+
 ## Adding new entries
 
 When you hit a new error and solve it, add a section using this format:
