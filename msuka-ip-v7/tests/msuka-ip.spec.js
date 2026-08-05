@@ -374,6 +374,57 @@ test.describe('2. Messenger UI Tests', () => {
     console.log('✅ Group modal closes correctly');
   });
 
+  test('2.11 Unread pill narrows the All list without breaking live updates', async ({ page }) => {
+    await page.waitForFunction(
+      // eslint-disable-next-line no-undef -- evaluated in the browser page context
+      () => typeof conversations !== 'undefined' && !!conversations['group_general'],
+      null, { timeout: 8000 });
+
+    // Mark exactly one conversation unread so the filter has something to KEEP,
+    // not just something to drop. group_general is skipped deliberately: Global
+    // Chat renders as its own pinned item, never a row in #all-list, so marking
+    // it unread would leave the filtered list empty and the test would pass
+    // while proving nothing.
+    const total = await page.evaluate(() => {
+      /* eslint-disable no-undef -- evaluated in the browser page context */
+      Object.values(conversations).forEach(c => { c.unread = 0; });
+      const target = Object.entries(conversations).find(([k]) => k !== 'group_general');
+      if (target) target[1].unread = 3;
+      renderAllList();
+      return { rows: document.querySelectorAll('#all-list .conv-item').length, marked: !!target };
+      /* eslint-enable no-undef */
+    });
+    test.skip(!total.marked || total.rows === 0, 'needs at least one non-global conversation');
+    expect(total.rows).toBeGreaterThan(0);
+
+    await page.click('#nav-unread');
+    await expect(page.locator('#nav-unread')).toHaveClass(/active/);
+    const shown = await page.locator('#all-list .conv-item').count();
+    const unread = await page.locator('#all-list .conv-item.unread').count();
+    expect(shown, 'the unread conversation must survive the filter').toBeGreaterThan(0);
+    expect(shown).toBe(unread);
+    expect(shown).toBeLessThan(total.rows);
+
+    // currentNav must stay 'global': the socket handlers test it to decide
+    // whether to redraw this list, so 'unread' there would freeze the list as
+    // new messages arrive.
+    // eslint-disable-next-line no-undef -- evaluated in the browser page context
+    expect(await page.evaluate(() => currentNav)).toBe('global');
+
+    // Nothing unread must say so rather than render an empty panel.
+    await page.evaluate(() => {
+      /* eslint-disable no-undef -- evaluated in the browser page context */
+      Object.values(conversations).forEach(c => { c.unread = 0; });
+      renderAllList();
+      /* eslint-enable no-undef */
+    });
+    await expect(page.locator('#all-list .le-title')).toHaveText('Nothing unread');
+
+    await page.click('#nav-global');
+    await expect(page.locator('#all-list .conv-item')).toHaveCount(total.rows);
+    console.log(`✅ Unread pill filters ${total.rows} → ${shown}, keeps currentNav global, empties gracefully`);
+  });
+
   test('2.10 Logout button works', async ({ page }) => {
     await page.click('button[onclick="logout()"]');
     await expect(page.locator('#auth-screen')).toBeVisible();

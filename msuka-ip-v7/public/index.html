@@ -1824,6 +1824,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
       <button class="nav-btn active" id="nav-global" onclick="switchNav('global',this)">All</button>
       <button class="nav-btn" id="nav-groups" onclick="switchNav('groups',this)">Groups</button>
       <button class="nav-btn" id="nav-private" onclick="switchNav('private',this)">Private</button>
+      <button class="nav-btn" id="nav-unread" onclick="switchNav('unread',this)">Unread</button>
     </div>
 
     <div id="section-global" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
@@ -2575,7 +2576,18 @@ function openGlobalChat() {
   openConversation('group_general');
 }
 
+let unreadOnly = false;
+
 function switchNav(name, btn) {
+  // 'Unread' is a narrowing of the All list, not a section of its own — the
+  // same conversations, fewer of them. Remember which pill was pressed before
+  // remapping, then let currentNav stay 'global': several live-update paths
+  // test currentNav==='global' to decide whether to redraw this list, and if
+  // it read 'unread' those would stop firing and the list would go stale as
+  // messages arrived.
+  const pillId = 'nav-' + name;
+  unreadOnly = (name === 'unread');
+  if (name === 'unread') name = 'global';
   currentNav = name;
   // Tapping a bottom tab on a phone means "show me that list", so leave the
   // chat view. openGlobalChat() calls this first and then reopens, so the
@@ -2588,7 +2600,7 @@ function switchNav(name, btn) {
   // used to leave the whole track with nothing selected. `btn` is still honoured
   // as a fallback so any caller passing an element keeps working.
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  const pill = document.getElementById('nav-' + name) || btn;
+  const pill = document.getElementById(pillId) || btn;
   if (pill) pill.classList.add('active');
   // Global Chat and Notifications are views, not list filters — there is no
   // pill for them. Hiding the track is honest; leaving it up with nothing
@@ -2771,7 +2783,7 @@ function groupRows(search) {
     const unread = conv.unread > 0 ? `<div class="unread-badge">${conv.unread}</div>` : '';
     const isActive = activeConvKey === key;
     const isCreator = conv.createdBy === currentUser?.name;
-    return { lastTime: conv.lastTime, html: `
+    return { lastTime: conv.lastTime, unread: Number(conv.unread) || 0, html: `
       <div class="conv-item ${isActive ? 'active' : ''} ${conv.unread > 0 ? 'unread' : ''}" onclick="openConversation('${key}')">
         <div class="conv-avatar">
           <div class="avatar-circle group"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5"/><path d="M15 19c0-2 2-3.5 4-3.5"/></svg></div>
@@ -2862,7 +2874,7 @@ function privateRows(search) {
     const preview = conv.lastMsg
       ? `<div class="conv-preview">${esc(conv.lastMsg)}</div>`
       : `<div class="conv-preview presence">${isOn ? '● Online' : '○ Offline'}${e.role ? ' · ' + esc(e.role) : ''}</div>`;
-    return { lastTime: conv.lastTime, html: `
+    return { lastTime: conv.lastTime, unread: Number(conv.unread) || 0, html: `
       <div class="conv-item ${activeConvKey === e.key ? 'active' : ''} ${conv.unread > 0 ? 'unread' : ''}" onclick="openConversation('${e.key}')">
         <div class="conv-avatar">
           <div class="avatar-circle ${colorFor(e.name)}">${esc(initials(e.name))}</div>
@@ -2896,9 +2908,11 @@ function renderAllList() {
   const search = document.getElementById('search-input').value.toLowerCase();
   const list   = document.getElementById('all-list');
   if (!list) return;
-  const rows = [...privateRows(search), ...groupRows(search)]
+  let rows = [...privateRows(search), ...groupRows(search)]
     .sort((a, b) => String(b.lastTime || '').localeCompare(String(a.lastTime || '')));
+  if (unreadOnly) rows = rows.filter(r => r.unread > 0);
   list.innerHTML = rows.length ? withDateGroups(rows)
+    : unreadOnly ? emptyState('search', 'Nothing unread', 'You are all caught up.')
     : search ? emptyState('search', 'No matches', 'Nothing here matches “' + esc(search) + '”.')
              : emptyState('private', 'No conversations yet', 'Say hello in Global Chat, or message someone who is online.');
 }
