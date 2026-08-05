@@ -662,6 +662,33 @@ test.describe('5. Admin Dashboard Tests', () => {
     console.log('✅ Pager clamps to the last real page instead of stranding on an empty one');
   });
 
+  test('5.15 Every KPI tile receives a value', async ({ page }) => {
+    await page.waitForSelector('.kpi-row .stat-card', { timeout: 8000 });
+    // Give /stats and /trends a moment to land.
+    await expect(page.locator('#lbl-total')).not.toHaveAttribute('data-current', '—', { timeout: 8000 });
+
+    // The visible figure comes from data-current via .slabel::after, so a tile
+    // whose id nothing writes to keeps the '—' placeholder and looks plausible.
+    // That is exactly what happened to the Group chats tile: stage 2 renamed the
+    // ids but the refresh loop still targeted the old #lbl-pending, so one tile
+    // was fed by nothing.
+    const tiles = await page.evaluate(() =>
+      // eslint-disable-next-line no-undef -- evaluated in the browser page context
+      [...document.querySelectorAll('.kpi-row .slabel')].map(l => ({
+        label: l.textContent.trim(),
+        value: l.dataset.current,
+      })));
+
+    expect(tiles).toHaveLength(5);
+    const unfed = tiles.filter(t => !t.value || t.value === '—');
+    expect(unfed.map(t => t.label).join(', ')).toBe('');
+
+    // The sparklines were removed in favour of the hero chart — no tile should
+    // still be carrying one.
+    expect(await page.locator('.kpi-row .stat-spark').count()).toBe(0);
+    console.log(`✅ All 5 KPI tiles populated: ${tiles.map(t => `${t.label}=${t.value}`).join(' · ')}`);
+  });
+
 });
 
 // ═══════════════════════════════════════════════════════════════════

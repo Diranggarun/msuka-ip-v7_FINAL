@@ -300,16 +300,6 @@ button,.tab,.rail-btn{touch-action:manipulation;}
 .stat-card .slabel{font-size:.63rem;font-weight:800;color:var(--text-light);text-transform:uppercase;letter-spacing:.07em;display:flex;flex-direction:column-reverse;gap:.15rem;}
 .stat-card .slabel::after{content:attr(data-current);display:block;font-family:'Cinzel',serif;font-size:1.6rem;font-weight:800;color:var(--tone);letter-spacing:.01em;line-height:1;font-variant-numeric:tabular-nums;}
 .stat-card .svalue{display:none;}
-.stat-spark{position:relative;height:34px;min-width:0;margin-top:auto;}
-/* A 34px tile has no room for the badge or the date axis — those belong to the
-   hero chart, which carries the shared x-scale for the whole panel. */
-.stat-spark .spark-badge,.stat-spark .spark-axis{display:none;}
-.stat-spark svg{width:100%;height:100%;display:block;overflow:visible;}
-.stat-spark .spark-badge{position:absolute;top:0;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:.74rem;padding:2px 9px;border-radius:8px;letter-spacing:.02em;box-shadow:0 4px 10px rgba(0,0,0,.18);pointer-events:none;white-space:nowrap;}
-.stat-spark .spark-badge::after{content:'';position:absolute;left:50%;bottom:-4px;transform:translateX(-50%) rotate(45deg);width:7px;height:7px;background:#1f2937;}
-/* (the .spark-axis styling that used to live here is gone: the date axis now
-   belongs to the hero chart, and the rule was overriding the hide above it —
-   same specificity, later in the file, so it silently won) */
 .stat-card[data-tone="green"]{--tone:#16a34a;--tone-soft:rgba(22,163,74,.18);}
 .stat-card[data-tone="gold"]{--tone:#B8860B;--tone-soft:rgba(184,134,11,.18);}
 .stat-card[data-tone="orange"]{--tone:#ea580c;--tone-soft:rgba(234,88,12,.18);}
@@ -483,15 +473,17 @@ tr:hover td{background:var(--maroon-soft);}
 .kpi-ico{grid-row:1 / span 2;width:40px;height:40px;border-radius:13px;display:flex;align-items:center;
   justify-content:center;background:var(--tone-soft);color:var(--tone);align-self:center;}
 .kpi-ico svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
-.kpi-row .slabel{grid-column:2;font-size:.62rem;font-weight:800;color:var(--text-light);
-  text-transform:uppercase;letter-spacing:.07em;display:flex;flex-direction:column-reverse;gap:1px;}
-.kpi-row .slabel::after{content:attr(data-current);font-family:'Nunito',sans-serif;font-size:1.55rem;
-  font-weight:800;color:var(--tone);letter-spacing:-.01em;line-height:1.05;font-variant-numeric:normal;}
+.kpi-row .slabel{grid-column:2;font-size:.7rem;font-weight:800;color:var(--text-light);
+  text-transform:uppercase;letter-spacing:.07em;display:flex;flex-direction:column-reverse;gap:2px;}
+/* The sparkline used to take 26px under this figure. With it gone the number
+   takes the room: a stat tile exists to show one value, so the value should be
+   the largest thing in it. */
+.kpi-row .slabel::after{content:attr(data-current);font-family:'Nunito',sans-serif;font-size:2.15rem;
+  font-weight:800;color:var(--tone);letter-spacing:-.02em;line-height:1.02;font-variant-numeric:normal;}
 /* justify-self:start because a grid item stretches to its column by default,
    which beat the .sdelta inline-flex and painted the pill background across
    the whole tile. Only visible once the tiles got wide. */
 .kpi-row .sdelta{grid-column:2;margin-top:1px;justify-self:start;}
-.kpi-row .stat-spark{grid-column:1 / -1;height:26px;margin-top:4px;opacity:.85;}
 @media (max-width:1100px){ .kpi-row{grid-template-columns:repeat(3,minmax(0,1fr));} }
 @media (max-width:700px){ .kpi-row{grid-template-columns:repeat(2,minmax(0,1fr));} }
 @media (max-width:400px){ .kpi-row{grid-template-columns:1fr;} }
@@ -820,31 +812,31 @@ tr:hover td{background:var(--maroon-soft);}
         <span class="kpi-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5"/><path d="M15 19c0-2 2-3.5 4-3.5"/></svg></span>
         <div class="slabel" id="lbl-total" data-current="—">Total users</div>
         <div class="sdelta" id="delta-total" hidden></div>
-        <div class="stat-spark" id="spark-total"></div><div class="svalue" id="stat-total">—</div>
+        <div class="svalue" id="stat-total">—</div>
       </div>
       <div class="stat-card" data-tone="green" data-good="up">
         <span class="kpi-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg></span>
         <div class="slabel" id="lbl-online" data-current="—">Online now</div>
         <div class="sdelta" id="delta-online" hidden></div>
-        <div class="stat-spark" id="spark-online"></div><div class="svalue" id="stat-online">—</div>
+        <div class="svalue" id="stat-online">—</div>
       </div>
       <div class="stat-card" data-tone="orange" data-good="up">
         <span class="kpi-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7A8.4 8.4 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5z"/></svg></span>
         <div class="slabel" id="lbl-messages" data-current="—">Messages</div>
         <div class="sdelta" id="delta-messages" hidden></div>
-        <div class="stat-spark" id="spark-messages"></div><div class="svalue" id="stat-messages">—</div>
+        <div class="svalue" id="stat-messages">—</div>
       </div>
       <div class="stat-card" data-tone="maroon" data-good="up">
         <span class="kpi-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .3 1.9.6 2.8a2 2 0 0 1-.4 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.5 2.8.6A2 2 0 0 1 22 16.9z"/></svg></span>
         <div class="slabel" id="lbl-calls" data-current="—">Voice calls</div>
         <div class="sdelta" id="delta-calls" hidden></div>
-        <div class="stat-spark" id="spark-calls"></div><div class="svalue" id="stat-calls">—</div>
+        <div class="svalue" id="stat-calls">—</div>
       </div>
       <div class="stat-card" data-tone="gold" data-good="up">
         <span class="kpi-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9.5" cy="7" r="3.5"/><path d="M22 21v-2a4 4 0 0 0-3-3.8"/><path d="M16 3.2a4 4 0 0 1 0 7.6"/></svg></span>
         <div class="slabel" id="lbl-groups" data-current="—">Group chats</div>
         <div class="sdelta" id="delta-groups" hidden></div>
-        <div class="stat-spark" id="spark-groups"></div><div class="svalue" id="stat-groups">—</div>
+        <div class="svalue" id="stat-groups">—</div>
       </div>
     </div>
 
@@ -1249,7 +1241,7 @@ document.addEventListener('click',e=>{
   if(ov && e.target===ov) closeFeedbackDetail();
 });
 
-// ── Sparkline-graph stat cards ──────────────────────────────────────────────
+// ── Stat tiles + hero chart ──────────────────────────────────────────────
 const SPARK_RANGE_KEY   = 'admin:statsRange:v1';
 const MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const RANGE_CFG = {
@@ -1264,7 +1256,7 @@ async function setStatsRange(range){
   currentRange = range;
   try { localStorage.setItem(SPARK_RANGE_KEY, range); } catch {}
   document.querySelectorAll('#range-toggle button').forEach(b => b.classList.toggle('active', b.dataset.range === range));
-  await refreshSparklines();
+  await refreshOverview();
 }
 document.addEventListener('DOMContentLoaded', () => {
   const toggle = document.getElementById('range-toggle');
@@ -1276,12 +1268,12 @@ document.addEventListener('DOMContentLoaded', () => {
     toggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.range === currentRange));
   }
 });
-// Re-render the sparklines on window resize so the viewBox keeps matching
+// Re-render on window resize so the hero chart's viewBox keeps matching
 // the container's pixel width — otherwise stretching returns.
-let _sparkResizeTimer = null;
+let _chartResizeTimer = null;
 window.addEventListener('resize', () => {
-  clearTimeout(_sparkResizeTimer);
-  _sparkResizeTimer = setTimeout(() => { if (lastStats) refreshSparklines(); }, 150);
+  clearTimeout(_chartResizeTimer);
+  _chartResizeTimer = setTimeout(() => { if (lastStats) refreshOverview(); }, 150);
 });
 
 // Parse a server bucket-label ("YYYY-MM-DD", "YYYY-MM", or "YYYY") back to a Date
@@ -1291,55 +1283,42 @@ function parseBucketLabel(label, range){
   if (range === 'month'){ const [y,m] = label.split('-').map(Number); return new Date(y, (m||1)-1, 1); }
   const [y,m,d] = label.split('-').map(Number); return new Date(y||1970, (m||1)-1, d||1);
 }
-function renderSparkFallback() {
-  // Used when /trends is unavailable — draws a seeded curve so each card still
-  // shows a graph rather than blank space. Uses lastStats as the anchor value.
+function renderTrendFallback() {
+  // Used when /trends is unavailable — seeds the hero chart so it still draws a
+  // curve rather than blank space. Uses lastStats as the anchor value.
   const s = lastStats || {};
-  const seeded = [
-    ['spark-total',    'totalUsers',    s.totalUsers    ?? 0],
-    ['spark-online',   'onlineUsers',   s.onlineUsers   ?? 0],
-    ['spark-pending',  'pendingUsers',  s.pendingUsers  ?? 0],
-    ['spark-messages', 'totalMessages', s.totalMessages ?? 0],
-    ['spark-calls',    'totalCalls',    s.totalCalls    ?? 0],
-  ];
-  for (const [sparkId, key, v] of seeded) {
-    const history = seedHistory(key, v, currentRange);
-    renderSpark(sparkId, history, v);
-  }
-  // Keep the hero chart populated too, so it never renders as an empty panel.
+  // Keep the hero chart populated so it never renders as an empty panel.
   renderMainChart(
     seedHistory('totalMessages', s.totalMessages ?? 0, currentRange),
     seedHistory('totalUsers',    s.totalUsers    ?? 0, currentRange)
   );
 }
-async function refreshSparklines(){
+async function refreshOverview(){
   try {
     const res = await fetch(`/api/admin/stats/trends?range=${encodeURIComponent(currentRange)}`, { headers:{ Authorization:`Bearer ${authToken}` } });
     if (!res.ok) {
-      console.warn(`[sparklines] /trends returned ${res.status} — falling back to seeded curves. Restart the server to enable real data.`);
-      renderSparkFallback();
+      console.warn(`[overview] /trends returned ${res.status} — falling back to seeded curves. Restart the server to enable real data.`);
+      renderTrendFallback();
       return;
     }
     const data = await res.json();
     if (!data || !Array.isArray(data.labels) || data.labels.length === 0) {
-      console.warn('[sparklines] /trends returned no buckets — using fallback.');
-      renderSparkFallback();
+      console.warn('[overview] /trends returned no buckets — using fallback.');
+      renderTrendFallback();
       return;
     }
     const mk = arr => data.labels.map((lb, i) => ({ t: parseBucketLabel(lb, data.range).getTime(), v: Number(arr[i])||0 }));
     const cards = [
-      { lblId:'lbl-total',    sparkId:'spark-total',    valId:'stat-total',    deltaId:'delta-total',    good:'up', series: mk(data.totalUsers),    current: data.totalUsers.at(-1) ?? 0 },
-      { lblId:'lbl-online',   sparkId:'spark-online',   valId:'stat-online',   deltaId:'delta-online',   good:'up', series: mk(data.onlineUsers),   current: data.onlineUsers.at(-1) ?? 0 },
-      { lblId:'lbl-pending',  sparkId:'spark-pending',  valId:'stat-pending',  deltaId:'delta-pending',  good:'down', series: mk(data.pendingUsers),  current: (lastStats?.pendingUsers ?? data.pendingUsers.at(-1) ?? 0) },
-      { lblId:'lbl-messages', sparkId:'spark-messages', valId:'stat-messages', deltaId:'delta-messages', good:'up', series: mk(data.totalMessages), current: data.totalMessages.at(-1) ?? 0 },
-      { lblId:'lbl-calls',    sparkId:'spark-calls',    valId:'stat-calls',    deltaId:'delta-calls',    good:'up', series: mk(data.totalCalls),    current: data.totalCalls.at(-1) ?? 0 },
+      { lblId:'lbl-total',    valId:'stat-total',    deltaId:'delta-total',    good:'up', series: mk(data.totalUsers),    current: data.totalUsers.at(-1) ?? 0 },
+      { lblId:'lbl-online',   valId:'stat-online',   deltaId:'delta-online',   good:'up', series: mk(data.onlineUsers),   current: data.onlineUsers.at(-1) ?? 0 },
+      { lblId:'lbl-messages', valId:'stat-messages', deltaId:'delta-messages', good:'up', series: mk(data.totalMessages), current: data.totalMessages.at(-1) ?? 0 },
+      { lblId:'lbl-calls',    valId:'stat-calls',    deltaId:'delta-calls',    good:'up', series: mk(data.totalCalls),    current: data.totalCalls.at(-1) ?? 0 },
     ];
     for (const c of cards) {
       // data-current drives the visible figure via .slabel::after — compact it
       // so a five-digit count can't widen the tile.
       const lbl = document.getElementById(c.lblId); if (lbl) lbl.dataset.current = fmtCompact(c.current);
       const val = document.getElementById(c.valId); if (val) val.textContent = c.current;
-      renderSpark(c.sparkId, c.series, c.current);
       renderDelta(c.deltaId, c.series, c.good);
     }
     // Group chats: /trends carries no group series, so this tile shows the live
@@ -1349,8 +1328,8 @@ async function refreshSparklines(){
     // Hero chart: messages is the headline activity series, users the context.
     renderMainChart(mk(data.totalMessages), mk(data.totalUsers));
   } catch (e) {
-    console.error('[sparklines] refresh failed:', e);
-    renderSparkFallback();
+    console.error('[overview] refresh failed:', e);
+    renderTrendFallback();
   }
 }
 // Tiny seeded PRNG so each metric gets a stable but distinct shape on first load.
@@ -1378,7 +1357,7 @@ function seedHistory(key, value, range){
 }
 // Hero chart for the Activity Overview: two series on one set of axes, each
 // with a soft area fill, plus a callout pinned to the latest point of the
-// primary series. Same smoothing and scaling maths as renderSpark, but both
+// primary series. Catmull-Rom smoothing over a shared y-scale, with both
 // series share one y-scale so their relative size is honest.
 function renderMainChart(seriesA, seriesB){
   const el = document.getElementById('main-chart');
@@ -1479,68 +1458,15 @@ function wireScrub(el, A, B, cA, cB, W, H){
   hit.addEventListener('pointerleave', () => el.classList.remove('scrub'));
 }
 
-function renderSpark(containerId, history, currentValue){
-  const el = document.getElementById(containerId);
-  if (!el) return;
-  const pts = history.length ? history : [{t:Date.now(), v:Number(currentValue)||0}];
-  // Pad single-point history so we still draw a flat line, not nothing.
-  const data = pts.length === 1 ? [pts[0], pts[0]] : pts;
-  // Match the viewBox to the container's actual pixel size so circles stay
-  // round and stroke widths stay uniform (no horizontal stretching).
-  const rect = el.getBoundingClientRect();
-  const W = Math.max(180, Math.round(rect.width || 600));
-  const H = Math.max(60,  Math.round(rect.height || 90));
-  const PAD_X = 14, PAD_TOP = 26, PAD_BOTTOM = 16;
-  const vals = data.map(p => p.v);
-  const min = Math.min(...vals), max = Math.max(...vals);
-  const flat = max === min;
-  const range = flat ? 1 : (max - min);
-  const xStep = (W - PAD_X*2) / (data.length - 1 || 1);
-  const chartH = H - PAD_TOP - PAD_BOTTOM;
-  // When all values equal, draw the line centered vertically instead of pinned to bottom.
-  const yFor = v => flat ? (PAD_TOP + chartH/2) : (PAD_TOP + (1 - (v - min) / range) * chartH);
-  const coords = data.map((p,i) => ({ x: PAD_X + i*xStep, y: yFor(p.v) }));
-  // Smooth path with simple monotone-ish cubic
-  let d = `M ${coords[0].x} ${coords[0].y}`;
-  for (let i=1;i<coords.length;i++){
-    const p0 = coords[i-1], p1 = coords[i];
-    const cx = (p0.x + p1.x) / 2;
-    d += ` C ${cx} ${p0.y}, ${cx} ${p1.y}, ${p1.x} ${p1.y}`;
-  }
-  const areaD = `${d} L ${coords[coords.length-1].x} ${H-PAD_BOTTOM+4} L ${coords[0].x} ${H-PAD_BOTTOM+4} Z`;
-  const gradId = `g-${containerId}`;
-  const last = coords[coords.length - 1];
-  const badgeLeftPct = (last.x / W) * 100;
-  const dots = coords.map(c => `<circle cx="${c.x}" cy="${c.y}" r="3.5" fill="#fff" style="stroke:var(--tone);stroke-width:2;"/>`).join('');
-  // X-axis labels follow the active range (day = DD, month = Jan, year = YYYY).
-  const fmt = (RANGE_CFG[currentRange] || RANGE_CFG.day).label;
-  const axis = data.map(p => fmt(p.t)).join('</span><span>');
-  el.innerHTML = `
-    <div class="spark-badge" style="left:${Math.max(12, Math.min(88, badgeLeftPct))}%;">${currentValue}</div>
-    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" width="100%" height="100%">
-      <defs>
-        <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" style="stop-color:var(--tone);stop-opacity:0.32"/>
-          <stop offset="100%" style="stop-color:var(--tone);stop-opacity:0.02"/>
-        </linearGradient>
-      </defs>
-      <path d="${areaD}" fill="url(#${gradId})" stroke="none"/>
-      <path d="${d}" fill="none" style="stroke:var(--tone);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;"/>
-      ${dots}
-    </svg>
-    <div class="spark-axis"><span>${axis}</span></div>`;
-}
-
 async function loadStats(){
   try{
     const res=await fetch('/api/admin/stats',{headers:{Authorization:`Bearer ${authToken}`}});
     const data=await res.json();
     lastStats = data;
-    // Update the live current values; the sparkline curves come from /trends.
+    // Update the live current values; the hero chart series come from /trends.
     const live = [
       ['stat-total',    'lbl-total',    data.totalUsers],
       ['stat-online',   'lbl-online',   data.onlineUsers],
-      ['stat-pending',  'lbl-pending',  data.pendingUsers],
       ['stat-messages', 'lbl-messages', data.totalMessages],
       ['stat-calls',    'lbl-calls',    data.totalCalls],
     ];
@@ -1549,7 +1475,7 @@ async function loadStats(){
       const valEl = document.getElementById(valId); if (valEl) valEl.textContent = v;
       const lbl = document.getElementById(lblId); if (lbl) lbl.dataset.current = v;
     }
-    await refreshSparklines();
+    await refreshOverview();
   }catch{}
 }
 
