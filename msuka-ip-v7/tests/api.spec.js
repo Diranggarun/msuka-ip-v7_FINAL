@@ -211,6 +211,44 @@ test.describe('9. Authorization & Security', () => {
     console.log(`✅ Login series validated and zero-filled — 30 buckets, ${gaps} quiet days`);
   });
 
+  test('9.10 changing your own password verifies the current one and revokes old tokens', async () => {
+    // A throwaway account: this test changes a password, so it must never
+    // touch the seeded demo student other tests sign in as.
+    const email = `pwapi_${Date.now()}@cics.msu.edu`;
+    await ctx.post('/api/register', { data: { name: 'PW API', email, password: 'original123' } });
+    const pending = await (await ctx.get('/api/admin/pending', { headers: { Authorization: `Bearer ${adminToken}` } })).json();
+    const id = pending.find(u => u.email === email).id;
+    await ctx.put(`/api/admin/users/${id}/approve`, { headers: { Authorization: `Bearer ${adminToken}` } });
+    const token = (await (await ctx.post('/api/login', { data: { email, password: 'original123' } })).json()).token;
+    const h = { headers: { Authorization: `Bearer ${token}` } };
+
+    expect((await ctx.put('/api/user/password', { data: {} })).status()).toBe(401);
+    expect((await ctx.put('/api/user/password', { data: {}, ...h })).status()).toBe(400);
+    expect((await ctx.put('/api/user/password', { data: { currentPassword: 'original123', newPassword: 'short' }, ...h })).status()).toBe(400);
+    expect((await ctx.put('/api/user/password', { data: { currentPassword: 'original123', newPassword: 'original123' }, ...h })).status()).toBe(400);
+    // Session possession alone must not be enough to take the account over.
+    expect((await ctx.put('/api/user/password', { data: { currentPassword: 'wrongpass1', newPassword: 'brandnew123' }, ...h })).status()).toBe(401);
+
+    expect((await ctx.put('/api/user/password', { data: { currentPassword: 'original123', newPassword: 'brandnew123' }, ...h })).ok()).toBeTruthy();
+    // token_version was bumped, so every token issued before now is dead.
+    expect((await ctx.put('/api/user/profile', { data: { name: 'Nope' }, ...h })).status()).toBe(401);
+    expect((await ctx.post('/api/login', { data: { email, password: 'original123' } })).status()).toBe(401);
+    expect((await ctx.post('/api/login', { data: { email, password: 'brandnew123' } })).ok()).toBeTruthy();
+    console.log('✅ Password change verified, old token revoked, old password dead');
+  });
+
+  test('9.11 profile rename validates length and needs a token', async () => {
+    expect((await ctx.put('/api/user/profile', { data: { name: 'Someone' } })).status()).toBe(401);
+    const h = { headers: { Authorization: `Bearer ${userToken}` } };
+    expect((await ctx.put('/api/user/profile', { data: { name: 'X' }, ...h })).status()).toBe(400);
+    expect((await ctx.put('/api/user/profile', { data: { name: 'y'.repeat(61) }, ...h })).status()).toBe(400);
+    // Restore the seeded name so later runs and the UI tests are unaffected.
+    const ok = await ctx.put('/api/user/profile', { data: { name: 'Student Demo' }, ...h });
+    expect(ok.ok()).toBeTruthy();
+    expect((await ok.json()).name).toBe('Student Demo');
+    console.log('✅ Profile rename validated and restored');
+  });
+
   test('9.5 admin can read aggregate stats with a valid token', async () => {
     const r = await ctx.get('/api/admin/stats', { headers: { Authorization: `Bearer ${adminToken}` } });
     expect(r.ok()).toBeTruthy();

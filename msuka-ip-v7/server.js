@@ -822,6 +822,61 @@ app.get('/api/admin/login-activity',verifyToken,adminOnly,async(req,res)=>{
   catch { res.status(500).json({error:'Server error'}); }
 });
 
+// ── Account settings (the signed-in user's own record) ──────────────────────
+// Change own password. Verifying the CURRENT password matters: a stolen or
+// borrowed session must not be enough to take the account over permanently.
+app.put('/api/user/password',verifyToken,async(req,res)=>{
+  try {
+    const currentPassword = String(req.body?.currentPassword || '');
+    const newPassword     = String(req.body?.newPassword || '');
+    if (!currentPassword || !newPassword) return res.status(400).json({error:'Both current and new password are required'});
+    if (newPassword.length < 8)           return res.status(400).json({error:'New password must be at least 8 characters'});
+    if (newPassword === currentPassword)  return res.status(400).json({error:'New password must be different from the current one'});
+
+    // Shares the login limiter. Without it this route is a brute-force oracle
+    // for the current password to anyone holding a token.
+    const key = rateKey(req, req.user.email);
+    if (loginLocked(key)) return res.status(429).json({error:'Too many attempts. Try again in 15 minutes.'});
+
+    const [rows] = await db.query('SELECT password_hash FROM users WHERE id=?',[req.user.id]);
+    if (!rows.length) return res.status(404).json({error:'User not found'});
+    if (!await bcrypt.compare(currentPassword, rows[0].password_hash)) {
+      recordLoginFailure(key);
+      await logAudit(req.user.id,'PASSWORD_CHANGE_FAILED','Wrong current password supplied',req);
+      return res.status(401).json({error:'Current password is incorrect'});
+    }
+
+    await db.query('UPDATE users SET password_hash=? WHERE id=?',[await bcrypt.hash(newPassword,12), req.user.id]);
+    await logAudit(req.user.id,'PASSWORD_CHANGED','Changed own password',req);
+    // Revokes every outstanding token for this account, this session included,
+    // and drops their sockets. Signing back in is the point: if someone else
+    // held a session, a password change they did not make must not leave it
+    // alive. Simpler to reason about than refreshing the current token.
+    await bumpTokenVersion(req.user.id);
+    res.json({ message:'Password changed. Please sign in again.' });
+  }
+  catch { res.status(500).json({error:'Server error'}); }
+});
+
+// Change own display name. Deliberately the only editable profile field —
+// email and role identify the account and are the admin's to change.
+app.put('/api/user/profile',verifyToken,async(req,res)=>{
+  try {
+    const name = String(req.body?.name || '').trim();
+    if (name.length < 2 || name.length > 60) return res.status(400).json({error:'Name must be between 2 and 60 characters'});
+    await db.query('UPDATE users SET name=? WHERE id=?',[name, req.user.id]);
+    await logAudit(req.user.id,'PROFILE_UPDATED',`Display name set to "${name}"`,req);
+    // Presence carries the name captured at socket handshake, so the in-memory
+    // copy has to be corrected as well — broadcasting on its own would just
+    // re-send the old one. The JWT's copy stays stale until the next sign-in,
+    // which only affects this user's own token, not what others see.
+    for (const u of onlineUsers.values()) if (u.id === req.user.id) u.name = name;
+    broadcastPresence();
+    res.json({ name });
+  }
+  catch { res.status(500).json({error:'Server error'}); }
+});
+
 // Per-user login history for the monitor cards. /login-activity above returns
 // totals only, so it cannot back a chart — this groups the same audit_logs rows
 // by day for one user.

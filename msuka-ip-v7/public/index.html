@@ -1531,6 +1531,29 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
   .agree-head,.agree-orn,.agree-consent,.agree-actions,.agree-foot{flex-shrink:1;}
 }
 
+/* ── Settings panel ─────────────────────────────────────────────────────────
+   Lives in the left panel like Notifications, so it inherits the chrome
+   surface and the --ink text pairing rather than introducing a third kind of
+   screen. Inputs are dark-on-glass: a white field here would punch a hole in
+   the panel the way the logo disc used to. */
+.settings-card{display:flex;flex-direction:column;gap:6px;padding:14px 16px 16px;}
+.set-label{font-size:.7rem;font-weight:800;color:var(--ink-mut);text-transform:uppercase;letter-spacing:.06em;margin-top:4px;}
+.set-input{width:100%;padding:.6rem .8rem;border-radius:10px;font-family:'Nunito',sans-serif;font-size:.88rem;
+  color:var(--ink);background:rgba(255,255,255,.07);border:1px solid var(--chrome-edge);outline:none;
+  transition:border-color var(--dur-base) var(--ease-out),background var(--dur-base) var(--ease-out);}
+.set-input:hover{background:rgba(255,255,255,.10);}
+.set-input:focus{border-color:var(--gold);background:rgba(255,255,255,.12);}
+.set-hint{font-size:.7rem;color:var(--ink-mut);line-height:1.45;margin-top:2px;}
+.set-msg{font-size:.74rem;font-weight:700;min-height:1.1em;margin-top:2px;}
+.set-msg.ok{color:var(--role-student);}
+.set-msg.bad{color:#F0928A;}
+.set-btn{margin-top:8px;padding:.6rem 1rem;border:1px solid var(--gold-dark);border-radius:11px;cursor:pointer;
+  font-family:'Nunito',sans-serif;font-size:.82rem;font-weight:800;color:#2a1500;
+  background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+  transition:transform var(--dur-fast) var(--ease-out),filter var(--dur-fast) var(--ease-out);}
+.set-btn:hover{filter:brightness(1.06);}
+.set-btn:active{transform:scale(.97);transition-duration:.06s;}
+
 /* ══ PHONE LAYOUT (≤768px) — single pane ══════════════════════════════════════
    MUST STAY LAST IN THIS STYLESHEET. Media queries carry no extra specificity,
    so these overrides only win by being later in source order than the desktop
@@ -1792,6 +1815,10 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
       <span class="ricon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.36.36.58.86.6 1.36"/></svg></span>
       <span class="rlabel">Admin</span>
     </button>
+    <button class="rail-btn" id="rail-settings" onclick="switchNav('settings', null)" title="Settings">
+      <span class="ricon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.36.36.58.86.6 1.36"/></svg></span>
+      <span class="rlabel">Settings</span>
+    </button>
     <div class="rail-spacer"></div>
     <button class="rail-btn" onclick="window.open('/feedback.html','_blank')" title="Feedback">
       <span class="ricon"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>
@@ -1873,6 +1900,30 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
            rows themselves, so the heading names the section instead. -->
       <div class="section-label">Direct Messages</div>
       <div id="private-list"></div>
+    </div>
+
+    <div id="section-settings" class="list-scroll" style="display:none;flex:1;overflow-y:auto;flex-direction:column;">
+      <div class="section-label"><span>Your profile</span></div>
+      <form class="settings-card" onsubmit="saveProfile(event)">
+        <label class="set-label" for="set-name">Display name</label>
+        <input class="set-input" id="set-name" type="text" maxlength="60" autocomplete="name"/>
+        <p class="set-hint">This is the name classmates see on your messages.</p>
+        <p class="set-msg" id="profile-msg" role="status"></p>
+        <button class="set-btn" type="submit">Save name</button>
+      </form>
+
+      <div class="section-label"><span>Password</span></div>
+      <form class="settings-card" onsubmit="changePassword(event)">
+        <label class="set-label" for="set-cur">Current password</label>
+        <input class="set-input" id="set-cur" type="password" autocomplete="current-password"/>
+        <label class="set-label" for="set-new">New password</label>
+        <input class="set-input" id="set-new" type="password" autocomplete="new-password"/>
+        <label class="set-label" for="set-confirm">Confirm new password</label>
+        <input class="set-input" id="set-confirm" type="password" autocomplete="new-password"/>
+        <p class="set-hint">At least 8 characters. Changing it signs you out everywhere, including here.</p>
+        <p class="set-msg" id="password-msg" role="status"></p>
+        <button class="set-btn" type="submit">Change password</button>
+      </form>
     </div>
 
     <div id="section-notif" class="list-scroll" style="display:none;flex:1;overflow-y:auto;flex-direction:column;">
@@ -2585,6 +2636,61 @@ function openGlobalChat() {
   openConversation('group_general');
 }
 
+
+// ── Settings ────────────────────────────────────────────────────────────────
+function setMsg(id, text, ok){
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'set-msg' + (text ? (ok ? ' ok' : ' bad') : '');
+}
+
+async function saveProfile(e){
+  e.preventDefault();
+  const name = document.getElementById('set-name').value.trim();
+  if (name.length < 2) return setMsg('profile-msg','Name must be at least 2 characters',false);
+  try{
+    const res = await fetch('/api/user/profile',{ method:'PUT',
+      headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${currentUser.token}` },
+      body: JSON.stringify({ name }) });
+    const data = await res.json();
+    if (!res.ok) return setMsg('profile-msg', data.error || 'Could not save', false);
+    if (currentUser) currentUser.name = data.name;
+    // Keep the rail's own card in step; it is the only place the name is shown
+    // to you, and leaving it stale makes the save look like it failed.
+    const label = document.getElementById('rail-avatar-name');
+    if (label) label.textContent = data.name;
+    const dot = document.getElementById('rail-avatar');
+    if (dot) dot.textContent = (data.name.trim()[0] || '?').toUpperCase();
+    setMsg('profile-msg','Saved.',true);
+  }catch{ setMsg('profile-msg','Server error',false); }
+}
+
+async function changePassword(e){
+  e.preventDefault();
+  const cur = document.getElementById('set-cur').value;
+  const next = document.getElementById('set-new').value;
+  const confirm2 = document.getElementById('set-confirm').value;
+  // Check what we can before spending a request — and before the server's
+  // rate limiter counts a wrong-current-password attempt against the user.
+  if (!cur || !next)        return setMsg('password-msg','Fill in every field',false);
+  if (next.length < 8)      return setMsg('password-msg','New password must be at least 8 characters',false);
+  if (next !== confirm2)    return setMsg('password-msg','New passwords do not match',false);
+  if (next === cur)         return setMsg('password-msg','New password must be different',false);
+  try{
+    const res = await fetch('/api/user/password',{ method:'PUT',
+      headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${currentUser.token}` },
+      body: JSON.stringify({ currentPassword: cur, newPassword: next }) });
+    const data = await res.json();
+    if (!res.ok) return setMsg('password-msg', data.error || 'Could not change password', false);
+    // The server revoked every token including this one, so staying on the
+    // page would just fail the next request. Say so, then sign out.
+    setMsg('password-msg','Password changed — signing you out…',true);
+    document.getElementById('set-cur').value = document.getElementById('set-new').value =
+      document.getElementById('set-confirm').value = '';
+    setTimeout(logout, 1400);
+  }catch{ setMsg('password-msg','Server error',false); }
+}
+
 let unreadOnly = false;
 
 function switchNav(name, btn) {
@@ -2627,6 +2733,16 @@ function switchNav(name, btn) {
   document.getElementById('section-groups').style.display         = name === 'groups'      ? 'flex'  : 'none';
   document.getElementById('section-private').style.display        = name === 'private'     ? 'flex'  : 'none';
   document.getElementById('section-notif').style.display          = name === 'notif'       ? 'flex'  : 'none';
+  document.getElementById('section-settings').style.display       = name === 'settings'    ? 'flex'  : 'none';
+  // Settings reads the signed-in user's own record, so fill it on open rather
+  // than at login — the name can have changed in another tab.
+  if (name === 'settings') { const n = document.getElementById('set-name'); if (n && currentUser) n.value = currentUser.name || ''; }
+  // The floating + creates a group, which only means anything while a
+  // conversation list is open. It is a sibling of all the sections, so it used
+  // to sit over Notifications too; on Settings it physically covered the
+  // Change password button.
+  const fab = document.querySelector('.fab-new-group');
+  if (fab) fab.style.display = ['global','groups','private'].includes(name) ? '' : 'none';
   document.getElementById('section-globalchat').style.display     = name === 'globalchat'  ? 'flex'  : 'none';
 
   // Rail active state

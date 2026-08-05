@@ -209,12 +209,20 @@ as something real.
   pills. Building the mockup as drawn would restore a duplication that was
   deliberately removed and documented one section above. New Group remains the
   floating **+**.
-- **`Dashboard` and `Settings` — deferred, not stubbed.** Neither is a screen in
-  this app. A nav item that opens nothing is a defect, and "coming soon" is a
-  defect with a label on it. Settings is specified (change password + profile)
-  and blocked only on what "profile" means: editable display name, or photo
-  upload — the latter needs an upload path, encryption at rest and an
-  authenticated serving route, and is its own project.
+- **`Dashboard` — deferred, not stubbed.** It is not a screen in this app. A nav
+  item that opens nothing is a defect, and "coming soon" is a defect with a label
+  on it.
+- **`Settings` — built, with "profile" read as the display name.** Change
+  password plus an editable display name. The alternative reading — profile
+  *photo* — needs an upload path, encryption at rest, an authenticated serving
+  route and a change to every avatar on both pages; that is its own project, not
+  a passenger on a restyle. Email and role stay read-only: they identify the
+  account and are the admin's to change.
+  Changing a password bumps `token_version`, which revokes every outstanding
+  token including the current session, so the user signs back in. That is
+  deliberate: if someone else were holding a session, a password change the owner
+  did not make must not leave it alive. It is also simpler to explain than
+  refreshing the live token.
 - **Photographic avatars — not taken.** There is no photo storage. Initials on a
   role-coloured disc is what both pages already do, and it is one system rather
   than two.

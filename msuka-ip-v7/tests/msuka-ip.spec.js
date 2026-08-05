@@ -425,6 +425,37 @@ test.describe('2. Messenger UI Tests', () => {
     console.log(`✅ Unread pill filters ${total.rows} → ${shown}, keeps currentNav global, empties gracefully`);
   });
 
+  test('2.12 Settings validates the password form before spending a request', async ({ page }) => {
+    await page.click('#rail-settings');
+    await expect(page.locator('#section-settings')).toBeVisible();
+    // The name field is filled from the signed-in user on open, not at login.
+    await expect(page.locator('#set-name')).toHaveValue(/\S/);
+
+    // The + creates a group; on Settings it means nothing and used to sit on
+    // top of the Change password button.
+    await expect(page.locator('.fab-new-group')).toBeHidden();
+
+    let calls = 0;
+    page.on('request', r => { if (r.url().includes('/api/user/password')) calls++; });
+
+    const submit = page.locator('.settings-card').last().locator('.set-btn');
+    await page.fill('#set-cur', 'whatever123');
+    await page.fill('#set-new', 'short');
+    await page.fill('#set-confirm', 'short');
+    await submit.click();
+    await expect(page.locator('#password-msg')).toContainText('at least 8 characters');
+
+    await page.fill('#set-new', 'longenough123');
+    await page.fill('#set-confirm', 'different123');
+    await submit.click();
+    await expect(page.locator('#password-msg')).toContainText('do not match');
+
+    // Neither of those should have reached the server — the endpoint shares the
+    // login rate limiter, so a client-side mistake must not burn an attempt.
+    expect(calls, 'client-side validation must not spend a request').toBe(0);
+    console.log('✅ Settings blocks invalid password input without calling the API');
+  });
+
   test('2.10 Logout button works', async ({ page }) => {
     await page.click('button[onclick="logout()"]');
     await expect(page.locator('#auth-screen')).toBeVisible();
