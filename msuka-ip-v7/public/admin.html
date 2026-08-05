@@ -40,6 +40,16 @@
   --grain:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.42 0'/></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>");
 }
 *{box-sizing:border-box;margin:0;padding:0;}
+/* The dashboard read too small: 43 of its font sizes sat under 12px, and the
+   table text was 13.8px. Everything here is expressed in rem, so raising the
+   root scales the whole page in one place instead of editing 40-odd values and
+   hoping they stay in proportion. 16 -> 18px is +12.5%.
+
+   Phones keep 16px: the layout is already single-column with a bottom tab bar
+   there, and 12.5% more type is what pushes a table into its scroll container.
+   This is a desktop tool being made readable across a room, not a phone one. */
+html{font-size:18px;}
+@media (max-width:768px){ html{font-size:16px;} }
 body{font-family:'Nunito',sans-serif;min-height:100vh;background:linear-gradient(135deg,#f5ede3 0%,#efe4d4 30%,#ead9c3 60%,#e1c8ad 100%) fixed;}
 body::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(900px 600px at 8% 0%,rgba(212,160,23,.18),transparent 65%),radial-gradient(700px 500px at 95% 100%,rgba(107,0,0,.12),transparent 65%),radial-gradient(500px 400px at 50% 45%,rgba(255,250,235,.25),transparent 70%);z-index:0;}
 body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.32;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");}
@@ -240,7 +250,7 @@ button,.tab,.rail-btn{touch-action:manipulation;}
 /* The plotted figure — the one number the panel is really about. */
 .ov-figure{font-family:'Cinzel',serif;font-size:2rem;font-weight:800;line-height:1;color:var(--gold-bright);margin:.55rem 0 .15rem;font-variant-numeric:tabular-nums;}
 .ov-figure-lbl{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-mut);font-weight:800;}
-#main-chart{position:relative;flex:1;min-height:190px;margin-top:.5rem;}
+#main-chart{position:relative;flex:1;min-height:240px;margin-top:.5rem;}
 #main-chart svg{width:100%;height:100%;display:block;overflow:visible;}
 /* Floating value callout, like a tooltip pinned to the latest point. */
 #main-chart .mc-badge{position:absolute;transform:translate(-50%,-120%);background:var(--gold);color:#2A1400;
@@ -322,7 +332,12 @@ button,.tab,.rail-btn{touch-action:manipulation;}
 .tab-btn:hover:not(.active){background:var(--maroon-soft);color:var(--maroon);}
 .badge-count{position:absolute;top:3px;right:4px;background:#dc2626;color:#fff;border-radius:10px;font-size:.6rem;padding:1px 5px;display:none;font-weight:800;}
 
-.card{background:var(--white);border-radius:18px;border:0.5px solid var(--gray-200);padding:1.3rem;margin-bottom:1.2rem;box-shadow:var(--shadow-sm);}
+/* overflow-x lives here, not only in the phone block where it started. A
+   7-column table is wider than its card at plenty of desktop widths too — it
+   just happened to fit while the root was 16px. Scrolling inside the card is
+   the correct behaviour at every width; confining it to <=768px meant the
+   table spilled off the page at 900-1280px instead. */
+.card{background:var(--white);border-radius:18px;border:0.5px solid var(--gray-200);padding:1.3rem;margin-bottom:1.2rem;box-shadow:var(--shadow-sm);overflow-x:auto;}
 .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;padding-bottom:.75rem;border-bottom:2px solid var(--gold-soft);}
 .card-header h3{font-size:.92rem;color:var(--maroon-dark);font-weight:800;font-family:'Cinzel',serif;display:inline-flex;align-items:center;gap:8px;}
 .hi{width:18px;height:18px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
@@ -480,7 +495,7 @@ tr:hover td{background:var(--maroon-soft);}
 .kpi-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:14px;}
 .kpi-row .stat-card{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto auto;
   gap:2px 11px;align-items:center;padding:.85rem .95rem .5rem;min-height:0;}
-.kpi-ico{grid-row:1 / span 2;width:40px;height:40px;border-radius:13px;display:flex;align-items:center;
+.kpi-ico{grid-row:1 / span 2;width:44px;height:44px;border-radius:13px;display:flex;align-items:center;
   justify-content:center;background:var(--tone-soft);color:var(--tone);align-self:center;}
 .kpi-ico svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
 .kpi-row .slabel{grid-column:2;font-size:.7rem;font-weight:800;color:var(--text-light);
@@ -596,7 +611,7 @@ tr:hover td{background:var(--maroon-soft);}
 .ov-panel-link:hover{background:var(--maroon-soft);color:var(--maroon-dark);}
 .ov-panel-link:focus-visible{outline:2px solid var(--gold-dark);outline-offset:1px;}
 
-.av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;
+.av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;
   font-family:'Nunito',sans-serif;font-size:.71rem;font-weight:800;color:#fff;letter-spacing:.02em;
   background:var(--text-mid);}
 .av[data-role="student"]{background:#1a6da3;}
@@ -640,7 +655,7 @@ tr:hover td{background:var(--maroon-soft);}
 .au-tab:focus-visible{outline:2px solid var(--gold-dark);outline-offset:1px;}
 /* Scrolls inside the panel so the page length stays fixed no matter how many
    users exist — 216 students must not push the layout down the page. */
-.au-list{overflow-y:auto;min-height:0;max-height:236px;display:flex;flex-direction:column;}
+.au-list{overflow-y:auto;min-height:0;max-height:290px;display:flex;flex-direction:column;}
 .au-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:9px;
   padding:.42rem .1rem;}
 .au-row+.au-row{border-top:1px solid var(--paper-line);}
@@ -663,7 +678,7 @@ tr:hover td{background:var(--maroon-soft);}
    request per row, and the pager keeps the panel a fixed height whatever
    the queue size. */
 .pu{display:flex;align-items:center;gap:9px;min-width:0;}
-.pu .av{width:30px;height:30px;font-size:.66rem;}
+.pu .av{width:34px;height:34px;font-size:.7rem;}
 .pu strong{color:var(--maroon-dark);font-weight:700;white-space:nowrap;}
 .row-actions{display:flex;gap:5px;}
 
@@ -672,7 +687,7 @@ tr:hover td{background:var(--maroon-soft);}
 .pager:empty{display:none;}
 .pager-info{font-size:.72rem;color:var(--text-light);}
 .pager-btns{display:flex;gap:4px;align-items:center;}
-.pg{min-width:32px;height:32px;padding:0 8px;border:1px solid var(--paper-line);
+.pg{min-width:36px;height:36px;padding:0 8px;border:1px solid var(--paper-line);
   background:var(--white);border-radius:9px;font-family:inherit;font-size:.74rem;font-weight:700;
   color:var(--text-dark);cursor:pointer;
   transition:border-color var(--dur-fast) var(--ease-out),background var(--dur-fast) var(--ease-out),

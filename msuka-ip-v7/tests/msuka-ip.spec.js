@@ -855,6 +855,26 @@ test.describe('6. Performance & Availability Tests', () => {
     console.log('✅ No horizontal overflow on any page at 320/375/414px');
   });
 
+  test('6.13 logged-in admin dashboard does not scroll sideways at desktop widths', async ({ page }) => {
+    // 6.11 above only visits /admin.html logged out, so it measures the login
+    // screen and has never seen the dashboard. Raising the root font size to
+    // 18px pushed the 7-column pending table past its card at 900-1280px and
+    // nothing caught it: .card had overflow-x:auto only inside the <=768px
+    // block, so above that the table spilled off the page.
+    await adminLogin(page);
+    await page.click('#rail-pending');
+    await page.waitForSelector('#pending-tbody tr td', { timeout: 8000 });
+
+    for (const width of [900, 1100, 1280, 1654]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.waitForTimeout(250);
+      // eslint-disable-next-line no-undef -- evaluated in the browser page context
+      const scrollW = await page.evaluate(() => document.documentElement.scrollWidth);
+      expect(scrollW, `admin dashboard overflows at ${width}px`).toBeLessThanOrEqual(width + 1);
+    }
+    console.log('✅ Admin dashboard has no horizontal overflow at 900/1100/1280/1654px');
+  });
+
   test('6.12 phone: admin dashboard is usable when logged in', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await adminLogin(page);
