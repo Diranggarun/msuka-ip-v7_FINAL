@@ -505,9 +505,16 @@ test.describe('5. Admin Dashboard Tests', () => {
     console.log('✅ Stats cards visible');
   });
 
-  test('5.3 Pending panel is visible by default', async ({ page }) => {
+  test('5.3 Overview is the default panel and Pending opens from the rail', async ({ page }) => {
+    // The landing tab moved from Pending to Overview when the hero chart got
+    // its own panel — Pending now starts at the top of the page instead of
+    // ~600px below the stats block.
+    await expect(page.locator('#tab-overview')).toBeVisible();
+    await expect(page.locator('#tab-pending')).toBeHidden();
+    await page.click('#rail-pending');
     await expect(page.locator('#tab-pending')).toBeVisible();
-    console.log('✅ Pending panel visible');
+    await expect(page.locator('#tab-overview')).toBeHidden();
+    console.log('✅ Overview is default; Pending reachable from the rail');
   });
 
   test('5.4 Users tab shows user table', async ({ page }) => {
@@ -601,6 +608,7 @@ test.describe('5. Admin Dashboard Tests', () => {
   });
 
   test('5.12 Pending requests paginate ten to a page', async ({ page }) => {
+    await page.click('#rail-pending');
     await page.waitForSelector('#pending-tbody tr td', { timeout: 8000 });
     // eslint-disable-next-line no-undef -- evaluated in the browser page context
     const total = await page.evaluate(() => pendingUsers.length);
@@ -623,6 +631,7 @@ test.describe('5. Admin Dashboard Tests', () => {
   });
 
   test('5.13 Search reaches pending requests that are not on the current page', async ({ page }) => {
+    await page.click('#rail-pending');
     await page.waitForSelector('#pending-tbody tr td', { timeout: 8000 });
     // eslint-disable-next-line no-undef -- evaluated in the browser page context
     const total = await page.evaluate(() => pendingUsers.length);
@@ -641,6 +650,7 @@ test.describe('5. Admin Dashboard Tests', () => {
   });
 
   test('5.14 Pager clamps when the queue shrinks under the current page', async ({ page }) => {
+    await page.click('#rail-pending');
     await page.waitForSelector('#pending-tbody tr td', { timeout: 8000 });
     // eslint-disable-next-line no-undef -- evaluated in the browser page context
     const total = await page.evaluate(() => pendingUsers.length);
@@ -687,6 +697,48 @@ test.describe('5. Admin Dashboard Tests', () => {
     // still be carrying one.
     expect(await page.locator('.kpi-row .stat-spark').count()).toBe(0);
     console.log(`✅ All 5 KPI tiles populated: ${tiles.map(t => `${t.label}=${t.value}`).join(' · ')}`);
+  });
+
+  test('5.16 Overview is the landing tab and owns the hero chart', async ({ page }) => {
+    await expect(page.locator('#tab-overview')).toHaveClass(/active/);
+    await expect(page.locator('#main-chart svg')).toBeVisible({ timeout: 8000 });
+
+    // The chart belongs to Overview only.
+    await page.click('#rail-pending');
+    await expect(page.locator('#main-chart')).toBeHidden();
+    await expect(page.locator('#pending-tbody tr').first()).toBeVisible();
+    console.log('✅ Hero chart is Overview-only; Pending renders without it');
+  });
+
+  test('5.17 Hero chart survives a refresh that lands while its tab is hidden', async ({ page }) => {
+    await expect(page.locator('#main-chart svg')).toBeVisible({ timeout: 8000 });
+    const width = () => page.evaluate(() => {
+      // eslint-disable-next-line no-undef -- evaluated in the browser page context
+      const el = document.getElementById('main-chart');
+      const svg = el.querySelector('svg');
+      return {
+        host: Math.round(el.getBoundingClientRect().width),
+        box: svg && Number(svg.getAttribute('viewBox').split(' ')[2]),
+      };
+    });
+    const before = await width();
+    expect(before.box).toBe(before.host);
+
+    // loadStats() refreshes every 5s regardless of tab. A hidden element
+    // measures 0, and renderMainChart's `|| 620` fallback would bake 620 into
+    // the viewBox — the chart returns stretched, not blank, so it is easy to
+    // miss. Force that refresh while hidden rather than waiting for the timer.
+    await page.click('#rail-pending');
+    // eslint-disable-next-line no-undef -- evaluated in the browser page context
+    await page.evaluate(() => refreshOverview());
+    await page.waitForTimeout(400);
+    await page.click('#rail-overview');
+    await page.waitForTimeout(500);
+
+    const after = await width();
+    expect(after.host).toBeGreaterThan(240);
+    expect(after.box, 'chart viewBox no longer matches its container').toBe(after.host);
+    console.log(`✅ Chart intact after a hidden refresh — viewBox ${after.box} = host ${after.host}`);
   });
 
 });

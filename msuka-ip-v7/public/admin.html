@@ -224,7 +224,17 @@ button,.tab,.rail-btn{touch-action:manipulation;}
 .ov-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:.2rem;}
 .ov-title{font-family:'Cinzel',serif;font-size:1rem;font-weight:700;color:var(--gold-bright);letter-spacing:.02em;margin:0;}
 .ov-sub{font-size:.72rem;color:var(--ink-mut);margin:2px 0 0;}
+.ov-controls{display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
 .ov-legend{display:flex;gap:14px;flex-wrap:wrap;}
+/* The toggle sits on the chart now, so it needs the chrome palette — the cream
+   .range-toggle above is invisible against the dark panel. It still drives the
+   KPI deltas as well as the chart; both are on screen together, so the toggle
+   is never changing a number you cannot see. */
+.ov-chart .range-toggle{background:rgba(255,255,255,.06);border-color:var(--chrome-edge);box-shadow:none;}
+.ov-chart .range-toggle button{color:var(--ink-mut);padding:.32rem .8rem;font-size:.74rem;}
+.ov-chart .range-toggle button:hover{color:var(--ink);background:var(--chrome-hover);}
+.ov-chart .range-toggle button.active{background:var(--gold-dark);color:#2a1500;box-shadow:none;}
+.ov-chart .range-toggle button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:1px;}
 .ov-legend span{display:flex;align-items:center;gap:6px;font-size:.72rem;font-weight:700;color:var(--ink-mut);white-space:nowrap;}
 .ov-legend i{width:9px;height:9px;border-radius:50%;background:var(--c);flex-shrink:0;}
 /* The plotted figure — the one number the panel is really about. */
@@ -726,7 +736,11 @@ tr:hover td{background:var(--maroon-soft);}
         <span class="arl-sub3">Main Campus</span>
       </div>
     </div>
-    <button class="rail-tab active" id="rail-pending" onclick="switchTab('pending',null,this)" title="Pending">
+    <button class="rail-tab active" id="rail-overview" onclick="switchTab('overview',null,this)" title="Overview">
+      <span class="ricon"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-6"/></svg></span>
+      <span class="rlabel">Overview</span>
+    </button>
+    <button class="rail-tab" id="rail-pending" onclick="switchTab('pending',null,this)" title="Pending">
       <span class="ricon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
       <span class="rlabel">Pending</span>
       <span class="rail-badge" id="rail-pending-count">0</span>
@@ -799,111 +813,118 @@ tr:hover td{background:var(--maroon-soft);}
   </div>
 
   <div class="container">
-    <div class="stats-toolbar">
-      <h2><svg class="hi" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-6"/></svg> Activity Overview</h2>
-      <div class="range-toggle" id="range-toggle" role="tablist" aria-label="Time range">
-        <button type="button" data-range="day"   class="active">Days</button>
-        <button type="button" data-range="month">Months</button>
-        <button type="button" data-range="year">Year</button>
+    <!-- Overview is the default landing tab. The hero chart lives only here;
+         see switchTab() for why it has to be redrawn on activation. -->
+    <div class="tab-panel active" id="tab-overview">
+      <div class="stats-toolbar">
+        <h2><svg class="hi" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-6"/></svg> Activity Overview</h2>
       </div>
-    </div>
-    <div class="kpi-row">
-      <div class="stat-card" data-tone="maroon" data-good="up">
-        <span class="kpi-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5"/><path d="M15 19c0-2 2-3.5 4-3.5"/></svg></span>
-        <div class="slabel" id="lbl-total" data-current="—">Total users</div>
-        <div class="sdelta" id="delta-total" hidden></div>
-        <div class="svalue" id="stat-total">—</div>
-      </div>
-      <div class="stat-card" data-tone="green" data-good="up">
-        <span class="kpi-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg></span>
-        <div class="slabel" id="lbl-online" data-current="—">Online now</div>
-        <div class="sdelta" id="delta-online" hidden></div>
-        <div class="svalue" id="stat-online">—</div>
-      </div>
-      <div class="stat-card" data-tone="orange" data-good="up">
-        <span class="kpi-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7A8.4 8.4 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5z"/></svg></span>
-        <div class="slabel" id="lbl-messages" data-current="—">Messages</div>
-        <div class="sdelta" id="delta-messages" hidden></div>
-        <div class="svalue" id="stat-messages">—</div>
-      </div>
-      <div class="stat-card" data-tone="maroon" data-good="up">
-        <span class="kpi-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .3 1.9.6 2.8a2 2 0 0 1-.4 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.5 2.8.6A2 2 0 0 1 22 16.9z"/></svg></span>
-        <div class="slabel" id="lbl-calls" data-current="—">Voice calls</div>
-        <div class="sdelta" id="delta-calls" hidden></div>
-        <div class="svalue" id="stat-calls">—</div>
-      </div>
-      <div class="stat-card" data-tone="gold" data-good="up">
-        <span class="kpi-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9.5" cy="7" r="3.5"/><path d="M22 21v-2a4 4 0 0 0-3-3.8"/><path d="M16 3.2a4 4 0 0 1 0 7.6"/></svg></span>
-        <div class="slabel" id="lbl-groups" data-current="—">Group chats</div>
-        <div class="sdelta" id="delta-groups" hidden></div>
-        <div class="svalue" id="stat-groups">—</div>
-      </div>
-    </div>
-
-    <div class="ov-grid">
-      <div class="ov-chart">
-        <div class="ov-head">
-          <div>
-            <h3 class="ov-title">Traffic</h3>
-            <p class="ov-sub">Messages and registered users over time</p>
-          </div>
-          <div class="ov-legend">
-            <span style="--c:#FFD24A;"><i></i>Messages</span>
-            <span style="--c:#E4A0A0;"><i></i>Total Users</span>
-          </div>
+      <div class="kpi-row">
+        <div class="stat-card" data-tone="maroon" data-good="up">
+          <span class="kpi-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5"/><path d="M15 19c0-2 2-3.5 4-3.5"/></svg></span>
+          <div class="slabel" id="lbl-total" data-current="—">Total users</div>
+          <div class="sdelta" id="delta-total" hidden></div>
+          <div class="svalue" id="stat-total">—</div>
         </div>
-        <div class="ov-figure" id="ov-figure">—</div>
-        <div class="ov-figure-lbl">Messages this period</div>
-        <div id="main-chart"></div>
-      </div>
-
-      <div class="ov-side">
-        <div class="ov-panel">
-          <div class="ov-panel-head">
-            <h3 class="ov-panel-title">Online Now <b id="on-count">(0)</b></h3>
-            <button type="button" class="ov-panel-link" onclick="switchTab('users',null,document.getElementById('rail-users'))">View all</button>
-          </div>
-          <div id="on-avatars" class="on-empty">Loading…</div>
-          <div class="qa-grid">
-            <button type="button" class="qa" onclick="switchTab('add',null,document.getElementById('rail-add'))">
-              <svg viewBox="0 0 24 24"><circle cx="10" cy="8" r="3.5"/><path d="M3 21c0-3.5 3-6 7-6"/><path d="M17 14v6M14 17h6"/></svg>Add user</button>
-            <button type="button" class="qa" onclick="switchTab('logs',null,document.getElementById('rail-logs'))">
-              <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Audit logs</button>
-            <button type="button" class="qa" onclick="switchTab('monitor',null,document.getElementById('rail-monitor'))">
-              <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 7v5l3 2"/><path d="M22 4l-3 3-2-2"/></svg>Logins</button>
-            <button type="button" class="qa" onclick="switchTab('feedback',null,document.getElementById('rail-feedback'))">
-              <svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7A8.4 8.4 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5z"/></svg>Feedback</button>
-          </div>
-          <!-- This is the only entry point to the Recent Messages panel — it has
-               no rail button, so before this it was unreachable. -->
-          <button type="button" class="qa qa-wide" onclick="switchTab('messages',null,null)">
-            <svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7A8.4 8.4 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5z"/></svg>View recent messages</button>
+        <div class="stat-card" data-tone="green" data-good="up">
+          <span class="kpi-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg></span>
+          <div class="slabel" id="lbl-online" data-current="—">Online now</div>
+          <div class="sdelta" id="delta-online" hidden></div>
+          <div class="svalue" id="stat-online">—</div>
         </div>
-
-        <div class="ov-panel">
-          <div class="ov-panel-head">
-            <h3 class="ov-panel-title">Approved Users <b id="au-count">(0)</b></h3>
-          </div>
-          <div class="au-tabs" role="group" aria-label="Filter users by role">
-            <button type="button" class="au-tab active" onclick="filterApproved('all',this)">All</button>
-            <button type="button" class="au-tab" onclick="filterApproved('student',this)">Students</button>
-            <button type="button" class="au-tab" onclick="filterApproved('faculty',this)">Faculty</button>
-            <button type="button" class="au-tab" onclick="filterApproved('admin',this)">Admins</button>
-          </div>
-          <div class="au-list" id="au-list"><p class="au-empty">Loading…</p></div>
-          <div class="au-foot">
-            <span class="au-shown" id="au-shown"></span>
-            <button type="button" class="ov-panel-link" onclick="switchTab('users',null,document.getElementById('rail-users'))">View All Users →</button>
-          </div>
+        <div class="stat-card" data-tone="orange" data-good="up">
+          <span class="kpi-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7A8.4 8.4 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5z"/></svg></span>
+          <div class="slabel" id="lbl-messages" data-current="—">Messages</div>
+          <div class="sdelta" id="delta-messages" hidden></div>
+          <div class="svalue" id="stat-messages">—</div>
+        </div>
+        <div class="stat-card" data-tone="maroon" data-good="up">
+          <span class="kpi-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .3 1.9.6 2.8a2 2 0 0 1-.4 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.5 2.8.6A2 2 0 0 1 22 16.9z"/></svg></span>
+          <div class="slabel" id="lbl-calls" data-current="—">Voice calls</div>
+          <div class="sdelta" id="delta-calls" hidden></div>
+          <div class="svalue" id="stat-calls">—</div>
+        </div>
+        <div class="stat-card" data-tone="gold" data-good="up">
+          <span class="kpi-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9.5" cy="7" r="3.5"/><path d="M22 21v-2a4 4 0 0 0-3-3.8"/><path d="M16 3.2a4 4 0 0 1 0 7.6"/></svg></span>
+          <div class="slabel" id="lbl-groups" data-current="—">Group chats</div>
+          <div class="sdelta" id="delta-groups" hidden></div>
+          <div class="svalue" id="stat-groups">—</div>
         </div>
       </div>
+
+      <div class="ov-grid">
+        <div class="ov-chart">
+          <div class="ov-head">
+            <div>
+              <h3 class="ov-title">Traffic</h3>
+              <p class="ov-sub">Messages and registered users over time</p>
+            </div>
+            <div class="ov-controls">
+              <div class="ov-legend">
+                <span style="--c:#FFD24A;"><i></i>Messages</span>
+                <span style="--c:#E4A0A0;"><i></i>Total Users</span>
+              </div>
+              <div class="range-toggle" id="range-toggle" role="tablist" aria-label="Time range">
+                <button type="button" data-range="day"   class="active">Days</button>
+                <button type="button" data-range="month">Months</button>
+                <button type="button" data-range="year">Year</button>
+              </div>
+            </div>
+          </div>
+          <div class="ov-figure" id="ov-figure">—</div>
+          <div class="ov-figure-lbl">Messages this period</div>
+          <div id="main-chart"></div>
+        </div>
+
+        <div class="ov-side">
+          <div class="ov-panel">
+            <div class="ov-panel-head">
+              <h3 class="ov-panel-title">Online Now <b id="on-count">(0)</b></h3>
+              <button type="button" class="ov-panel-link" onclick="switchTab('users',null,document.getElementById('rail-users'))">View all</button>
+            </div>
+            <div id="on-avatars" class="on-empty">Loading…</div>
+            <div class="qa-grid">
+              <button type="button" class="qa" onclick="switchTab('add',null,document.getElementById('rail-add'))">
+                <svg viewBox="0 0 24 24"><circle cx="10" cy="8" r="3.5"/><path d="M3 21c0-3.5 3-6 7-6"/><path d="M17 14v6M14 17h6"/></svg>Add user</button>
+              <button type="button" class="qa" onclick="switchTab('logs',null,document.getElementById('rail-logs'))">
+                <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Audit logs</button>
+              <button type="button" class="qa" onclick="switchTab('monitor',null,document.getElementById('rail-monitor'))">
+                <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 7v5l3 2"/><path d="M22 4l-3 3-2-2"/></svg>Logins</button>
+              <button type="button" class="qa" onclick="switchTab('feedback',null,document.getElementById('rail-feedback'))">
+                <svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7A8.4 8.4 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5z"/></svg>Feedback</button>
+            </div>
+            <!-- This is the only entry point to the Recent Messages panel — it has
+                 no rail button, so before this it was unreachable. -->
+            <button type="button" class="qa qa-wide" onclick="switchTab('messages',null,null)">
+              <svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7A8.4 8.4 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5z"/></svg>View recent messages</button>
+          </div>
+
+          <div class="ov-panel">
+            <div class="ov-panel-head">
+              <h3 class="ov-panel-title">Approved Users <b id="au-count">(0)</b></h3>
+            </div>
+            <div class="au-tabs" role="group" aria-label="Filter users by role">
+              <button type="button" class="au-tab active" onclick="filterApproved('all',this)">All</button>
+              <button type="button" class="au-tab" onclick="filterApproved('student',this)">Students</button>
+              <button type="button" class="au-tab" onclick="filterApproved('faculty',this)">Faculty</button>
+              <button type="button" class="au-tab" onclick="filterApproved('admin',this)">Admins</button>
+            </div>
+            <div class="au-list" id="au-list"><p class="au-empty">Loading…</p></div>
+            <div class="au-foot">
+              <span class="au-shown" id="au-shown"></span>
+              <button type="button" class="ov-panel-link" onclick="switchTab('users',null,document.getElementById('rail-users'))">View All Users →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <div class="tabs" style="display:none;">
       <button class="tab-btn active" id="tab-btn-pending"><span class="badge-count" id="pending-count">0</span></button>
     </div>
 
-    <div class="tab-panel active" id="tab-pending">
+    <div class="tab-panel" id="tab-pending">
       <div class="card">
         <div class="card-header">
           <h3><svg class="hi" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Pending Account Requests</h3>
@@ -1359,12 +1380,22 @@ function seedHistory(key, value, range){
 // with a soft area fill, plus a callout pinned to the latest point of the
 // primary series. Catmull-Rom smoothing over a shared y-scale, with both
 // series share one y-scale so their relative size is honest.
+// Last series handed to the chart, kept so switchTab() can redraw it.
+let _chartSeries = null, _chartStale = false;
+
 function renderMainChart(seriesA, seriesB){
   const el = document.getElementById('main-chart');
   if (!el) return;
+  _chartSeries = { a: seriesA, b: seriesB };
+  const rect = el.getBoundingClientRect();
+  // The Overview panel is display:none whenever another tab is open, and
+  // loadStats() refreshes on a 5s interval regardless. A hidden element
+  // measures 0, and the `|| 620` fallback below would then bake a 620px width
+  // into the viewBox — the chart comes back stretched rather than blank, which
+  // is harder to spot. Skip the draw and let switchTab('overview') redo it.
+  if (!rect.width) { _chartStale = true; return; }
   const norm = s => (Array.isArray(s) && s.length) ? (s.length === 1 ? [s[0], s[0]] : s) : [{t:Date.now(),v:0},{t:Date.now(),v:0}];
   const A = norm(seriesA), B = norm(seriesB);
-  const rect = el.getBoundingClientRect();
   const W = Math.max(240, Math.round(rect.width || 620));
   const H = Math.max(150, Math.round(rect.height || 200));
   // PAD_L is wider than PAD_X: the y-axis values live in that gutter, so the
@@ -1915,6 +1946,11 @@ function switchTab(name,btn,railBtn){
   document.getElementById(`tab-${name}`).classList.add('active');
   if(btn) btn.classList.add('active');
   if(railBtn) railBtn.classList.add('active');
+  // Redraw the hero chart if a refresh was skipped while this panel was hidden.
+  if(name==='overview' && _chartStale && _chartSeries){
+    _chartStale = false;
+    renderMainChart(_chartSeries.a, _chartSeries.b);
+  }
   if(name==='monitor') loadLoginActivity();
   // loadAll() never fetches messages, so the panel needs its own trigger.
   if(name==='messages') loadMessages();
