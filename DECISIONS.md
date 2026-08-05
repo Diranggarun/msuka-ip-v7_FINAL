@@ -203,12 +203,26 @@ as something real.
 
 **Reasoning, item by item:**
 
-- **Rail Groups / Private / New Group — not taken.** The mockup shows these in
-  the rail *and* keeps the filter pills above the list. Commit `8ce0663` removed
-  exactly these because they fired the identical `switchNav()` calls as the
-  pills. Building the mockup as drawn would restore a duplication that was
-  deliberately removed and documented one section above. New Group remains the
-  floating **+**.
+- **Rail Groups / Private / New Group — not taken. This is the final answer to
+  decision 3, option (a).** The mockup shows these in the rail *and* keeps the
+  filter pills above the list. Commit `8ce0663` removed exactly these because
+  they fired the identical `switchNav()` calls as the pills. Building the mockup
+  as drawn would restore a duplication that was deliberately removed and
+  documented one section above — and the pills are now definitively staying,
+  since the mockup's own Unread pill shipped in `942ab7a`. Two controls calling
+  the same function is the thing the earlier entry argues against. New Group
+  remains the floating **+**.
+  Reversing this is a markup change of about fifteen lines if the team decides
+  the picture should win.
+- **`Dashboard` — dropped from the rail, not stubbed. Decision 4.** It is not a
+  screen, and the three options were build it, drop it, or disable it. Building
+  it is a feature nobody specified; a disabled item is a defect wearing a label.
+  It is gone until there is something for it to open.
+- **Rail footer — the university crest, added.** The one part of the mockup's
+  rail that no decision blocked. Sits below Sign Out under a hairline rule, with
+  no card fill of its own: a second surface inside the glass panel would be
+  glass-on-glass, which this file documents as a compositing problem. The crest
+  is `alt=""` because the text beside it already names the university.
 - **`Dashboard` — deferred, not stubbed.** It is not a screen in this app. A nav
   item that opens nothing is a defect, and "coming soon" is a defect with a label
   on it.
