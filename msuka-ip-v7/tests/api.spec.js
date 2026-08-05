@@ -179,6 +179,38 @@ test.describe('9. Authorization & Security', () => {
     console.log('✅ Message content stays private even from admins (403)');
   });
 
+  test('9.8 per-user login series requires an admin token', async () => {
+    const anon = await ctx.get('/api/admin/login-activity/1/series');
+    expect(anon.status()).toBe(401);
+    const student = await ctx.get('/api/admin/login-activity/1/series',
+      { headers: { Authorization: `Bearer ${userToken}` } });
+    expect(student.status()).toBe(403);
+    console.log('✅ Login series is admin-only (401 anon, 403 student)');
+  });
+
+  test('9.9 per-user login series validates its inputs and zero-fills days', async () => {
+    const h = { headers: { Authorization: `Bearer ${adminToken}` } };
+    // A non-numeric or out-of-range id must be rejected before it reaches SQL.
+    expect((await ctx.get('/api/admin/login-activity/abc/series', h)).status()).toBe(400);
+    expect((await ctx.get('/api/admin/login-activity/0/series', h)).status()).toBe(400);
+    expect((await ctx.get('/api/admin/login-activity/99999999/series', h)).status()).toBe(404);
+
+    // days is clamped at both ends so a caller cannot request an unbounded scan.
+    expect((await (await ctx.get('/api/admin/login-activity/1/series?days=9999', h)).json()).days).toBe(90);
+    expect((await (await ctx.get('/api/admin/login-activity/1/series?days=1', h)).json()).days).toBe(7);
+
+    const body = await (await ctx.get('/api/admin/login-activity/1/series?days=30', h)).json();
+    // Every day in the window must be present. Without zero-filling, a quiet day
+    // is simply absent and the chart draws a slope between two events that never
+    // happened.
+    expect(body.labels).toHaveLength(30);
+    expect(body.successes).toHaveLength(30);
+    expect(body.failed).toHaveLength(30);
+    expect(body.successes.every(n => Number.isInteger(n))).toBeTruthy();
+    const gaps = body.successes.filter(n => n === 0).length;
+    console.log(`✅ Login series validated and zero-filled — 30 buckets, ${gaps} quiet days`);
+  });
+
   test('9.5 admin can read aggregate stats with a valid token', async () => {
     const r = await ctx.get('/api/admin/stats', { headers: { Authorization: `Bearer ${adminToken}` } });
     expect(r.ok()).toBeTruthy();

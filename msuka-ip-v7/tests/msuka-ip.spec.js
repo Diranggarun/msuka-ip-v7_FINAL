@@ -699,6 +699,36 @@ test.describe('5. Admin Dashboard Tests', () => {
     console.log(`✅ All 5 KPI tiles populated: ${tiles.map(t => `${t.label}=${t.value}`).join(' · ')}`);
   });
 
+  test('5.18 Login monitor cards expand to a history chart, by keyboard, fetched once', async ({ page }) => {
+    const series = [];
+    page.on('request', r => { if (r.url().includes('/series')) series.push(r.url()); });
+
+    await page.click('#rail-monitor');
+    await page.waitForSelector('.mon-card', { timeout: 8000 });
+    expect(series, 'history must not be fetched until a card is opened').toHaveLength(0);
+
+    const card = page.locator('.mon-card').first();
+    // A real <button>, not a div with an onclick — that is what makes Enter work
+    // and lets aria-expanded be announced.
+    expect(await card.evaluate(el => el.tagName)).toBe('BUTTON');
+    await expect(card).toHaveAttribute('aria-expanded', 'false');
+
+    await card.focus();
+    await page.keyboard.press('Enter');
+    await expect(card).toHaveAttribute('aria-expanded', 'true');
+    await expect(card.locator('.mon-bar').first()).toBeVisible({ timeout: 8000 });
+    expect(await card.locator('.mon-bar').count()).toBe(30);
+    expect(series).toHaveLength(1);
+
+    // Collapse and reopen: the answer is cached, so no second request.
+    await page.keyboard.press('Enter');
+    await expect(card).toHaveAttribute('aria-expanded', 'false');
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(400);
+    expect(series, 'reopening must not refetch').toHaveLength(1);
+    console.log('✅ Monitor card expands via keyboard, renders 30 days, fetches once');
+  });
+
   test('5.16 Overview is the landing tab and owns the hero chart', async ({ page }) => {
     await expect(page.locator('#tab-overview')).toHaveClass(/active/);
     await expect(page.locator('#main-chart svg')).toBeVisible({ timeout: 8000 });

@@ -673,6 +673,41 @@ tr:hover td{background:var(--maroon-soft);}
   .au-list{max-height:300px;}
 }
 
+/* ═══ A5 · login monitor, expandable per-user history ═════════════════════
+   The card is a <button> now rather than a div with an onclick, so it is
+   focusable, Enter/Space work, and screen readers announce the expanded state
+   from aria-expanded — none of which a clickable div gets. That means undoing
+   the button defaults the card never wanted. */
+.mon-card{width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;
+  appearance:none;-webkit-appearance:none;
+  transition:border-color var(--dur-base) var(--ease-out),box-shadow var(--dur-base) var(--ease-out);}
+.mon-card:hover{border-color:var(--gold);box-shadow:var(--shadow-md);}
+.mon-card:focus-visible{outline:2px solid var(--gold-dark);outline-offset:2px;}
+.mon-chev{margin-left:auto;display:inline-flex;transition:transform var(--dur-base) var(--ease-out);}
+.mon-chev svg{width:15px;height:15px;stroke:var(--text-light);fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round;}
+.mon-card[aria-expanded="true"] .mon-chev{transform:rotate(180deg);}
+@media (prefers-reduced-motion:reduce){.mon-chev{transition:none;}}
+
+.mon-series{border-top:1px solid var(--gray-200);padding-top:10px;margin-top:2px;}
+.mon-msg{font-size:.74rem;color:var(--text-light);padding:4px 0;margin:0;}
+.mon-series-head,.mon-series-foot{display:flex;justify-content:space-between;
+  font-size:.66rem;color:var(--text-light);}
+.mon-series-head{margin-bottom:6px;}
+.mon-series-head b{color:var(--text-mid);font-weight:800;}
+.mon-series-foot{margin-top:5px;font-variant-numeric:tabular-nums;}
+/* One column per day. align-items:flex-end so bars grow up from the baseline;
+   the two series sit side by side rather than stacked so a day with failures
+   does not read as a taller success. */
+.mon-bars{display:flex;align-items:flex-end;gap:2px;height:46px;}
+.mon-bars.fail-track{height:24px;}
+.mon-bar{flex:1;display:flex;align-items:flex-end;justify-content:center;height:100%;min-width:0;}
+.mon-bar i{width:4px;border-radius:2px 2px 0 0;display:block;}
+.mon-bar i.ok{background:#16a34a;}
+.mon-bar i.fail{background:#c0392b;}
+.mon-series-head.fail-head{margin-top:8px;margin-bottom:4px;color:#B23A2E;}
+.mon-series-head.fail-head b{color:#B23A2E;}
+
 /* ═══ Stage 5 · pending requests table + pager ════════════════════════════
    139 requests as stacked cards was ~19000px of page. A table puts one
    request per row, and the pager keeps the panel a fixed height whatever
@@ -1923,6 +1958,68 @@ async function loadMessages(){
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function monInitials(n){return String(n||'?').trim().split(/\s+/).map(w=>w[0]||'').join('').toUpperCase().slice(0,2)||'?';}
 
+// ── Login monitor · per-user history ───────────────────────────────────────
+// Fetched lazily on first expand: loading a 30-day series for every user on
+// page load would be N requests for charts nobody has asked to see yet.
+const _monSeries = new Map();
+
+async function toggleMonitor(userId, btn){
+  const box = btn.querySelector('.mon-series');
+  const open = btn.getAttribute('aria-expanded') === 'true';
+  if (open){ btn.setAttribute('aria-expanded','false'); box.hidden = true; return; }
+
+  btn.setAttribute('aria-expanded','true');
+  box.hidden = false;
+
+  if (_monSeries.has(userId)){ box.innerHTML = monSeriesHtml(_monSeries.get(userId)); return; }
+  box.innerHTML = '<p class="mon-msg">Loading login history…</p>';
+  try{
+    const res = await fetch(`/api/admin/login-activity/${userId}/series?days=30`,
+      { headers:{ Authorization:`Bearer ${authToken}` } });
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    _monSeries.set(userId, data);
+    box.innerHTML = monSeriesHtml(data);
+  }catch{
+    box.innerHTML = '<p class="mon-msg">Could not load login history.</p>';
+  }
+}
+
+// Bars, not the hero chart's smoothed line. That chart plots a running total —
+// continuous, so a line is right. This is a discrete count per day where most
+// days are zero; a line across those zeros would draw slopes between events
+// that never happened.
+//
+// Successes and failures get SEPARATE tracks with their own scales. Sharing one
+// axis looked tidier and hid the only thing this panel exists to show: an
+// account with 3132 successes and 277 failures rendered the failures at under a
+// pixel, so a card flagged red showed no red in its chart. Each track is
+// labelled with its own peak so the two are never read as comparable heights.
+function monTrack(values, peak, cls, labels){
+  return values.map((v,i) =>
+    `<span class="mon-bar" title="${esc(labels[i].slice(5))} — ${v}">
+      <i class="${cls}" style="height:${v ? Math.max(6, v/peak*100).toFixed(1) : 0}%"></i>
+    </span>`).join('');
+}
+
+function monSeriesHtml(d){
+  const okTotal  = d.successes.reduce((a,b)=>a+b,0);
+  const badTotal = d.failed.reduce((a,b)=>a+b,0);
+  if (!okTotal && !badTotal) return '<p class="mon-msg">No sign-in activity in the last 30 days.</p>';
+
+  const okPeak  = Math.max(...d.successes, 1);
+  const badPeak = Math.max(...d.failed, 1);
+  let html = `<div class="mon-series-head"><span>Last 30 days</span><b>peak ${okPeak}/day</b></div>
+    <div class="mon-bars">${monTrack(d.successes, okPeak, 'ok', d.labels)}</div>`;
+  // Only drawn when there is something to draw — an always-empty red strip
+  // would be noise on the many accounts that have never failed a sign-in.
+  if (badTotal) {
+    html += `<div class="mon-series-head fail-head"><span>${badTotal} failed</span><b>peak ${badPeak}/day</b></div>
+      <div class="mon-bars fail-track">${monTrack(d.failed, badPeak, 'fail', d.labels)}</div>`;
+  }
+  return html + `<div class="mon-series-foot"><span>${esc(d.labels[0].slice(5))}</span><span>${esc(d.labels.at(-1).slice(5))}</span></div>`;
+}
+
 async function loadLoginActivity(){
   const grid=document.getElementById('monitor-grid');
   try{
@@ -1932,7 +2029,8 @@ async function loadLoginActivity(){
     grid.innerHTML=users.map(u=>{
       const failed=Number(u.failed)||0, ok=Number(u.successes)||0;
       const last=u.last_login?new Date(u.last_login.replace(' ','T')).toLocaleString():'Never signed in';
-      return `<div class="mon-card ${failed>0?'has-fails':''}">
+      return `<button type="button" class="mon-card ${failed>0?'has-fails':''}"
+        aria-expanded="false" data-uid="${Number(u.id)}" onclick="toggleMonitor(${Number(u.id)},this)">
         <div class="mon-id">
           <div class="mon-av">${monInitials(u.name)}</div>
           <div style="min-width:0;">
@@ -1948,8 +2046,12 @@ async function loadLoginActivity(){
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
           ${esc(last)}
           <span class="mon-role">${esc(u.role)}</span>
+          <span class="mon-chev" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </span>
         </div>
-      </div>`;
+        <div class="mon-series" hidden></div>
+      </button>`;
     }).join('');
   }catch{grid.innerHTML='<p class="empty">Could not load login activity</p>';}
 }

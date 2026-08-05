@@ -822,6 +822,48 @@ app.get('/api/admin/login-activity',verifyToken,adminOnly,async(req,res)=>{
   catch { res.status(500).json({error:'Server error'}); }
 });
 
+// Per-user login history for the monitor cards. /login-activity above returns
+// totals only, so it cannot back a chart — this groups the same audit_logs rows
+// by day for one user.
+app.get('/api/admin/login-activity/:userId/series',verifyToken,adminOnly,async(req,res)=>{
+  try {
+    const userId = Number(req.params.userId);
+    if (!Number.isInteger(userId) || userId < 1) return res.status(400).json({error:'Invalid user id'});
+    // Bounded so a caller cannot ask for an arbitrarily large scan.
+    const days = Math.min(90, Math.max(7, Number(req.query.days) || 30));
+
+    const [urows] = await db.query('SELECT id,name,email FROM users WHERE id=?',[userId]);
+    if (!urows.length) return res.status(404).json({error:'User not found'});
+
+    const since = new Date(Date.now() - (days-1)*86400000);
+    const sinceStr = `${since.getFullYear()}-${String(since.getMonth()+1).padStart(2,'0')}-${String(since.getDate()).padStart(2,'0')} 00:00:00`;
+    const [rows] = await db.query(
+      `SELECT substr(created_at,1,10) AS d,
+              SUM(CASE WHEN action='LOGIN'        THEN 1 ELSE 0 END) AS successes,
+              SUM(CASE WHEN action='LOGIN_FAILED' THEN 1 ELSE 0 END) AS failed
+         FROM audit_logs
+        WHERE user_id=? AND created_at>=? AND action IN ('LOGIN','LOGIN_FAILED')
+        GROUP BY d ORDER BY d ASC`, [userId, sinceStr]);
+
+    // Zero-fill: a day with no activity must plot as 0, not be skipped. Without
+    // this the line joins across the gap and invents a slope that never happened.
+    const byDay = new Map(rows.map(r => [r.d, r]));
+    const labels = [], successes = [], failed = [];
+    for (let i = 0; i < days; i++) {
+      const t = new Date(since.getFullYear(), since.getMonth(), since.getDate() + i);
+      const key = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+      const hit = byDay.get(key);
+      labels.push(key);
+      successes.push(Number(hit?.successes) || 0);
+      failed.push(Number(hit?.failed) || 0);
+    }
+
+    await logAudit(req.user.id,'VIEW_LOGIN_SERIES',`Viewed ${days}-day login history for user ${userId}`,req);
+    res.json({ userId, name: urows[0].name, days, labels, successes, failed });
+  }
+  catch { res.status(500).json({error:'Server error'}); }
+});
+
 // ── Survey responses ────────────────────────────────────────────────────────
 // Public submit (no auth) — anonymous respondents fill this in after the demo.
 // This is the only unauthenticated POST in the system; respondents shouldn't
