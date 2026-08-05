@@ -456,6 +456,46 @@ test.describe('2. Messenger UI Tests', () => {
     console.log('✅ Settings blocks invalid password input without calling the API');
   });
 
+  test('2.13 reduced-transparency fallback actually wins the cascade', async ({ page }) => {
+    // Playwright cannot emulate prefers-reduced-transparency, so flip the
+    // rule's own condition to `all` and read the computed value. That is the
+    // part worth testing anyway: the block spent its first commit sitting
+    // ABOVE .left-panel and .icon-rail, and a media query adds no specificity,
+    // so the panel rules below simply won and the fallback was dead — while
+    // reading, in the source, exactly as if it worked.
+    const flipped = await page.evaluate(() => {
+      let n = 0;
+      // eslint-disable-next-line no-undef -- evaluated in the browser page context
+      for (const sheet of document.styleSheets) {
+        let rules; try { rules = sheet.cssRules; } catch { continue; }
+        for (const r of rules) {
+          if (r.media && String(r.conditionText || r.media.mediaText).includes('reduced-transparency')) {
+            r.media.mediaText = 'all'; n++;
+          }
+        }
+      }
+      return n;
+    });
+    expect(flipped, 'no prefers-reduced-transparency block found').toBeGreaterThan(0);
+
+    const surfaces = await page.evaluate(() => {
+      // eslint-disable-next-line no-undef -- evaluated in the browser page context
+      const cs = s => getComputedStyle(document.querySelector(s));
+      return {
+        railFilter: cs('.icon-rail').backdropFilter,
+        listFilter: cs('.left-panel').backdropFilter,
+        railBg: cs('.icon-rail').backgroundColor,
+        listBg: cs('.left-panel').backgroundColor,
+      };
+    });
+    expect(surfaces.railFilter, 'rail still blurring under reduced transparency').toBe('none');
+    expect(surfaces.listFilter, 'list still blurring under reduced transparency').toBe('none');
+    // Opaque, or the text ends up sitting on the gate photograph.
+    expect(surfaces.railBg).not.toContain('rgba(0, 0, 0, 0)');
+    expect(surfaces.listBg).not.toContain('rgba(0, 0, 0, 0)');
+    console.log('✅ Reduced-transparency fallback disables blur and paints both panels opaque');
+  });
+
   test('2.10 Logout button works', async ({ page }) => {
     await page.click('button[onclick="logout()"]');
     await expect(page.locator('#auth-screen')).toBeVisible();

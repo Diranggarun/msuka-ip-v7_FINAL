@@ -154,6 +154,53 @@ Or change `PORT=3001` in `.env`.
 
 **Why it went unnoticed:** test 6.12 asserted no horizontal scroll and a full-width rail. Both were true the whole time the page was unusable. It now measures `.admin-main`'s own width, which reads 0 against the unfixed page. When a responsive test passes, check that it measures the thing that would actually be missing.
 
+### A chart drawn while its tab is hidden comes back stretched
+
+**Cause:** `renderMainChart()` sizes itself from the element. A `display:none`
+panel measures 0, and the existing `|| 620` fallback then baked 620px into the
+SVG viewBox. `loadStats()` refreshes every 5 seconds whatever tab is open, so
+sitting on Pending was enough to corrupt the Overview chart. It returned
+*stretched*, not blank, which is the harder failure to notice.
+
+**Fix:** store the series, skip the draw when the host has no width, redraw in
+`switchTab('overview')`. Test 5.17 fails without it: viewBox 620 against a 641px
+host.
+
+### A wide table spills off the page above 768px
+
+**Cause:** `.card{overflow-x:auto}` lived only inside the `max-width:768px`
+block. A 7-column table is wider than its card at plenty of desktop widths too —
+it just happened to fit while the root font was 16px. Raising it to 18px pushed
+the pending table from 954px to 1061px and the page began scrolling sideways at
+900/1100/1280px.
+
+**Fix:** the rule belongs on the base `.card`. Test 6.13 covers desktop widths;
+6.11 never could, because it only ever visits `/admin.html` logged out and so has
+only ever measured the login screen.
+
+### A media-query fallback that reads correctly but does nothing
+
+**Cause:** the `prefers-reduced-transparency` block was written above the
+`.left-panel` / `.icon-rail` rules it needed to override. Media queries add no
+specificity, so the later panel rules won and the fallback was dead from the
+commit that introduced it. Nothing warns you; the source looks right.
+
+**Fix:** move it below both rules (it now sits beside the phone-layout block,
+which is late for the same reason). Test 2.13 flips the rule's own
+`media.mediaText` to `all` and asserts the computed `backdrop-filter` is `none`
+— Playwright cannot emulate the media feature, but the cascade is the part worth
+locking. Same trap as the phone layout block in `index.html`.
+
+### Presence keeps broadcasting a stale display name after a rename
+
+**Cause:** `onlineUsers` caches the name captured at socket handshake.
+`PUT /api/user/profile` updated the database, and calling `broadcastPresence()`
+alone re-sent the old name to everyone.
+
+**Fix:** correct the in-memory entries for that user before broadcasting. The
+JWT's copy stays stale until the next sign-in, which only affects that user's own
+token, not what others see.
+
 ## Adding new entries
 
 When you hit a new error and solve it, add a section using this format:

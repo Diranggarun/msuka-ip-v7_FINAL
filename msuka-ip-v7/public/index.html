@@ -454,20 +454,6 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
   letter-spacing:.42em;text-indent:.42em;text-transform:uppercase;
   color:rgba(212,160,23,.62);text-shadow:0 1px 3px rgba(0,0,0,.6);}
 
-/* Glass needs something behind it, and it costs GPU time every frame. Both of
-   these turn the panels opaque: one for users who ask for less transparency,
-   one for engines without backdrop-filter, where the panels would otherwise be
-   near-transparent over the photo and the text would sit on brickwork. */
-@media (prefers-reduced-transparency:reduce){
-  .icon-rail,.left-panel{backdrop-filter:none;-webkit-backdrop-filter:none;}
-  .left-panel{background-color:#2a0a0a;}
-  .icon-rail{background-color:#3a0f0f;}
-}
-@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
-  .left-panel{background-color:#2a0a0a;}
-  .icon-rail{background-color:#3a0f0f;}
-}
-
 /* Shared card geometry. No !important: the phone layout at the end of this
    stylesheet overrides these by source order alone. */
 .left-panel,.right-panel,.contacts-panel,.icon-rail{
@@ -1553,6 +1539,27 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
   transition:transform var(--dur-fast) var(--ease-out),filter var(--dur-fast) var(--ease-out);}
 .set-btn:hover{filter:brightness(1.06);}
 .set-btn:active{transform:scale(.97);transition-duration:.06s;}
+
+/* ══ TRANSPARENCY FALLBACKS ═══════════════════════════════════════════════
+   These MUST sit after .left-panel and .icon-rail, not before them. A media
+   query adds no specificity, so when this block lived earlier in the file the
+   panel rules below simply won and the whole fallback was dead — it read as
+   working right up until you measured the computed backdrop-filter.
+   Same trap as the phone layout block further down, for the same reason.
+
+   Both paths make the panels opaque: one for people who ask for less
+   transparency, one for engines with no backdrop-filter at all, where the
+   panels would otherwise be near-transparent over the photo and the text would
+   sit directly on brickwork. */
+@media (prefers-reduced-transparency:reduce){
+  .icon-rail,.left-panel{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+  .left-panel{background-color:#2a0a0a;}
+  .icon-rail{background-color:#3a0f0f;}
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .left-panel{background-color:#2a0a0a;}
+  .icon-rail{background-color:#3a0f0f;}
+}
 
 /* ══ PHONE LAYOUT (≤768px) — single pane ══════════════════════════════════════
    MUST STAY LAST IN THIS STYLESHEET. Media queries carry no extra specificity,

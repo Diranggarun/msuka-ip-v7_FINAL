@@ -124,6 +124,69 @@ Easing tokens (the built-in CSS curves are too weak — these carry intention):
 
 ---
 
+## 6b. Glass (translucent panels)
+
+One recipe, in `:root`, used by every panel that floats over the gate
+photograph:
+
+```css
+--glass-blur: 20px;   --glass-sat: 150%;
+--r-panel: 24px;      /* panels only — the --r-sm/md/lg/xl scale is unchanged */
+```
+
+Before this, the rail was `blur(26px) saturate(165%)` and the conversation list
+`blur(14px) saturate(130%)`, each chosen on its own. Two panels side by side were
+different materials for no stateable reason. A panel now differs by its **tint**,
+not by how much it blurs.
+
+Overlays, popovers and the emoji picker keep their own, lighter blurs. A scrim is
+not a panel, and collapsing them into one token would flatten a distinction that
+is doing work.
+
+**The chat panel is not glass.** It is opaque paper (`--paper`). It is the one
+surface here that gets read rather than scanned, and text on a moving photograph
+is harder to read no matter how well the contrast measures.
+
+Five rules, each learned by shipping the mistake first:
+
+1. **Never nest glass in glass.** A `backdrop-filter` inside another one flashes
+   as the compositing layer is promoted and demoted. Inner surfaces — rows,
+   bubbles, the composer — take flat fills.
+2. **Measure contrast against the worst-case pixel, not the average.** The gate
+   photo can contain white. Every colour on glass clears 4.5:1 against the
+   darkest overlay stop; measured worst on the chat page is **7.94:1** (the
+   tagline).
+3. **Always pair `-webkit-backdrop-filter`.**
+4. **`background:` shorthand with `!important` wipes `background-color`.** This
+   shipped once and made the feedback cards translucent with the photo showing
+   through the form.
+5. **Fallbacks must come *after* the panel rules.** `prefers-reduced-transparency`
+   and `@supports not (backdrop-filter)` both turn the panels opaque — but a
+   media query adds no specificity, so a fallback written above the rules it
+   overrides is dead while looking correct. Locked by test 2.13.
+
+**Measured cost.** 90 frames scrolling the conversation list, 1440×900: median
+frame time is identical with and without the blur (16.7ms — both vsync-bound),
+but the 95th-percentile frame goes **17.8ms → 31.9ms**. The blur is free on
+average and occasionally costs a dropped frame. If the demo laptops stutter,
+reduce `--glass-blur` before removing a panel: radius is the expensive part.
+
+## 6c. Density
+
+Root font size is **18px** on the admin dashboard, 16px below 768px. Everything
+there is expressed in `rem`, so one declaration scales the page; 43 of its font
+sizes had drifted under 12px. Phones stay at 16px — that is where space is tight,
+and the dashboard is a desktop tool.
+
+Stat tiles follow the dataviz contract: the **figure is the largest thing in the
+tile** (2.15rem against a 0.7rem label), set in Nunito rather than Cinzel — a
+serif display face on a number reads as decoration — with proportional numerals,
+not tabular. Tabular figures belong in columns that must align, like table rows
+and axis ticks.
+
+Sparklines were removed from the tiles. The hero chart beneath them already
+carried trend, and a 26px curve under a figure competes for the same job.
+
 ## 7. Anti-patterns — do not ship these
 
 | Banned | Instead | Source |
