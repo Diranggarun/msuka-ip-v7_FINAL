@@ -546,9 +546,18 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    real size (104px, up from 84) and lit from behind: --glass-halo is a soft
    gold radial bloom that makes the disc look like it is sitting slightly off
    the glass. z-index keeps the disc above its own halo. */
-.rail-logo-frame{width:104px;height:104px;border-radius:50%;background:#fff;padding:0;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;box-shadow:0 0 0 2px var(--gold),0 0 0 6px rgba(212,160,23,.22),0 0 26px rgba(212,160,23,.28),0 10px 30px rgba(0,0,0,.45);overflow:hidden;flex-shrink:0;}
+/* Faded rather than swapped for a gold version: the mark is already a
+   maroon-to-gold wordmark on transparent, so a "gold logo" would be a new
+   asset to draw, not a code change — and the wordmark needs a light disc
+   behind it to stay legible at all.
+   What made it shout was the disc, not the logo: pure #fff against dark
+   maroon glass is the largest value jump on the screen, so the brightest
+   thing in the app was its own badge. A warm off-white at 82% lets the glass
+   read through, keeps the wordmark legible, and lets the rail's contents win
+   the eye instead. */
+.rail-logo-frame{width:104px;height:104px;border-radius:50%;background:rgba(253,248,240,.82);padding:0;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;box-shadow:0 0 0 2px rgba(212,160,23,.75),0 0 0 6px rgba(212,160,23,.16),0 0 22px rgba(212,160,23,.20),0 10px 30px rgba(0,0,0,.45);overflow:hidden;flex-shrink:0;}
 .rail-logo-frame::before{content:'';position:absolute;inset:-11px;border-radius:50%;border:1px dashed rgba(212,160,23,.35);pointer-events:none;}
-.rail-logo-frame img{width:118%;height:118%;object-fit:cover;object-position:center;display:block;filter:drop-shadow(0 1px 2px rgba(0,0,0,.15));}
+.rail-logo-frame img{width:118%;height:118%;object-fit:cover;object-position:center;display:block;opacity:.9;filter:drop-shadow(0 1px 2px rgba(0,0,0,.15));}
 .rail-logo-text{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:2px;}
 /* Wordmark typography: Cinzel at a larger size with wider tracking reads as an
    engraved institutional mark rather than a heading. The subtitles step DOWN in

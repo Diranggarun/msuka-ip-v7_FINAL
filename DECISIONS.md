@@ -188,6 +188,57 @@ Two things this let us delete rather than maintain: the phone-only rule hiding t
 
 ---
 
+## Chat mockup: what was taken from it, and what was not
+
+**Decision:** The August 2026 chat mockup was implemented selectively. Taken: the
+detached glass panels at 24px, one shared glass recipe, the `LOCAL. ACADEMIC.
+PERSISTENCE.` strip, the Unread filter pill, and a faded rail logo. Not taken:
+the rail's `Groups` / `Private` / `New Group` entries, `Dashboard`, `Settings`,
+photographic avatars, and the chat header's search / video / overflow buttons.
+
+**Context:** The mockup arrived after several of these questions had already been
+settled here, and it reopens some of them. Rather than treat the picture as
+either binding or advisory, each element was judged on whether it could be built
+as something real.
+
+**Reasoning, item by item:**
+
+- **Rail Groups / Private / New Group — not taken.** The mockup shows these in
+  the rail *and* keeps the filter pills above the list. Commit `8ce0663` removed
+  exactly these because they fired the identical `switchNav()` calls as the
+  pills. Building the mockup as drawn would restore a duplication that was
+  deliberately removed and documented one section above. New Group remains the
+  floating **+**.
+- **`Dashboard` and `Settings` — deferred, not stubbed.** Neither is a screen in
+  this app. A nav item that opens nothing is a defect, and "coming soon" is a
+  defect with a label on it. Settings is specified (change password + profile)
+  and blocked only on what "profile" means: editable display name, or photo
+  upload — the latter needs an upload path, encryption at rest and an
+  authenticated serving route, and is its own project.
+- **Photographic avatars — not taken.** There is no photo storage. Initials on a
+  role-coloured disc is what both pages already do, and it is one system rather
+  than two.
+- **Chat header search / video / overflow — not taken.** This is audio-only
+  WebRTC, so a video button could never place a video call; in-conversation
+  search does not exist; and nothing exists to put behind an overflow menu. All
+  three would be dead controls. `admin.html` had a panel with no way to reach it
+  for the same class of reason, and it was worth fixing, not repeating.
+- **Logo faded rather than gold.** The brief was "fade it or use the gold logo".
+  The wordmark is already maroon-to-gold on transparency, so a gold variant is a
+  new asset to draw, not a CSS change — and the mark needs a light disc behind it
+  to stay legible at all. What made it shout was the disc: pure `#fff` against
+  dark maroon glass is the largest value jump on the screen, which made the app's
+  own badge the brightest thing in it. The disc is now warm off-white at 82% with
+  the mark at 90%, applied identically in `index.html` and `admin.html` so the
+  two pages do not drift.
+
+**Trade-offs:** The running app now differs from the picture in visible ways, and
+anyone comparing them will notice. That is preferred to shipping five controls
+that do nothing. Every item above is a small change to reverse if the call was
+wrong — the rail entries are markup, the logo is two declarations.
+
+---
+
 ## Stack divergence from the original plan
 
 The original capstone plan called for **FastAPI + React + Vite + Pydantic + Alembic migrations**. The actual build is **Node.js + Express + Socket.IO + vanilla HTML/JS + ad-hoc schema-init via `CREATE TABLE IF NOT EXISTS`**.
