@@ -1450,6 +1450,15 @@ io.on('connection', async(socket)=>{
     // A group call room is the group's own key, so only its members may join —
     // same access rule as the group's messages. Refusing here stops a non-member
     // from receiving a private call's peer list and WebRTC signaling.
+    // Global Chat is not callable. Every approved account is in it, and a group
+    // call here is a full mesh — each participant opens a peer connection to
+    // every other, so N people means N(N-1)/2 connections and N-1 upstreams per
+    // browser. That does not work at class size and would saturate the LAN long
+    // before it failed politely. Refused on the server, not just hidden in the
+    // UI, so it cannot be started from the console either.
+    if(roomId === 'group_general'){
+      return socket.emit('room:error',{reason:'Global Chat does not support group calls. Start one from a group chat.'});
+    }
     if(!(await canAccessConv(id, roomId))){
       await logAudit(id,'ACCESS_DENIED',`Blocked room:join on ${roomId}`,socket);
       return socket.emit('room:error',{reason:'You are not a member of this call.'});

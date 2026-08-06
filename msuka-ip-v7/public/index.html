@@ -936,7 +936,16 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 /* The chat's identity band: maroon, so the open conversation is visually
    "titled" the same way the rail and the list are, and the cream message area
    below reads as the page inside a bound cover. */
-.chat-header{background:linear-gradient(135deg,var(--maroon-dark),var(--maroon));color:var(--ink);padding:.85rem 1.1rem;min-height:92px;border-bottom:1px solid var(--chrome-edge);display:flex;align-items:center;gap:14px;flex-shrink:0;position:relative;}
+/* Chrome, not the bright brand maroon. This was the one dark surface still
+   painted with --maroon-dark -> --maroon (#4a0000 -> #6B0000) while the rail
+   and the conversation list use --chrome -> --chrome-deep, so it read as a
+   saturated red slab beside them rather than the same material.
+   Opaque values rather than the rgba tokens: this sits on the cream paper
+   panel, and the alpha ones would blend upward into a lighter, different
+   colour. No backdrop-filter either — the surface behind it is opaque paper,
+   so there is nothing to blur, and glass-inside-glass is a documented problem
+   in this file. The grain tile is shared with every other chrome surface. */
+.chat-header{background-color:#26090A;background-image:var(--grain),linear-gradient(135deg,#2E0A0A,#1A0505);background-repeat:repeat,no-repeat;background-size:160px 160px,auto;background-blend-mode:overlay,normal;color:var(--ink);padding:.85rem 1.1rem;min-height:92px;border-bottom:1px solid var(--chrome-edge);display:flex;align-items:center;gap:14px;flex-shrink:0;position:relative;}
 /* Soft gold hairline where the maroon band meets the cream paper — it fades out
    at both ends so the join reads as an engraved rule rather than a hard border.
    Drawn over the existing 1px border, which stays as the fallback edge. */
@@ -3149,7 +3158,9 @@ function openConversation(key) {
     else { const isOn=onlineUsers.some(u=>u.email===conv.email); sub.innerHTML=`<span class="status-dot ${isOn?'online':'offline'}"></span>${isOn?'Online':'Offline'}`; }
   }
   document.getElementById('call-btn').style.display=isGroup?'none':'flex';
-  document.getElementById('group-call-btn').style.display=isGroup?'flex':'none';
+  // Global Chat is a group by key but is not callable — see the room:join
+  // guard in server.js for why (mesh WebRTC does not scale to everyone).
+  document.getElementById('group-call-btn').style.display=(isGroup && !isGlobal)?'flex':'none';
   document.getElementById('empty-state').style.display='none';
   document.getElementById('chat-panel').classList.add('active');
   if(!conv.messages||conv.messages.length===0) socket.emit('messages:get',{key});
@@ -3468,6 +3479,7 @@ async function startGroupCall(){
   // joins the same room (a random per-caller id could never be shared, so the
   // old scheme left each caller alone). The server only lets group members join.
   if(!activeConvKey || !activeConvKey.startsWith('group_')){ alert('Open a group chat to start a group call.'); return; }
+  if(activeConvKey === 'group_general'){ alert('Global Chat does not support group calls. Start one from a group chat.'); return; }
   groupStream=await getMic();
   if(!groupStream)return;
   currentRoomId=activeConvKey;

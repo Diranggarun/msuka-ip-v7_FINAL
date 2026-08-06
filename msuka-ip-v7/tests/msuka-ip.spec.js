@@ -496,6 +496,26 @@ test.describe('2. Messenger UI Tests', () => {
     console.log('✅ Reduced-transparency fallback disables blur and paints both panels opaque');
   });
 
+  test('2.14 Global Chat offers no group call, and the server refuses one', async ({ page }) => {
+    await openGlobalChat(page);
+    // Global Chat is a group by key, but calling it would be a full mesh across
+    // every approved account — N(N-1)/2 peer connections.
+    await expect(page.locator('#group-call-btn')).toBeHidden();
+    await expect(page.locator('#call-btn')).toBeHidden();
+
+    // Hiding the button is not the guard. Ask the server directly, the way the
+    // console would.
+    const refusal = await page.evaluate(() => new Promise(resolve => {
+      /* eslint-disable no-undef -- evaluated in the browser page context */
+      const t = setTimeout(() => resolve('(no reply)'), 4000);
+      socket.once('room:error', ({ reason }) => { clearTimeout(t); resolve(reason); });
+      socket.emit('room:join', { roomId: 'group_general' });
+      /* eslint-enable no-undef */
+    }));
+    expect(refusal).toMatch(/does not support group calls/i);
+    console.log('✅ Global Chat group call hidden in UI and refused by the server');
+  });
+
   test('2.10 Logout button works', async ({ page }) => {
     await page.click('button[onclick="logout()"]');
     await expect(page.locator('#auth-screen')).toBeVisible();

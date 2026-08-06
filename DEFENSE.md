@@ -274,6 +274,77 @@ The panel may frame this as "you're storing student communications — how do yo
 
 ---
 
+## 9b. "What network security protocols did you use?"
+
+Answer by asset, because they genuinely differ. Reading the same answer for
+voice and for text would be wrong.
+
+| Asset | In transit | At rest |
+|---|---|---|
+| Chat text | TLS on `:3443` (plain HTTP on `:3000`) | AES-256-GCM |
+| Voice | **DTLS-SRTP**, peer-to-peer | never stored |
+| Images / files | as text | AES-256-GCM |
+| Signalling | Socket.IO over the page origin (WSS on 3443) | — |
+| Passwords | as above | bcrypt, 12 rounds |
+
+### Voice is the strongest claim you have
+
+WebRTC **mandates** DTLS-SRTP — there is no unencrypted mode. Keys are
+negotiated directly between the two browsers, and the media never touches the
+server: `server.js` only relays SDP offers/answers and ICE candidates.
+
+So say it plainly: **even a compromised MSUkaIP server cannot listen to a call.**
+That is a stronger property than the text path has, and it is true.
+
+`iceServers: []` is deliberate — no STUN/TURN, so peers use host candidates and
+must share a subnet. That is the offline-LAN requirement, not an oversight.
+
+### At rest: what GCM buys beyond secrecy
+
+Key derived with `scrypt` from `AES_SECRET` + `AES_SALT`; 96-bit random IV per
+message; and GCM is *authenticated* encryption, so the auth tag detects tampering
+as well as hiding content. Decryption is fail-closed — it throws rather than
+returning plaintext. Files are encrypted the same way, stored outside `public/`,
+and served only through an authenticated `GET /uploads/:name`.
+
+### Two limits to state before the panel finds them
+
+Both are threat-model boundaries, not gaps — say them first and they read as
+rigour.
+
+**1. Port 3000 is plain HTTP.** Text and files over `http://<ip>:3000` are not
+encrypted in transit on the LAN. `:3443` with the self-signed certificate is the
+encrypted path, and it exists mainly because browsers require a secure origin for
+microphone access.
+
+> *"Can a classmate with Wireshark read messages on the campus wifi?"*
+> Over `:3000`, yes. That is why the deployment guide and the demo both use
+> `:3443`, and why the mic simply does not work on the plain-HTTP origin.
+
+**Demo on `:3443`.**
+
+**2. Encryption at rest is not end-to-end.** The server holds the key, so it can
+read every message. What AES-256-GCM protects against is someone who obtains the
+*database file* — a stolen laptop, a copied backup, a discarded drive — not the
+server operator. Do not claim E2E: it is easy to disprove and the honest version
+is defensible.
+
+> *"So the admin can read my messages?"*
+> The admin API deliberately **refuses** to return message content
+> (`GET /api/admin/messages` returns 403 — see test 9.4). Someone with shell
+> access to the server could, and that is the accepted trust boundary for a
+> single-server LAN deployment.
+
+### Supporting controls
+
+CSP, `X-Frame-Options: DENY`, `nosniff`, Referrer-Policy and Permissions-Policy
+on every response; HSTS added only when the request is already secure. JWT HS256
+with an 8-hour expiry and a `token_version` column that revokes every outstanding
+token instantly (logout, password change, reject, delete). Login rate limiting at
+5 failures per 15 minutes per IP+email.
+
+---
+
 ## 10. If anything goes wrong on demo day
 
 Open `DEBUGGING.md`. Every error message listed there is something we hit and solved during build, so the fix is one paragraph away.
