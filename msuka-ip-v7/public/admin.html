@@ -681,6 +681,12 @@ tr:hover td{background:var(--maroon-soft);}
 .set-msg{font-size:.76rem;font-weight:700;min-height:1.1em;margin:0;}
 .set-msg.ok{color:#1B7A44;}
 .set-msg.bad{color:#B23A2E;}
+/* A response either carries a comment or it does not — an icon reads faster
+   down a column than truncated prose, and the full text sits in the title. */
+.fb-note-dot{display:inline-flex;color:var(--gold-dark);cursor:help;}
+.fb-note-dot svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+.fb-note-none{color:var(--gray-200);}
+
 /* ═══ S3 · broadcast composer ═════════════════════════════════════════════ */
 .bc-note{font-size:.78rem;color:var(--text-light);margin-bottom:10px;line-height:1.5;}
 .bc-text{width:100%;padding:.7rem .85rem;border:1px solid var(--gray-200);border-radius:11px;
@@ -1192,8 +1198,8 @@ tr:hover td{background:var(--maroon-soft);}
           <h4 style="font-family:'Cinzel',serif;color:var(--maroon-dark);font-size:.9rem;margin-bottom:.6rem;">All Responses</h4>
         </div>
         <table>
-          <thead><tr><th>#</th><th>Name</th><th>Type</th><th>Device</th><th>A</th><th>B</th><th>C</th><th>D</th><th>Overall</th><th>Submitted</th><th>Action</th></tr></thead>
-          <tbody id="feedback-tbody"><tr><td colspan="11" class="empty">Loading…</td></tr></tbody>
+          <thead><tr><th>#</th><th>Name</th><th>Type</th><th>Device</th><th>A</th><th>B</th><th>C</th><th>D</th><th>Overall</th><th>Comment</th><th>Submitted</th><th>Action</th></tr></thead>
+          <tbody id="feedback-tbody"><tr><td colspan="12" class="empty">Loading…</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -1326,6 +1332,9 @@ async function loadFeedback(){
             <div style="font-size:.74rem;color:rgba(255,255,255,.7);">Overall Weighted Mean / 5.00</div>
             <div style="font-size:.85rem;font-weight:800;color:var(--gold-bright);margin-top:.3rem;">${interp.label}</div>
             <div style="font-size:.7rem;color:rgba(255,255,255,.6);margin-top:.4rem;">${summary.total} respondent${summary.total>1?'s':''}</div>
+            <!-- The qualitative sample size. Chapter 4 quotes comments, so how
+                 many there are to quote from belongs next to the mean. -->
+            <div style="font-size:.7rem;color:var(--gold);margin-top:.15rem;">${responses.filter(r=>r.notes).length} left a comment</div>
           </div>
           <div>
             <h4 style="font-family:'Cinzel',serif;color:var(--maroon-dark);font-size:.85rem;margin-bottom:.5rem;">Aggregate by Capstone Section</h4>
@@ -1340,7 +1349,7 @@ async function loadFeedback(){
     // Table
     const tbody=document.getElementById('feedback-tbody');
     if(!responses.length){
-      tbody.innerHTML='<tr><td colspan="11" class="empty">No responses yet</td></tr>';
+      tbody.innerHTML='<tr><td colspan="12" class="empty">No responses yet</td></tr>';
       return;
     }
     tbody.innerHTML=responses.map((r,i)=>`
@@ -1354,6 +1363,9 @@ async function loadFeedback(){
         <td>${Number(r.mean_c).toFixed(2)}</td>
         <td>${Number(r.mean_d).toFixed(2)}</td>
         <td><strong style="color:var(--maroon)">${Number(r.overall).toFixed(2)}</strong></td>
+        <td>${r.notes
+          ? `<span class="fb-note-dot" title="${esc(r.notes)}"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7A8.4 8.4 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5z"/></svg></span>`
+          : '<span class="fb-note-none">—</span>'}</td>
         <td style="color:var(--text-light);font-size:.76rem">${new Date(r.created_at).toLocaleString()}</td>
         <td><button class="btn-sm btn-warning" onclick="viewFeedbackDetail(${r.id})"><svg class="bi" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View</button></td>
       </tr>`).join('');
