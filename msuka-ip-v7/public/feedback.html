@@ -181,6 +181,25 @@ button,label{touch-action:manipulation;}
 
 ::-webkit-scrollbar{width:4px;}
 ::-webkit-scrollbar-thumb{background:rgba(107,0,0,.2);border-radius:4px;}
+
+/* ── Open comment ───────────────────────────────────────────────────────────
+   The Likert means say how highly people rated MSUkaIP; this is where they say
+   why, which is the part Chapter 4 can quote. Optional on purpose — making it
+   required would cost responses, and a forced comment is rarely a real one. */
+.note-wrap{/* padding comes from .section-card */}
+.note-label{display:block;font-size:.86rem;font-weight:700;color:var(--text-dark);margin-bottom:.5rem;}
+.note-input{width:100%;padding:.75rem .9rem;border:1.5px solid var(--gray-200);border-radius:12px;
+  font-family:'Nunito',sans-serif;font-size:.9rem;line-height:1.5;color:var(--text-dark);
+  background:var(--white);resize:vertical;outline:none;
+  transition:border-color .15s,box-shadow .15s;}
+.note-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,160,23,.16);}
+.note-foot{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-top:.45rem;}
+.note-hint{font-size:.72rem;color:var(--text-light);line-height:1.45;}
+.note-count{font-size:.72rem;color:var(--text-light);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.note-count.over{color:#B23A2E;font-weight:800;}
+@media (max-width:600px){
+  .note-foot{flex-direction:column;gap:4px;}
+}
 </style>
 </head>
 <body>
@@ -300,6 +319,29 @@ button,label{touch-action:manipulation;}
     <div id="section-d"></div>
   </div>
 
+  <!-- OPEN COMMENT -->
+  <div class="section-card">
+    <div class="section-header">
+      <div class="section-icon"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7A8.4 8.4 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5z"/></svg></div>
+      <div>
+        <h3>Section E — Additional Comments</h3>
+        <p>Optional — anything the ratings above did not cover</p>
+      </div>
+    </div>
+    <div class="note-wrap">
+      <label class="note-label" for="resp-notes">
+        What worked well, what did not, or anything you would change?
+      </label>
+      <textarea id="resp-notes" class="note-input" rows="4" maxlength="1000"
+                placeholder="e.g. Sending files was easy, but I could not tell when someone had read my message."
+                oninput="updateNoteCount()"></textarea>
+      <div class="note-foot">
+        <span class="note-hint">Your comment is stored with your ratings and stays anonymous unless you gave a name above.</span>
+        <span class="note-count" id="note-count">0 / 1000</span>
+      </div>
+    </div>
+  </div>
+
   <!-- SUBMIT -->
   <div class="submit-section">
     <p>Thank you for sharing your feedback on <strong>MSUkaIP</strong>.<br>Your responses will be compiled and analyzed for the Chapter 4 results of the capstone paper.</p>
@@ -411,6 +453,14 @@ Object.entries(sections).forEach(([sec, data]) => {
 document.getElementById('resp-date').valueAsDate = new Date();
 
 // ── Submit ──────────────────────────────────────────────────────────────────
+function updateNoteCount(){
+  const el = document.getElementById('resp-notes');
+  const c  = document.getElementById('note-count');
+  if (!el || !c) return;
+  c.textContent = `${el.value.length} / 1000`;
+  c.classList.toggle('over', el.value.length >= 1000);
+}
+
 async function submitQuestionnaire() {
   const type   = document.getElementById('resp-type').value;
   const device = document.getElementById('resp-device').value;
@@ -482,7 +532,8 @@ async function submitQuestionnaire() {
         name: name || null,
         type, device, date,
         sectionScores,
-        overall: Number(overall.toFixed(2))
+        overall: Number(overall.toFixed(2)),
+        notes: (document.getElementById('resp-notes')?.value || '').trim() || null
       })
     });
     if (!resp.ok) {

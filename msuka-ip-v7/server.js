@@ -1079,7 +1079,7 @@ app.get('/api/admin/login-activity/:userId/series',verifyToken,adminOnly,async(r
 // `type` and `device` to keep junk submissions from corrupting the dataset,
 // but accept anonymous `name` for the Chapter-4 evaluation.
 app.post('/api/survey', async (req, res) => {
-  const { name, type, device, date, sectionScores, overall } = req.body || {};
+  const { name, type, device, date, sectionScores, overall, notes } = req.body || {};
   if (!type || !device) return res.status(400).json({ error: 'Respondent type and device are required' });
   if (!sectionScores || typeof sectionScores !== 'object') return res.status(400).json({ error: 'sectionScores required' });
   try {
@@ -1089,8 +1089,11 @@ app.post('/api/survey', async (req, res) => {
     const d = Number(sectionScores.d?.mean ?? 0);
     const ov = Number(overall ?? ((a + b + c + d) / 4));
     await db.query(
-      'INSERT INTO survey_responses (respondent_name,respondent_type,device,response_date,scores_json,mean_a,mean_b,mean_c,mean_d,overall) VALUES (?,?,?,?,?,?,?,?,?,?)',
-      [name || null, type, device, date || null, JSON.stringify(sectionScores), a, b, c, d, ov]
+      'INSERT INTO survey_responses (respondent_name,respondent_type,device,response_date,scores_json,mean_a,mean_b,mean_c,mean_d,overall,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+      // Bounded so a public, unauthenticated endpoint cannot be used to write
+      // unbounded text into the database.
+      [name || null, type, device, date || null, JSON.stringify(sectionScores), a, b, c, d, ov,
+       (String(notes || '').trim().slice(0, 1000)) || null]
     );
     res.json({ message: 'Response saved' });
   } catch (err) {
@@ -1101,7 +1104,7 @@ app.post('/api/survey', async (req, res) => {
 
 app.get('/api/admin/survey', verifyToken, adminOnly, async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT id,respondent_name,respondent_type,device,response_date,mean_a,mean_b,mean_c,mean_d,overall,created_at FROM survey_responses ORDER BY created_at DESC');
+    const [rows] = await db.query('SELECT id,respondent_name,respondent_type,device,response_date,mean_a,mean_b,mean_c,mean_d,overall,notes,created_at FROM survey_responses ORDER BY created_at DESC');
     const [[agg]] = await db.query('SELECT COUNT(*) AS total, AVG(mean_a) AS avg_a, AVG(mean_b) AS avg_b, AVG(mean_c) AS avg_c, AVG(mean_d) AS avg_d, AVG(overall) AS avg_overall FROM survey_responses');
     await logAudit(req.user.id,'VIEW_SURVEY',`Viewed survey responses (${rows.length})`,req);
     res.json({ responses: rows, summary: agg });
@@ -1121,16 +1124,16 @@ app.get('/api/admin/survey/:id', verifyToken, adminOnly, async (req, res) => {
 
 app.get('/api/admin/survey.csv', verifyToken, adminOnly, async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT id,respondent_name,respondent_type,device,response_date,mean_a,mean_b,mean_c,mean_d,overall,scores_json,created_at FROM survey_responses ORDER BY created_at ASC');
+    const [rows] = await db.query('SELECT id,respondent_name,respondent_type,device,response_date,mean_a,mean_b,mean_c,mean_d,overall,scores_json,notes,created_at FROM survey_responses ORDER BY created_at ASC');
     const csvEsc = v => {
       if (v === null || v === undefined) return '';
       const s = String(v).replace(/"/g, '""');
       return /[",\r\n]/.test(s) ? `"${s}"` : s;
     };
-    const header = ['id','name','type','device','date','mean_a','mean_b','mean_c','mean_d','overall','scores_json','created_at'];
+    const header = ['id','name','type','device','date','mean_a','mean_b','mean_c','mean_d','overall','notes','scores_json','created_at'];
     const lines = [header.join(',')];
     for (const r of rows) {
-      lines.push([r.id, r.respondent_name, r.respondent_type, r.device, r.response_date, r.mean_a, r.mean_b, r.mean_c, r.mean_d, r.overall, r.scores_json, r.created_at].map(csvEsc).join(','));
+      lines.push([r.id, r.respondent_name, r.respondent_type, r.device, r.response_date, r.mean_a, r.mean_b, r.mean_c, r.mean_d, r.overall, r.notes, r.scores_json, r.created_at].map(csvEsc).join(','));
     }
     await logAudit(req.user.id,'EXPORT_SURVEY_CSV',`Exported survey CSV (${rows.length} rows)`,req);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');

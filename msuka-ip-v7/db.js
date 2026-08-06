@@ -167,6 +167,10 @@ function ensureSchema() {
   addCol('users',      'token_version INTEGER NOT NULL DEFAULT 0'); // session revocation (RA 10173 Tier 2)
   addCol('audit_logs', 'ip TEXT');                                  // accountability (§21)
   addCol('audit_logs', 'user_agent TEXT');
+  // Free-text comment on the evaluation form. The Likert means say how highly
+  // people rated the system; this is where they say why, which is the part
+  // Chapter 4 can actually quote.
+  addCol('survey_responses', 'notes TEXT');
 }
 
 module.exports = { query, getConnection, ensureSchema, raw, DB_PATH };

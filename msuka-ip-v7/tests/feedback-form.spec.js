@@ -120,6 +120,48 @@ test.describe('13. Feedback Form — full submission', () => {
     console.log('✅ Submission POSTed to /api/survey with overall=4');
   });
 
+  test('13.5 the optional comment is sent, stored and readable on a solid card', async ({ page }) => {
+    await page.goto(`${BASE_URL}/feedback.html`);
+    await page.selectOption('#resp-type', 'Student (4th Year IT/CS)');
+    await page.selectOption('#resp-device', 'Android Smartphone');
+
+    // The card must be opaque. Every section on this page sits over the MSU
+    // gate photograph, and a section built with the wrong classes renders with
+    // the photo showing through its own text — which is how this one shipped
+    // the first time.
+    const bg = await page.evaluate(() =>
+      // eslint-disable-next-line no-undef -- evaluated in the browser page context
+      getComputedStyle(document.querySelector('#resp-notes').closest('.section-card')).backgroundColor);
+    expect(bg, 'the comment card is transparent over the background photo').not.toMatch(/rgba\(0, 0, 0, 0\)/);
+
+    const note = 'Voice calls worked, but 5MB uploads were tight. Commas, "quotes" and all.';
+    await page.fill('#resp-notes', note);
+    await expect(page.locator('#note-count')).toHaveText(`${note.length} / 1000`);
+
+    await answerAll(page, 5);
+    const [request] = await Promise.all([
+      page.waitForRequest(r => r.url().endsWith('/api/survey') && r.method() === 'POST'),
+      page.click('.btn-submit'),
+    ]);
+    expect(request.postDataJSON().notes).toBe(note);
+    console.log('✅ Comment sent with the submission and its card is opaque');
+  });
+
+  test('13.6 the comment is optional', async ({ page }) => {
+    // A required comment would cost responses, and a forced one is rarely real.
+    await page.goto(`${BASE_URL}/feedback.html`);
+    await page.selectOption('#resp-type', 'Student (3rd Year IT/CS)');
+    await page.selectOption('#resp-device', 'Desktop/Laptop (Windows)');
+    await answerAll(page, 4);
+    const [request] = await Promise.all([
+      page.waitForRequest(r => r.url().endsWith('/api/survey') && r.method() === 'POST'),
+      page.click('.btn-submit'),
+    ]);
+    expect(request.postDataJSON().notes).toBeNull();
+    await expect(page.locator('#result-overlay')).toHaveClass(/open/);
+    console.log('✅ Submitting with no comment still works');
+  });
+
   test('13.4 result modal closes via the Close button', async ({ page }) => {
     await page.goto(`${BASE_URL}/feedback.html`);
     await page.selectOption('#resp-type', 'CICS Network Administrator');

@@ -1397,6 +1397,9 @@ async function viewFeedbackDetail(id){
         <div style="font-size:.72rem;color:rgba(255,255,255,.7);">Overall Weighted Mean / 5.00</div>
         <div style="font-size:.85rem;font-weight:800;color:var(--gold-bright);margin-top:.3rem;">${interp.label}</div>
       </div>
+      ${r.notes ? `
+      <h4 style="font-family:'Cinzel',serif;color:var(--maroon-dark);font-size:.85rem;margin:.8rem 0 .3rem;">In their own words</h4>
+      <blockquote style="margin:0 0 .8rem;padding:.75rem .9rem;background:var(--gold-soft);border-left:3px solid var(--gold);border-radius:0 10px 10px 0;font-size:.86rem;line-height:1.6;color:var(--text-dark);white-space:pre-wrap;">${esc(r.notes)}</blockquote>` : ''}
       <h4 style="font-family:'Cinzel',serif;color:var(--maroon-dark);font-size:.85rem;margin:.8rem 0 .3rem;">Section Means</h4>
       ${fbBar(FB_SECTION_LABELS.a, r.mean_a)}
       ${fbBar(FB_SECTION_LABELS.b, r.mean_b)}
