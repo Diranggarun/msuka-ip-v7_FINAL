@@ -1,0 +1,374 @@
+# MSUkaIP — Chapter 1–3 revisions, verified against the paper
+
+Checked line-by-line against **`CAPTSONE1_Final_REVISED_PAPER01.06 (2).pdf`** and
+against the running system on 6 August 2026. Supersedes
+`MSUkaIP_Paper_Revisions (1).docx` (20 July) and my earlier addendum.
+
+**Format is preserved throughout.** Section numbers, table column style
+(`text | Functional | Mandatory`), heading levels and prose voice all match what
+is already in your document. Nothing here changes structure — only content that
+is factually wrong or missing.
+
+Ordered by section so you can work top to bottom.
+
+**Legend** — `[MUST]` the paper currently describes something the system does not
+do; a panel comparing paper to demo will find it. `[ADD]` accurate but incomplete;
+adding it strengthens the work.
+
+---
+
+# CHAPTER 1
+
+## `[MUST]` §1.3 Objectives — internal inconsistency
+
+Your General Objectives say **"at least 100 concurrent users"**; Specific
+Objective 3 says **"50-100"**. Section 3.1.2 says **"100 concurrent user
+connections"**. Pick one figure and use it in all three places. Recommended:
+**50–100**, because that is what the non-functional requirement is written
+against.
+
+## `[MUST]` §1.3 — replace Specific Objective 3
+
+Currently: *"…institutional email authentication and AES-256 encryption for
+secure access by 50-100 concurrent users."*
+
+> 3. To integrate the system into the CICS network with institutional email
+>    authentication, an administrator account-approval workflow, and AES-256-GCM
+>    encryption of stored messages and files, for secure access by 50–100
+>    concurrent users.
+
+## `[MUST]` §1.4 — replace the Scope paragraph
+
+The current paragraph omits voice messages, broadcast, the audit log and the
+survey — all of which are built and demonstrable.
+
+> This project focuses on the design, development, and implementation of MSUkaIP,
+> an offline communication system accessible to all students, faculty, and
+> administrators within the College of Information and Computing Sciences. The
+> system supports real-time text messaging in private and group conversations,
+> lightweight image sharing, file sharing for academic documents (PDF and DOCX),
+> push-to-talk voice messages, and localized voice calls over Wi-Fi networks
+> without internet connectivity. Administrators can additionally send broadcast
+> messages to all active users, review a security audit log, and monitor system
+> usage through a dashboard. The system also includes a built-in anonymous
+> evaluation survey used to gather respondent feedback for the study.
+
+## `[ADD]` §1.4 — append to the Limitations paragraph
+
+State these before a panel finds them. Declared, they read as engineering
+judgement.
+
+> Voice calls are limited to one-to-one conversations and to group chats with a
+> defined membership. Group calls are not available in the Global Chat channel:
+> WebRTC group calls use a full mesh topology in which every participant holds a
+> direct connection to every other, so a call among *n* users requires
+> *n(n−1)/2* connections. Because Global Chat contains every approved account in
+> the college, a mesh call there would exceed the capacity of the CICS local
+> network. Furthermore, the encryption of messages and files at rest protects
+> stored data against unauthorized access to the database file or its backups; it
+> is not end-to-end encryption, as the server holds the encryption key in order
+> to support the administrative and audit functions the institution requires.
+
+---
+
+# CHAPTER 2
+
+## `[ADD]` §2.1.3.4 — new subsection after §2.1.3.3
+
+> **2.1.3.4 Republic Act No. 10173 (Data Privacy Act of 2012)**
+>
+> Republic Act No. 10173, the Data Privacy Act of 2012, mandates that entities
+> processing personal information implement reasonable organizational, physical,
+> and technical security measures to protect personal data against unauthorized
+> access, disclosure, and destruction (National Privacy Commission, 2012). Section
+> 20 of the Act specifically requires safeguards such as access control,
+> encryption, and the ability to identify and monitor security incidents. MSUkaIP
+> operationalizes these requirements through several technical measures: user
+> passwords are hashed with the bcrypt algorithm; chat messages and uploaded files
+> are encrypted at rest using AES-256-GCM; uploaded files are stored outside the
+> public web directory and served only to authenticated users; repeated failed
+> logins are rate-limited; user sessions can be revoked immediately through token
+> versioning; and an audit log records the actor, IP address, and device of every
+> security-relevant action. The audit log can be filtered by action type, user,
+> and date range, so that a specific class of event — for example, all failed
+> login attempts against one account in a given week — can be isolated from
+> routine activity, satisfying the Act's monitoring requirement. These measures
+> ensure that a communication system operated by a government-funded academic
+> institution meets its statutory obligation to protect the personal data of its
+> students and faculty.
+
+**Reference to add:**
+National Privacy Commission. (2012). *Republic Act No. 10173: Data Privacy Act of
+2012*. Republic of the Philippines. https://www.privacy.gov.ph/data-privacy-act/
+
+---
+
+# CHAPTER 3
+
+## `[MUST]` §3.1.2 — replace two rows
+
+Replace *"Administrator shall be able to create 'Channels' (Group chat) … and
+generate join codes for Clients"*:
+
+> Users and administrators shall be able to create group chats (channels) for
+> specific subjects and select their members upon creation. | Functional | Mandatory
+
+There is no join-code mechanism in the system. Members are chosen at creation.
+
+Replace *"The Admin shall be able to add/remove, edit, or deactivate user accounts
+based on IP address"*:
+
+> The Admin shall be able to approve pending registrations, and add, edit,
+> deactivate, or remove user accounts. | Functional | Mandatory
+
+Accounts are managed by identity, not by IP address.
+
+## `[ADD]` §3.1.2 — add eight rows
+
+> Users shall be able to record and send push-to-talk voice messages within a conversation. | Functional | Desirable
+>
+> Users shall be able to change their own password, which immediately revokes all other active sessions for that account. | Functional | Mandatory
+>
+> Users shall be able to edit their own display name. | Functional | Desirable
+>
+> The system shall record an audit log of security-relevant actions (logins, failed logins, administrative changes) including the actor, IP address, and device. | Functional | Mandatory
+>
+> The Admin shall be able to filter and search the audit log by action, user, and date range. | Functional | Mandatory
+>
+> The Admin shall be able to send a broadcast announcement to all active users. | Functional | Desirable
+>
+> The Admin shall be able to view all group chats, inspect their membership, and remove a group. | Functional | Mandatory
+>
+> The system shall provide an anonymous Likert-scale evaluation survey for gathering respondent feedback. | Functional | Desirable
+
+## `[MUST]` §3.1.2 — replace the non-functional Security row
+
+> User passwords must be hashed using bcrypt (cost factor 12); chat messages and
+> uploaded files must be encrypted at rest using AES-256-GCM; uploads must be
+> stored in a restricted directory served only to authenticated users; repeated
+> failed logins must be rate-limited to five attempts per fifteen minutes per
+> account and address; the administrative and student portals must be separated so
+> that neither role can authenticate on the other's page; and a secure HTTPS
+> origin must be available on the local network. | Security | Mandatory
+
+---
+
+## `[MUST]` §3.2.4 Entity-Relationship Diagram — replace the paragraph
+
+Your figure caption stays as-is. Replace the description so it matches the seven
+tables actually in the database:
+
+> The Entity-Relationship Diagram defines the logical database structure of
+> MSUkaIP. The schema comprises seven entities. **Users** stores account identity,
+> the bcrypt password hash, role, account status, and a token version used for
+> session revocation. **Messages** stores every message with its conversation key,
+> type, encrypted body, and file metadata, and is linked to its sender.
+> **Groups** stores group chats and their creator, while **Group Members**
+> resolves the many-to-many relationship between users and groups and enforces
+> uniqueness so that a user appears in a group exactly once. **Calls** records
+> voice call attempts with caller, receiver, status, and duration. **Audit Logs**
+> records security-relevant actions with the acting user, IP address, and device.
+>
+> **Survey Responses** stores evaluation results and is deliberately not linked to
+> the users table: the absence of that relationship is what makes the evaluation
+> anonymous, since a stored response cannot be traced back to an account.
+>
+> All relationships are enforced with foreign keys, and the database runs with
+> foreign-key constraints enabled, so referential integrity is maintained by the
+> database engine rather than by application code alone.
+
+**Check your ERD figure shows all seven tables**, including `audit_logs` and
+`survey_responses`. If it was drawn before those existed, it needs redrawing —
+the panel will compare it to the demo.
+
+## `[MUST]` §3.2.5 Architectural Design — replace items C, D, E
+
+Replace **C**:
+
+> **C. VoIP Signaling (WebRTC)**
+>
+> This component sets up and manages voice calls. The server handles only call
+> signaling — exchanging session descriptions and connection candidates between
+> participants through Socket.IO — while the audio itself flows directly between
+> devices as a peer-to-peer WebRTC stream. WebRTC mandates DTLS-SRTP for media,
+> so call audio is encrypted between the two browsers and never traverses the
+> server. Because all participants are on the same local area network and are
+> directly reachable, the system operates with an empty ICE server list: no STUN
+> or TURN servers are required, which keeps the entire call path inside the CICS
+> LAN. Browsers require a secure origin to grant microphone access, so the server
+> also exposes an HTTPS endpoint (port 3443) with a locally generated self-signed
+> TLS certificate for LAN clients.
+
+Replace **D** (currently *"PostgreSQL / MySQL Database"* — neither is used):
+
+> **D. SQLite Database**
+>
+> The system uses SQLite, an embedded relational database engine accessed through
+> Node.js's built-in `node:sqlite` module. All persistent data — user accounts,
+> group chats, messages, call records, audit logs, and survey responses — is
+> stored in a single database file on the local server. SQLite runs in
+> Write-Ahead Logging (WAL) mode, which allows concurrent readers alongside a
+> writer and is well suited to the system's scale of 50–100 concurrent users on a
+> single LAN server. Because SQLite requires no separate database server process,
+> installation, or credentials, it simplifies deployment on the college server and
+> makes backup a matter of copying one file.
+
+Replace **E** (currently *"Redis Cache"* — there is no Redis):
+
+> **E. In-Memory Presence and Session State**
+>
+> Fast-changing data such as online status, active sessions, and login rate-limit
+> counters are held directly in the Node.js server's memory and synchronized to
+> clients through Socket.IO events. Because MSUkaIP runs as a single server on the
+> local network, this in-process approach provides instant presence updates
+> without the operational overhead of an external cache such as Redis.
+
+## `[ADD]` §3.2.5 — new item after E
+
+> **F. Access Control and Session Management**
+>
+> Authentication issues a signed JSON Web Token carrying the user's identity,
+> role, and a token version number. Every request revalidates that version against
+> the database, so incrementing it invalidates all outstanding tokens for an
+> account instantly — used on sign-out, password change, account rejection, and
+> account deletion. Tokens expire after eight hours.
+>
+> Authorization is enforced per conversation rather than per page. Before a
+> message is read from or written to a group conversation, the server confirms the
+> requesting account appears in that group's membership table; a request failing
+> this check is refused and recorded in the audit log as an access violation. The
+> same rule governs entry to a group call, so a non-member cannot obtain the peer
+> list or exchange signaling data for a call they were not part of. The student
+> and administrative interfaces are separate pages with separate login endpoints,
+> and each refuses accounts belonging to the other role.
+
+## `[ADD]` §3.2.6 Network Architecture Design — append two paragraphs
+
+Your existing description of the LinkCode topology is accurate and stays. Add:
+
+> Within this topology the server exposes two endpoints. Port 3000 serves the
+> application over HTTP for general access, while port 3443 serves the same
+> application over HTTPS using a self-signed TLS certificate generated on first
+> start. The secure endpoint exists because browsers grant microphone access only
+> to a secure origin, so voice features require it; it also encrypts message and
+> file traffic in transit across the LAN.
+>
+> Voice traffic does not follow the same path as messaging traffic. Messages and
+> files travel from client to server and back, whereas call audio establishes a
+> direct peer-to-peer path between the two participating devices after signaling
+> completes. Because both devices sit within the same LAN segment, this media path
+> stays inside the college network and does not pass through the MSUkaIP server at
+> all, reducing server load and keeping call latency low.
+
+## `[MUST]` §3.3.1 Software Specification — replace tables A, B, C, F
+
+**A. Programming Language**
+
+> JavaScript (Node.js) | Backend logic for authentication, message handling, encrypted file transfer, VoIP signaling, and administration.
+>
+> HTML, CSS, and JavaScript | Front-end interface for real-time user interaction, served directly with no build step.
+
+**B. Development Framework**
+
+> Express.js (Node.js) | Manages REST API requests and server-side operations.
+>
+> Socket.IO | Provides real-time messaging, presence, and VoIP signaling between clients over the LAN.
+>
+> WebRTC (browser API) | Establishes direct peer-to-peer audio streams for voice calls.
+
+Remove the **Vue.js / React** row — the front end is vanilla HTML/CSS/JS with no
+build step.
+
+**C. Database Management System**
+
+> SQLite (via Node.js built-in `node:sqlite`, WAL mode) | Stores persistent system data aligned with the ERD (users, groups, messages, calls, audit logs, survey responses) in a single local database file.
+
+**D. Server and Communication Protocol** — add one row:
+
+> HTTPS (TLS, self-signed certificate) | Secure endpoint on port 3443 providing the secure origin browsers require for microphone access on LAN clients.
+
+**F. Other Tools**
+
+> Version Control | Git / GitHub | Code tracking and collaboration.
+>
+> Automated Testing | Playwright | End-to-end browser test suites covering authentication, messaging, security, and the feedback form.
+>
+> Static Analysis | ESLint | Code quality checks on server and inline front-end scripts.
+>
+> Security Measures | Login rate limiting, JWT token versioning, audit logging | Account protection, immediate session revocation, and security monitoring.
+>
+> UML Tools | Lucidchart, Draw.io | Diagram creation.
+>
+> Network Design | Cisco Packet Tracer | Designing the network architecture.
+
+Remove the **Postman, JMeter** row — neither is used.
+
+---
+
+## `[ADD]` §3.4 Testing — append to the opening paragraph
+
+Your §3.4 describes respondent testing only. Add the automated and security
+testing that was actually performed:
+
+> In addition to respondent evaluation, the system was verified through automated
+> testing. System testing was conducted using Playwright, an automated
+> browser-driven testing framework, executed against both Chromium and Firefox to
+> verify that behaviour does not depend on a single rendering engine. The suite
+> exercises the system through its interface rather than its API alone, covering
+> authentication and portal separation, real-time messaging, file and image
+> upload, the administrative dashboard, the evaluation form, responsive behaviour
+> at mobile and desktop widths, and a dedicated group of authorization and
+> security tests. Static analysis was performed with ESLint across both server
+> code and the inline scripts of the front-end pages.
+>
+> Security testing was adversarial rather than confirmatory: each control was
+> attacked before and after implementation, and a test was accepted only once it
+> had been demonstrated to fail against the unfixed system.
+
+## `[MUST]` §3.4.3 — retitle
+
+Currently **"3.4.3 tools (questionnaire)"**, which implies the questionnaire is
+the only instrument. Retitle to **"3.4.3 Tools and Instruments"** and add a short
+paragraph before the questionnaire description:
+
+> Two instruments were used. The evaluation questionnaire described below gathers
+> respondent perception, and the automated test suite described in Section 3.4
+> verifies functional correctness and security independently of respondent
+> opinion. The questionnaire is delivered by the system itself as an anonymous
+> web form, and responses are written directly to the system database.
+
+## `[ADD]` §3.4.3 — add a fifth questionnaire component
+
+Your components list A–D. The form now also collects an open comment:
+
+> **E. Additional Comments**
+>
+> An optional free-text field inviting respondents to describe what worked well,
+> what did not, and what they would change. This provides the qualitative data
+> reported alongside the weighted means.
+
+---
+
+# Items to carry to the oral defense
+
+Keep these ready — each stack change is a delivery-time refinement, not a scope
+change. Functional requirements were unaffected.
+
+- **SQLite instead of MySQL/PostgreSQL** — zero-configuration deployment on the
+  college server; no separate database service, credentials, or schema-creation
+  step. Backup is copying one file.
+- **No Redis** — a cache tier is justified when multiple servers share state.
+  MSUkaIP is a single server, so in-process memory is both simpler and faster.
+- **Vanilla HTML/CSS/JS instead of Vue/React** — no build toolchain means the
+  system deploys by copying files and runs on any browser in the lab.
+- **Playwright instead of Postman/JMeter** — end-to-end browser tests exercise the
+  system exactly as respondents use it, rather than testing endpoints in
+  isolation.
+- **No STUN/TURN** — those exist to traverse NAT between networks. All MSUkaIP
+  peers are on one LAN and directly reachable.
+- **Voice is the strongest security claim** — WebRTC mandates DTLS-SRTP; media
+  never touches the server, so even a compromised server could not listen to a
+  call.
+- **Encryption at rest is not end-to-end** — deliberately, because end-to-end
+  encryption is incompatible with the administrative oversight the institution
+  requires. It protects against theft of the database file or a backup.
