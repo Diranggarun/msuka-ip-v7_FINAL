@@ -738,9 +738,9 @@ test.describe('5. Admin Dashboard Tests', () => {
 
     const rows = await page.locator('#pending-tbody tr').count();
     expect(rows).toBe(10);
-    await expect(page.locator('.pager-info')).toHaveText(`Showing 1–10 of ${total}`);
+    await expect(page.locator('#pending-pager .pager-info')).toHaveText(`Showing 1–10 of ${total}`);
     // On page 1 there is nowhere back to go.
-    await expect(page.locator('.pager-btns .pg').first()).toBeDisabled();
+    await expect(page.locator('#pending-pager .pg').first()).toBeDisabled();
 
     // The final page holds the remainder, and Next is spent.
     const pages = Math.ceil(total / 10);
@@ -748,7 +748,7 @@ test.describe('5. Admin Dashboard Tests', () => {
     await page.evaluate((p) => gotoPending(p), pages);
     const lastRows = await page.locator('#pending-tbody tr').count();
     expect(lastRows).toBe(total - (pages - 1) * 10);
-    await expect(page.locator('.pager-btns .pg').last()).toBeDisabled();
+    await expect(page.locator('#pending-pager .pg').last()).toBeDisabled();
     console.log(`✅ Pending paginates — ${total} requests over ${pages} pages, last page has ${lastRows}`);
   });
 

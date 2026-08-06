@@ -795,14 +795,52 @@ app.delete('/api/admin/users/:id',verifyToken,adminOnly,async(req,res)=>{
     res.json({message:'Deleted'});
   } catch(err){ res.status(500).json({error:'Server error: '+err.message}); }
 });
+// Actions the log can be filtered by. An allow-list rather than passing the
+// query string into SQL: this route takes user input now, which it did not
+// before. VIEW_* are the admin's own reads and dominate the table (~70% of
+// rows), which is why the client can exclude them in one switch.
+const AUDIT_ACTIONS = ['LOGIN','LOGIN_FAILED','LOGOUT','REGISTER','APPROVE','REJECT',
+  'ADD_USER','EDIT_USER','DELETE_USER','PASSWORD_CHANGED','PASSWORD_CHANGE_FAILED',
+  'PROFILE_UPDATED','ACCESS_DENIED','BROADCAST','DELETE_GROUP','BACKUP',
+  'VIEW_USERS','VIEW_PENDING','VIEW_LOGS','VIEW_SURVEY','EXPORT_SURVEY_CSV',
+  'VIEW_LOGIN_ACTIVITY','VIEW_LOGIN_SERIES','VIEW_MESSAGES','VIEW_GROUPS'];
+const AUDIT_VIEW_ACTIONS = AUDIT_ACTIONS.filter(a => a.startsWith('VIEW_') || a === 'EXPORT_SURVEY_CSV');
+
 app.get('/api/admin/logs',verifyToken,adminOnly,async(req,res)=>{
   try {
-    const [r]=await db.query('SELECT l.*,u.name AS user_name FROM audit_logs l LEFT JOIN users u ON l.user_id=u.id ORDER BY l.created_at DESC LIMIT 100');
-    await logAudit(req.user.id,'VIEW_LOGS','Viewed audit logs',req);
-    res.json(r);
-  }
-  catch { res.status(500).json({error:'Server error'}); }
+    const where = [], args = [];
+    // Every branch below is a placeholder — nothing from the query string is
+    // ever concatenated into the SQL text.
+    if (req.query.action && AUDIT_ACTIONS.includes(req.query.action)) { where.push('l.action=?'); args.push(req.query.action); }
+    if (req.query.userId && /^\d+$/.test(req.query.userId))           { where.push('l.user_id=?'); args.push(Number(req.query.userId)); }
+    // Dates arrive as YYYY-MM-DD; anything else is dropped rather than guessed.
+    if (/^\d{4}-\d{2}-\d{2}$/.test(req.query.from || ''))             { where.push('l.created_at>=?'); args.push(req.query.from + ' 00:00:00'); }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(req.query.to   || ''))             { where.push('l.created_at<=?'); args.push(req.query.to   + ' 23:59:59'); }
+    if (req.query.securityOnly === '1') {
+      where.push(`l.action NOT IN (${AUDIT_VIEW_ACTIONS.map(()=>'?').join(',')})`);
+      args.push(...AUDIT_VIEW_ACTIONS);
+    }
+    const q = String(req.query.q || '').trim();
+    if (q) {
+      // Escape the LIKE wildcards so a literal % or _ searches for itself.
+      const needle = '%' + q.replace(/[\\%_]/g, c => '\\' + c) + '%';
+      where.push("(l.details LIKE ? ESCAPE '\\' OR u.name LIKE ? ESCAPE '\\' OR l.action LIKE ? ESCAPE '\\')");
+      args.push(needle, needle, needle);
+    }
+    const clause = where.length ? 'WHERE ' + where.join(' AND ') : '';
+
+    const perPage = Math.min(200, Math.max(25, Number(req.query.perPage) || 50));
+    const page    = Math.max(1, Number(req.query.page) || 1);
+    const [[{ total }]] = await db.query(
+      `SELECT COUNT(*) AS total FROM audit_logs l LEFT JOIN users u ON l.user_id=u.id ${clause}`, args);
+    const [r]=await db.query(
+      `SELECT l.*,u.name AS user_name FROM audit_logs l LEFT JOIN users u ON l.user_id=u.id
+       ${clause} ORDER BY l.created_at DESC LIMIT ? OFFSET ?`, [...args, perPage, (page-1)*perPage]);
+    await logAudit(req.user.id,'VIEW_LOGS',`Viewed audit logs (page ${page}${q?`, q="${q}"`:''})`,req);
+    return res.json({ rows: r, total: Number(total)||0, page, perPage, actions: AUDIT_ACTIONS });
+  } catch { return res.status(500).json({error:'Server error'}); }
 });
+
 app.get('/api/admin/messages',verifyToken,adminOnly,async(req,res)=>{
   // Privacy: admins are not allowed to read user message content.
   res.status(403).json({error:'Message content is private and cannot be viewed by administrators.'});

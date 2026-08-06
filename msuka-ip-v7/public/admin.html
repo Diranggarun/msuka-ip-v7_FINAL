@@ -678,6 +678,25 @@ tr:hover td{background:var(--maroon-soft);}
   .au-list{max-height:300px;}
 }
 
+/* ═══ S2 · audit log filters ══════════════════════════════════════════════ */
+.log-filters{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;margin-bottom:14px;
+  padding-bottom:12px;border-bottom:1px solid var(--paper-line);}
+.lf-field{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.lf-field>span{font-size:.62rem;font-weight:800;color:var(--text-light);text-transform:uppercase;letter-spacing:.06em;}
+.lf-field select,.lf-field input{font-family:'Nunito',sans-serif;font-size:.8rem;padding:.42rem .6rem;
+  border:1px solid var(--gray-200);border-radius:9px;background:var(--white);color:var(--text-dark);outline:none;
+  transition:border-color var(--dur-fast) var(--ease-out);}
+.lf-field select:focus,.lf-field input:focus{border-color:var(--gold);}
+.lf-grow{flex:1;min-width:160px;}
+.lf-grow input{width:100%;}
+.lf-check{display:flex;align-items:center;gap:6px;font-size:.76rem;font-weight:700;color:var(--text-mid);cursor:pointer;}
+.lf-check input{width:16px;height:16px;accent-color:var(--maroon);cursor:pointer;}
+@media (max-width:768px){
+  .log-filters{gap:8px;}
+  .lf-field select,.lf-field input,.lf-check input{min-height:44px;}
+  .lf-check input{min-height:0;width:22px;height:22px;}
+}
+
 /* ═══ S1 · KPI tiles as chart selectors ═══════════════════════════════════
    The tiles are <button> now, so the browser's button defaults have to be
    undone — same treatment the monitor cards needed in A5, and for the same
@@ -1057,7 +1076,30 @@ tr:hover td{background:var(--maroon-soft);}
     <div class="tab-panel" id="tab-logs">
       <div class="card">
         <div class="card-header"><h3><svg class="hi" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Audit Logs</h3><button class="btn-sm btn-warning" onclick="loadLogs()"><svg class="bi" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Refresh</button></div>
+        <div class="log-filters">
+          <label class="lf-field"><span>Action</span>
+            <select id="log-action" onchange="logPage=1;loadLogs()"><option value="">All actions</option></select>
+          </label>
+          <label class="lf-field"><span>From</span>
+            <input type="date" id="log-from" onchange="logPage=1;loadLogs()"/>
+          </label>
+          <label class="lf-field"><span>To</span>
+            <input type="date" id="log-to" onchange="logPage=1;loadLogs()"/>
+          </label>
+          <label class="lf-field lf-grow"><span>Search</span>
+            <input type="search" id="log-q" placeholder="name, action or detail…" oninput="logSearchDebounced()"/>
+          </label>
+          <!-- ~70% of this table is the admin's own VIEW_* reads. Without a way
+               to drop them, the first page of any investigation is your own
+               browsing history. -->
+          <label class="lf-check">
+            <input type="checkbox" id="log-security" onchange="logPage=1;loadLogs()"/>
+            <span>Security events only</span>
+          </label>
+          <button class="btn-sm" type="button" onclick="resetLogFilters()">Clear</button>
+        </div>
         <div id="logs-list"><p class="empty">Loading…</p></div>
+        <div class="pager" id="logs-pager"></div>
       </div>
     </div>
 
@@ -2003,12 +2045,80 @@ async function deleteUser(id){
 
 function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
 
+function renderLogsPager(total, page, perPage, shown){
+  const el = document.getElementById('logs-pager');
+  if (!el) return;
+  const pages = Math.max(1, Math.ceil(total / perPage));
+  if (!total) { el.innerHTML=''; return; }
+  const start = (page-1)*perPage;
+  // Same window rule as the pending table: first and last always reachable,
+  // two either side of the current page. One pager component, not two.
+  const nums=[];
+  for(let p=1;p<=pages;p++){
+    if(p===1||p===pages||Math.abs(p-page)<=2) nums.push(p);
+    else if(nums[nums.length-1]!=='…') nums.push('…');
+  }
+  el.innerHTML = `
+    <span class="pager-info">Showing ${start+1}–${start+shown} of ${total.toLocaleString()}</span>
+    <span class="pager-btns">
+      <button class="pg" ${page===1?'disabled':''} onclick="gotoLogPage(${page-1})" aria-label="Previous page">‹</button>
+      ${nums.map(n=>n==='…'?'<span class="pg-gap">…</span>'
+        :`<button class="pg${n===page?' current':''}"${n===page?' aria-current="page"':''} onclick="gotoLogPage(${n})">${n}</button>`).join('')}
+      <button class="pg" ${page===pages?'disabled':''} onclick="gotoLogPage(${page+1})" aria-label="Next page">›</button>
+    </span>`;
+}
+
+// ── Audit log: filters + server-side paging ────────────────────────────────
+// The route used to end in LIMIT 100 with no parameters, so 26,000 rows were
+// unreachable. Filtering happens on the server — pulling the table into the
+// browser to filter it there would be worse at every size.
+let logPage = 1, _logSearchTimer = null, _logActionsFilled = false;
+
+function logSearchDebounced(){
+  clearTimeout(_logSearchTimer);
+  _logSearchTimer = setTimeout(() => { logPage = 1; loadLogs(); }, 300);
+}
+
+function resetLogFilters(){
+  ['log-action','log-from','log-to','log-q'].forEach(id => { const e=document.getElementById(id); if(e) e.value=''; });
+  const sec=document.getElementById('log-security'); if(sec) sec.checked=false;
+  logPage = 1; loadLogs();
+}
+
+function logQuery(){
+  const v = id => (document.getElementById(id)?.value || '').trim();
+  const p = new URLSearchParams({ page:String(logPage), perPage:'50' });
+  if (v('log-action')) p.set('action', v('log-action'));
+  if (v('log-from'))   p.set('from',   v('log-from'));
+  if (v('log-to'))     p.set('to',     v('log-to'));
+  if (v('log-q'))      p.set('q',      v('log-q'));
+  if (document.getElementById('log-security')?.checked) p.set('securityOnly','1');
+  return p.toString();
+}
+
+function gotoLogPage(n){ logPage = n; loadLogs(); }
+
 async function loadLogs(){
   try{
-    const res=await fetch('/api/admin/logs',{headers:{Authorization:`Bearer ${authToken}`}});
-    const logs=await res.json();
+    const res=await fetch(`/api/admin/logs?${logQuery()}`,{headers:{Authorization:`Bearer ${authToken}`}});
+    const data=await res.json();
+    const logs=data.rows||[];
     const el=document.getElementById('logs-list');
-    if(!logs.length){el.innerHTML='<p class="empty">No audit logs yet</p>';return;}
+    // Fill the action dropdown once, from the server's own allow-list, so the
+    // options can never drift from what the filter will actually accept.
+    if(!_logActionsFilled && Array.isArray(data.actions)){
+      const sel=document.getElementById('log-action');
+      if(sel){ sel.innerHTML='<option value="">All actions</option>'+
+        data.actions.map(a=>`<option value="${esc(a)}">${esc(a)}</option>`).join(''); _logActionsFilled=true; }
+    }
+    renderLogsPager(data.total||0, data.page||1, data.perPage||50, logs.length);
+    if(!logs.length){
+      const filtered = logQuery().split('&').some(kv => !/^(page|perPage)=/.test(kv));
+      el.innerHTML = `<p class="empty">${filtered
+        ? 'No audit entries match these filters.'
+        : 'No audit logs yet'}</p>`;
+      return;
+    }
     const SVG = s => `<svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24">${s}</svg>`;
     const icons={
       LOGIN:        SVG('<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>'),

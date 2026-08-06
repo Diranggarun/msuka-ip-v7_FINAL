@@ -249,6 +249,47 @@ test.describe('9. Authorization & Security', () => {
     console.log('✅ Profile rename validated and restored');
   });
 
+  test('9.12 audit log filters narrow server-side and validate their input', async () => {
+    const h = { headers: { Authorization: `Bearer ${adminToken}` } };
+    const get = async qs => (await (await ctx.get(`/api/admin/logs?${qs}`, h)).json());
+
+    expect((await ctx.get('/api/admin/logs')).status()).toBe(401);
+    expect((await ctx.get('/api/admin/logs', { headers: { Authorization: `Bearer ${userToken}` } })).status()).toBe(403);
+
+    const all = await get('');
+    expect(all.total).toBeGreaterThan(100);          // the old route capped at 100
+    expect(all.rows.length).toBeLessThanOrEqual(all.perPage);
+
+    // A filter must narrow the TOTAL, not just the page — that is the difference
+    // between filtering on the server and hiding rows in the browser.
+    const failed = await get('action=LOGIN_FAILED');
+    expect(failed.total).toBeLessThan(all.total);
+    expect(failed.rows.every(r => r.action === 'LOGIN_FAILED')).toBeTruthy();
+
+    // The admin's own VIEW_* reads dominate the table; the switch drops them.
+    const secure = await get('securityOnly=1');
+    expect(secure.total).toBeLessThan(all.total);
+    expect(secure.rows.some(r => r.action.startsWith('VIEW_'))).toBeFalsy();
+
+    // Unknown action and malformed date are ignored, not passed through.
+    expect((await get('action=DROP%20TABLE%20users')).total).toBeGreaterThan(0);
+    expect((await get('from=not-a-date')).total).toBeGreaterThan(0);
+
+    // perPage is clamped at both ends so a caller cannot request the whole table.
+    expect((await get('perPage=99999')).perPage).toBe(200);
+    expect((await get('perPage=1')).perPage).toBe(25);
+
+    // A literal % must be searched for, not act as a wildcard matching everything.
+    expect((await get('q=%25')).total).toBeLessThan(all.total);
+
+    // Paging returns different rows.
+    const p1 = await get('page=1&perPage=25');
+    const p2 = await get('page=2&perPage=25');
+    expect(p2.page).toBe(2);
+    if (p1.rows.length && p2.rows.length) expect(p1.rows[0].id).not.toBe(p2.rows[0].id);
+    console.log(`✅ Audit filters: ${all.total} all · ${secure.total} security-only · ${failed.total} failed logins`);
+  });
+
   test('9.5 admin can read aggregate stats with a valid token', async () => {
     const r = await ctx.get('/api/admin/stats', { headers: { Authorization: `Bearer ${adminToken}` } });
     expect(r.ok()).toBeTruthy();
