@@ -290,6 +290,94 @@ test.describe('9. Authorization & Security', () => {
     console.log(`✅ Audit filters: ${all.total} all · ${secure.total} security-only · ${failed.total} failed logins`);
   });
 
+  test('9.13 broadcast is admin-only, validated, and lands as an announcement', async () => {
+    expect((await ctx.post('/api/admin/broadcast', { data: { text: 'hi' } })).status()).toBe(401);
+    expect((await ctx.post('/api/admin/broadcast', {
+      data: { text: 'hi' }, headers: { Authorization: `Bearer ${userToken}` } })).status()).toBe(403);
+
+    const h = { headers: { Authorization: `Bearer ${adminToken}` } };
+    expect((await ctx.post('/api/admin/broadcast', { data: { text: '   ' }, ...h })).status()).toBe(400);
+    expect((await ctx.post('/api/admin/broadcast', { data: { text: 'x'.repeat(501) }, ...h })).status()).toBe(400);
+
+    const text = `PW broadcast ${Date.now()}`;
+    expect((await ctx.post('/api/admin/broadcast', { data: { text }, ...h })).ok()).toBeTruthy();
+
+    // It must land in group_general as an announcement — the same row shape the
+    // socket handler writes, so history is consistent whichever path was used.
+    const msgs = await (await ctx.get('/api/admin/messages', h)).json().catch(() => null);
+    if (Array.isArray(msgs)) {
+      const row = msgs.find(m => m.type === 'announcement');
+      expect(row, 'no announcement row found').toBeTruthy();
+      expect(row.conv_key).toBe('group_general');
+    }
+
+    // Reaching every user is worth an audit entry of its own.
+    const logs = await (await ctx.get('/api/admin/logs?action=BROADCAST', h)).json();
+    expect(logs.total).toBeGreaterThan(0);
+    console.log('✅ Broadcast: authz enforced, validated, audited, stored as announcement');
+  });
+
+  test('9.14 group routes are admin-only and validate the id', async () => {
+    expect((await ctx.get('/api/admin/groups')).status()).toBe(401);
+    expect((await ctx.get('/api/admin/groups', { headers: { Authorization: `Bearer ${userToken}` } })).status()).toBe(403);
+
+    const h = { headers: { Authorization: `Bearer ${adminToken}` } };
+    const list = await ctx.get('/api/admin/groups', h);
+    expect(list.ok()).toBeTruthy();
+    expect(Array.isArray(await list.json())).toBeTruthy();
+
+    expect((await ctx.get('/api/admin/groups/abc', h)).status()).toBe(400);
+    expect((await ctx.get('/api/admin/groups/0', h)).status()).toBe(400);
+    expect((await ctx.get('/api/admin/groups/99999999', h)).status()).toBe(404);
+    expect((await ctx.delete('/api/admin/groups/abc', h)).status()).toBe(400);
+    expect((await ctx.delete('/api/admin/groups/99999999', h)).status()).toBe(404);
+    expect((await ctx.delete('/api/admin/groups/1', { headers: { Authorization: `Bearer ${userToken}` } })).status()).toBe(403);
+    console.log('✅ Group routes: admin-only, id validated, missing group is a 404');
+  });
+
+  test('9.15 backup download refuses anything outside the backups folder', async () => {
+    const h = { headers: { Authorization: `Bearer ${adminToken}` } };
+    expect((await ctx.post('/api/admin/backup')).status()).toBe(401);
+    expect((await ctx.post('/api/admin/backup', { headers: { Authorization: `Bearer ${userToken}` } })).status()).toBe(403);
+
+    // The server refuses a second concurrent VACUUM with 429, which is correct
+    // and also means the two browser projects can collide here. Wait and retry
+    // once, exactly as a user would.
+    let made = await ctx.post('/api/admin/backup', h);
+    if (made.status() === 429) {
+      await new Promise(r => setTimeout(r, 2500));
+      made = await ctx.post('/api/admin/backup', h);
+    }
+    expect(made.ok(), `backup failed with ${made.status()}`).toBeTruthy();
+    const { name, size } = await made.json();
+    expect(name).toMatch(/^db-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.db$/);
+    expect(size).toBeGreaterThan(1000);
+
+    // The real snapshot downloads.
+    expect((await ctx.get(`/api/admin/backup/${name}`, h)).ok()).toBeTruthy();
+    expect((await ctx.get(`/api/admin/backup/${name}`)).status()).toBe(401);
+
+    // This route serves a file by name, so it is the one place in the admin API
+    // that could become a file-read primitive. Every one of these must be
+    // refused by the name pattern, before the filesystem is touched.
+    for (const bad of ['..%2Fserver.js', '..%2F..%2F.env', 'server.js', '.env', '..%2Fpackage.json',
+                       `${name}%2F..%2F..%2F.env`, 'db-9999-99-99_99-99-99.db%00.env']) {
+      const r = await ctx.get(`/api/admin/backup/${bad}`, h);
+      expect([400, 404], `traversal attempt "${bad}" returned ${r.status()}`).toContain(r.status());
+    }
+    // Delete the snapshot this test made. VACUUM INTO writes a full copy of the
+    // database — ~7MB here — and the suite runs in two browsers, so without
+    // this the backups folder grows by ~14MB every run. Fifteen files and 68MB
+    // accumulated before this was noticed, and the VACUUMs slowed the whole
+    // suite from ~5 to ~10 minutes.
+    const fs = require('fs');
+    const path = require('path');
+    const snapshot = path.join(__dirname, '..', 'backups', name);
+    if (fs.existsSync(snapshot)) fs.unlinkSync(snapshot);
+
+    console.log(`✅ Backup created (${Math.round(size/1024)}KB), traversal refused, snapshot cleaned up`);
+  });
+
   test('9.5 admin can read aggregate stats with a valid token', async () => {
     const r = await ctx.get('/api/admin/stats', { headers: { Authorization: `Bearer ${adminToken}` } });
     expect(r.ok()).toBeTruthy();

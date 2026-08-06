@@ -867,6 +867,114 @@ app.get('/api/admin/login-activity',verifyToken,adminOnly,async(req,res)=>{
   catch { res.status(500).json({error:'Server error'}); }
 });
 
+// ── Backup from the dashboard ───────────────────────────────────────────────
+// `npm run backup` was the only way to take one, and the deployment target is a
+// CICS-run LAN server rather than a developer's machine. VACUUM INTO is an
+// online, consistent snapshot — safe to run while the server is serving.
+const BACKUP_DIR = path.join(__dirname, 'backups');
+// The one route here that serves a file by name, so the name is matched against
+// a strict shape and the resolved path is checked to be inside BACKUP_DIR.
+// Without both, this is a file-read primitive.
+const BACKUP_NAME = /^db-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.db$/;
+let _backupRunning = false;
+
+app.post('/api/admin/backup',verifyToken,adminOnly,async(req,res)=>{
+  if (_backupRunning) return res.status(429).json({error:'A backup is already running'});
+  _backupRunning = true;
+  try {
+    fs.mkdirSync(BACKUP_DIR,{recursive:true});
+    const ts = new Date().toISOString().slice(0,19).replace('T','_').replace(/:/g,'-');
+    const name = `db-${ts}.db`;
+    const dest = path.join(BACKUP_DIR, name);
+    db.raw.exec(`VACUUM INTO '${dest.replace(/'/g,"''")}'`);
+    const { size } = fs.statSync(dest);
+    await logAudit(req.user.id,'BACKUP',`Created backup ${name} (${size} bytes)`,req);
+    res.json({ name, size });
+  }
+  catch (e) { console.error('backup error:', e.message); res.status(500).json({error:'Backup failed'}); }
+  finally { _backupRunning = false; }
+});
+
+app.get('/api/admin/backup/:name',verifyToken,adminOnly,(req,res)=>{
+  const name = String(req.params.name || '');
+  if (!BACKUP_NAME.test(name)) return res.status(400).json({error:'Invalid backup name'});
+  const full = path.resolve(BACKUP_DIR, name);
+  // Belt and braces: even with the pattern above, confirm the resolved path
+  // really sits inside the backups directory before opening it.
+  if (path.dirname(full) !== path.resolve(BACKUP_DIR)) return res.status(400).json({error:'Invalid backup name'});
+  if (!fs.existsSync(full)) return res.status(404).json({error:'Backup not found'});
+  res.download(full, name);
+});
+
+// ── Groups (admin visibility) ───────────────────────────────────────────────
+// There was no admin view of groups at all. This project fixed a real
+// group-message IDOR (canAccessConv), which makes "how do you know nobody
+// created a group they shouldn't have?" a fair question with no answer.
+app.get('/api/admin/groups',verifyToken,adminOnly,async(req,res)=>{
+  try {
+    const [rows]=await db.query(
+      `SELECT g.id, g.name, g.created_at, u.name AS creator,
+              (SELECT COUNT(*) FROM group_members m WHERE m.group_id=g.id) AS members
+         FROM groups_table g LEFT JOIN users u ON u.id=g.created_by
+        ORDER BY g.created_at DESC`);
+    await logAudit(req.user.id,'VIEW_GROUPS',`Viewed groups (${rows.length})`,req);
+    res.json(rows);
+  }
+  catch { res.status(500).json({error:'Server error'}); }
+});
+
+app.get('/api/admin/groups/:id',verifyToken,adminOnly,async(req,res)=>{
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id < 1) return res.status(400).json({error:'Invalid group id'});
+    const [[g]]=await db.query('SELECT id,name FROM groups_table WHERE id=?',[id]);
+    if (!g) return res.status(404).json({error:'Group not found'});
+    const [members]=await db.query(
+      `SELECT u.id,u.name,u.email,u.role FROM group_members m
+         JOIN users u ON u.id=m.user_id WHERE m.group_id=? ORDER BY u.name`,[id]);
+    res.json({ ...g, members });
+  }
+  catch { res.status(500).json({error:'Server error'}); }
+});
+
+app.delete('/api/admin/groups/:id',verifyToken,adminOnly,async(req,res)=>{
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id < 1) return res.status(400).json({error:'Invalid group id'});
+    const [[g]]=await db.query('SELECT id,name FROM groups_table WHERE id=?',[id]);
+    if (!g) return res.status(404).json({error:'Group not found'});
+    // Memberships first — they reference the group.
+    await db.query('DELETE FROM group_members WHERE group_id=?',[id]);
+    await db.query('DELETE FROM groups_table WHERE id=?',[id]);
+    await logAudit(req.user.id,'DELETE_GROUP',`Deleted group "${g.name}" (#${id})`,req);
+    io.emit('group:deleted',{ groupId:id });
+    res.json({ message:'Group deleted' });
+  }
+  catch { res.status(500).json({error:'Server error'}); }
+});
+
+// Announcement to everyone. The socket handler `broadcast:send` does the same
+// work, but admin.html opens no socket at all — so the capability existed and
+// was unreachable from the dashboard. This is the way in. Both paths write the
+// identical row so history stays consistent whichever was used.
+app.post('/api/admin/broadcast',verifyToken,adminOnly,async(req,res)=>{
+  try {
+    const text = String(req.body?.text || '').trim();
+    if (!text) return res.status(400).json({error:'Announcement cannot be empty'});
+    if (text.length > 500) return res.status(400).json({error:'Announcement must be 500 characters or fewer'});
+
+    const encrypted = encryptMessage(text);
+    await db.query('INSERT INTO messages (sender_id,conv_key,type,text) VALUES (?,?,?,?)',
+      [req.user.id,'group_general','announcement',encrypted]);
+    // Reaches every connected user, so it earns an audit row of its own.
+    await logAudit(req.user.id,'BROADCAST',`Announced: ${text.slice(0,120)}`,req);
+    io.emit('message:new',{ type:'announcement', sender:req.user.name, text,
+      convKey:'group_general', timestamp:new Date().toISOString() });
+    res.json({ message:'Announcement sent' });
+  }
+  catch { res.status(500).json({error:'Server error'}); }
+});
+
 // ── Account settings (the signed-in user's own record) ──────────────────────
 // Change own password. Verifying the CURRENT password matters: a stolen or
 // borrowed session must not be enough to take the account over permanently.

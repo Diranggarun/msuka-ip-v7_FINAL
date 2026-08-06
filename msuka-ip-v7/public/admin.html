@@ -678,6 +678,21 @@ tr:hover td{background:var(--maroon-soft);}
   .au-list{max-height:300px;}
 }
 
+.set-msg{font-size:.76rem;font-weight:700;min-height:1.1em;margin:0;}
+.set-msg.ok{color:#1B7A44;}
+.set-msg.bad{color:#B23A2E;}
+/* ═══ S3 · broadcast composer ═════════════════════════════════════════════ */
+.bc-note{font-size:.78rem;color:var(--text-light);margin-bottom:10px;line-height:1.5;}
+.bc-text{width:100%;padding:.7rem .85rem;border:1px solid var(--gray-200);border-radius:11px;
+  font-family:'Nunito',sans-serif;font-size:.88rem;color:var(--text-dark);background:var(--white);
+  resize:vertical;outline:none;transition:border-color var(--dur-fast) var(--ease-out);}
+.bc-text:focus{border-color:var(--gold);}
+.bc-foot{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap;}
+.bc-count{font-size:.72rem;color:var(--text-light);font-variant-numeric:tabular-nums;}
+.bc-count.over{color:#B23A2E;font-weight:800;}
+.bc-foot .set-msg{flex:1;min-width:120px;margin:0;}
+.bc-foot .btn-add{margin-left:auto;}
+
 /* ═══ S2 · audit log filters ══════════════════════════════════════════════ */
 .log-filters{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;margin-bottom:14px;
   padding-bottom:12px;border-bottom:1px solid var(--paper-line);}
@@ -847,6 +862,10 @@ tr:hover td{background:var(--maroon-soft);}
     <button class="rail-tab" id="rail-users" onclick="switchTab('users',null,this)" title="Users">
       <span class="ricon"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5"/><path d="M15 19c0-2 2-3.5 4-3.5"/></svg></span>
       <span class="rlabel">Users</span>
+    </button>
+    <button class="rail-tab" id="rail-groups" onclick="switchTab('groups',null,this)" title="Groups">
+      <span class="ricon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9.5" cy="7" r="3.5"/><path d="M22 21v-2a4 4 0 0 0-3-3.8"/><path d="M16 3.2a4 4 0 0 1 0 7.6"/></svg></span>
+      <span class="rlabel">Groups</span>
     </button>
     <button class="rail-tab" id="rail-add" onclick="switchTab('add',null,this)" title="Add User">
       <span class="ricon"><svg viewBox="0 0 24 24"><circle cx="10" cy="8" r="3.5"/><path d="M3 21c0-3.5 3-6 7-6"/><path d="M17 14v6M14 17h6"/></svg></span>
@@ -1050,6 +1069,19 @@ tr:hover td{background:var(--maroon-soft);}
       </div>
     </div>
 
+    <div class="tab-panel" id="tab-groups">
+      <div class="card">
+        <div class="card-header">
+          <h3><svg class="hi" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9.5" cy="7" r="3.5"/><path d="M22 21v-2a4 4 0 0 0-3-3.8"/></svg>Group Chats</h3>
+          <button class="btn-sm btn-warning" onclick="loadGroups()"><svg class="bi" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Refresh</button>
+        </div>
+        <table>
+          <thead><tr><th>#</th><th>Group</th><th>Created by</th><th>Members</th><th>Created</th><th>Actions</th></tr></thead>
+          <tbody id="groups-tbody"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
     <div class="tab-panel" id="tab-add">
       <div class="card">
         <div class="card-header"><h3><svg class="hi" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M3 21c0-3.5 3-6 7-6"/><path d="M19 14v6M16 17h6"/></svg>Add New User (Pre-approved)</h3></div>
@@ -1075,7 +1107,7 @@ tr:hover td{background:var(--maroon-soft);}
 
     <div class="tab-panel" id="tab-logs">
       <div class="card">
-        <div class="card-header"><h3><svg class="hi" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Audit Logs</h3><button class="btn-sm btn-warning" onclick="loadLogs()"><svg class="bi" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Refresh</button></div>
+        <div class="card-header"><h3><svg class="hi" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Audit Logs</h3><button class="btn-sm" id="backup-btn" onclick="runBackup()" style="background:var(--gold-soft);color:var(--gold-dark);border:1px solid var(--gold);"><svg class="bi" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download backup</button><button class="btn-sm btn-warning" onclick="loadLogs()"><svg class="bi" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Refresh</button></div>
         <div class="log-filters">
           <label class="lf-field"><span>Action</span>
             <select id="log-action" onchange="logPage=1;loadLogs()"><option value="">All actions</option></select>
@@ -1115,6 +1147,24 @@ tr:hover td{background:var(--maroon-soft);}
     </div>
 
     <div class="tab-panel" id="tab-messages">
+      <!-- The server has had a broadcast handler all along (socket
+           `broadcast:send`), but admin.html opens no socket, so there was no
+           way to reach it from here. This is the way in. -->
+      <div class="card">
+        <div class="card-header">
+          <h3><svg class="hi" viewBox="0 0 24 24"><path d="M11 5L4 9v6l7 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18 6a8 8 0 0 1 0 12"/></svg>Send an Announcement</h3>
+        </div>
+        <p class="bc-note">Posted to Global Chat and pushed to everyone signed in. It cannot be recalled.</p>
+        <textarea id="bc-text" class="bc-text" rows="3" maxlength="500"
+                  placeholder="e.g. System maintenance this Saturday, 8-10 AM."
+                  oninput="updateBroadcastCount()"></textarea>
+        <div class="bc-foot">
+          <span class="bc-count" id="bc-count">0 / 500</span>
+          <span class="set-msg" id="bc-msg" role="status"></span>
+          <button class="btn-add" id="bc-send" onclick="sendBroadcast()">
+            <svg class="bi" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Send to everyone</button>
+        </div>
+      </div>
       <div class="card">
         <div class="card-header"><h3><svg class="hi" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>Recent Messages</h3><button class="btn-sm btn-warning" onclick="loadMessages()"><svg class="bi" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Refresh</button></div>
         <table>
@@ -2068,6 +2118,127 @@ function renderLogsPager(total, page, perPage, shown){
     </span>`;
 }
 
+// ── Backup ──────────────────────────────────────────────────────────────────
+// VACUUM INTO is not instant on a large database, so the button locks while it
+// runs — a second click would otherwise start a second snapshot.
+async function runBackup(){
+  const btn = document.getElementById('backup-btn');
+  const label = btn.innerHTML;
+  btn.disabled = true; btn.textContent = 'Backing up…';
+  try{
+    const res = await fetch('/api/admin/backup',{method:'POST',headers:{Authorization:`Bearer ${authToken}`}});
+    const data = await res.json();
+    if(!res.ok){ alert(data.error || 'Backup failed'); return; }
+    // Download it immediately: a snapshot sitting on the same disk as the
+    // database it protects is not much of a backup.
+    const dl = await fetch(`/api/admin/backup/${encodeURIComponent(data.name)}`,
+      {headers:{Authorization:`Bearer ${authToken}`}});
+    if(!dl.ok){ alert('Backup was created, but the download failed'); return; }
+    const blob = await dl.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = data.name; a.click();
+    URL.revokeObjectURL(url);
+    loadLogs();
+  }catch{ alert('Server error'); }
+  finally{ btn.disabled = false; btn.innerHTML = label; }
+}
+
+// ── Groups (admin view) ─────────────────────────────────────────────────────
+let adminGroups = [];
+
+async function loadGroups(){
+  const tb = document.getElementById('groups-tbody');
+  try{
+    const res = await fetch('/api/admin/groups',{headers:{Authorization:`Bearer ${authToken}`}});
+    adminGroups = await res.json();
+    if(!Array.isArray(adminGroups) || !adminGroups.length){
+      // There are zero groups today, so this is the state that shows first.
+      tb.innerHTML = '<tr><td colspan="6" class="empty">No group chats yet.<br>' +
+        '<span style="font-size:.8rem;">Groups students create will appear here.</span></td></tr>';
+      return;
+    }
+    tb.innerHTML = adminGroups.map((g,i)=>`
+      <tr>
+        <td style="color:var(--text-light);font-size:.8rem">${i+1}</td>
+        <td><strong style="color:var(--maroon-dark)">${esc(g.name)}</strong></td>
+        <td style="color:var(--text-mid);font-size:.84rem">${esc(g.creator || '—')}</td>
+        <td><span class="badge student">${Number(g.members)||0}</span></td>
+        <td style="color:var(--text-light);font-size:.8rem">${new Date(g.created_at).toLocaleDateString()}</td>
+        <td><div class="row-actions">
+          <button class="btn-sm btn-warning" onclick="viewGroupMembers(${Number(g.id)})"><svg class="bi" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Members</button>
+          <button class="btn-sm btn-danger" onclick="deleteGroupAdmin(${Number(g.id)})"><svg class="bi" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>Delete</button>
+        </div></td>
+      </tr>`).join('');
+  }catch{ tb.innerHTML = '<tr><td colspan="6" class="empty">Could not load groups</td></tr>'; }
+}
+
+async function viewGroupMembers(id){
+  try{
+    const res = await fetch(`/api/admin/groups/${id}`,{headers:{Authorization:`Bearer ${authToken}`}});
+    const g = await res.json();
+    if(!res.ok) return alert(g.error || 'Could not load members');
+    const who = g.members.length
+      ? g.members.map(m => `• ${m.name} (${m.role})`).join('\n')
+      : 'This group has no members.';
+    alert(`${g.name}\n\n${who}`);
+  }catch{ alert('Server error'); }
+}
+
+async function deleteGroupAdmin(id){
+  const g = adminGroups.find(x => Number(x.id) === Number(id));
+  const n = g ? Number(g.members)||0 : 0;
+  // Say what it costs before doing it — this removes the conversation for
+  // everyone in it, not just from this list.
+  if(!confirm(`Delete "${g ? g.name : 'this group'}"?\n\n${n} member${n===1?'':'s'} will lose the conversation. This cannot be undone.`)) return;
+  try{
+    const res = await fetch(`/api/admin/groups/${id}`,{method:'DELETE',headers:{Authorization:`Bearer ${authToken}`}});
+    const data = await res.json();
+    if(!res.ok) return alert(data.error || 'Could not delete');
+    loadGroups(); loadStats();
+  }catch{ alert('Server error'); }
+}
+
+// ── Broadcast ───────────────────────────────────────────────────────────────
+// Small status-line helper. index.html has an identical one for its Settings
+// panel; these are two standalone documents with no shared bundle, so each
+// carries its own rather than inventing a build step to share six lines.
+function setMsg(id, text, ok){
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'set-msg' + (text ? (ok ? ' ok' : ' bad') : '');
+}
+
+function updateBroadcastCount(){
+  const el = document.getElementById('bc-text');
+  const c  = document.getElementById('bc-count');
+  const n  = el.value.length;
+  c.textContent = `${n} / 500`;
+  c.classList.toggle('over', n >= 500);
+}
+
+async function sendBroadcast(){
+  const box = document.getElementById('bc-text');
+  const btn = document.getElementById('bc-send');
+  const text = box.value.trim();
+  if (!text) return setMsg('bc-msg','Write something first',false);
+  // This reaches every signed-in user and cannot be taken back, so it asks.
+  if (!confirm(`Send this announcement to everyone?\n\n"${text}"`)) return;
+  btn.disabled = true;
+  try{
+    const res = await fetch('/api/admin/broadcast',{ method:'POST',
+      headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${authToken}` },
+      body: JSON.stringify({ text }) });
+    const data = await res.json();
+    if (!res.ok) return setMsg('bc-msg', data.error || 'Could not send', false);
+    box.value = ''; updateBroadcastCount();
+    setMsg('bc-msg','Announcement sent.',true);
+    loadMessages();
+  }catch{ setMsg('bc-msg','Server error',false); }
+  finally{ btn.disabled = false; }
+}
+
 // ── Audit log: filters + server-side paging ────────────────────────────────
 // The route used to end in LIMIT 100 with no parameters, so 26,000 rows were
 // unreachable. Filtering happens on the server — pulling the table into the
@@ -2275,6 +2446,7 @@ function switchTab(name,btn,railBtn){
     _chartStale = false;
     renderMainChart(_chartSeries.a, _chartSeries.b);
   }
+  if(name==='groups') loadGroups();
   if(name==='monitor') loadLoginActivity();
   // loadAll() never fetches messages, so the panel needs its own trigger.
   if(name==='messages') loadMessages();
