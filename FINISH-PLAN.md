@@ -48,9 +48,15 @@ and a paper with real quotes reads very differently from one with only means.
 
 ### 3. Do NOT run the test suite again until collection closes
 
-Every full run adds ~10 synthetic responses. If you must run it, re-run
-`clean-test-data.js` afterwards and re-collect. Simplest: leave the tests alone
-until Saturday.
+**Three specs submit survey responses**, not one — `api.spec.js`,
+`feedback-form.spec.js` and `smoke.spec.js`. A full run adds roughly a dozen
+synthetic rows, and they are indistinguishable from real ones in the dashboard
+until you look at the names.
+
+If you must run tests, run `node scripts/clean-test-data.js` immediately
+afterwards — but that also deletes any genuine responses collected up to that
+point, so collect a second batch after. Simplest: leave the tests alone until
+Saturday, run them once, clean, and record the number.
 
 ### 4. Meanwhile — paper revisions to Chapters 1–3
 
