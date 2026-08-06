@@ -1,0 +1,76 @@
+erDiagram
+    audit_logs {
+        integer id PK
+        integer user_id FK
+        text action
+        text details
+        text created_at
+        text ip
+        text user_agent
+    }
+    calls {
+        integer id PK
+        integer caller_id FK
+        integer receiver_id FK
+        text status
+        text started_at
+        text ended_at
+        integer duration
+        text created_at
+    }
+    group_members {
+        integer id PK
+        integer group_id FK
+        integer user_id FK
+    }
+    groups_table {
+        integer id PK
+        text name
+        integer created_by FK
+        text created_at
+    }
+    messages {
+        integer id PK
+        integer sender_id FK
+        text conv_key
+        text type
+        text text
+        text file_name
+        text file_url
+        integer file_size
+        text file_type
+        text created_at
+    }
+    survey_responses {
+        integer id PK
+        text respondent_name
+        text respondent_type
+        text device
+        text response_date
+        text scores_json
+        real mean_a
+        real mean_b
+        real mean_c
+        real mean_d
+        real overall
+        text created_at
+        text notes
+    }
+    users {
+        integer id PK
+        text name
+        text email
+        text password_hash
+        text role
+        text account_status
+        text status
+        text created_at
+        integer token_version
+    }
+    users ||--o{ audit_logs : "user_id"
+    users ||--o{ calls : "receiver_id"
+    users ||--o{ calls : "caller_id"
+    users ||--o{ group_members : "user_id"
+    groups_table ||--o{ group_members : "group_id"
+    users ||--o{ groups_table : "created_by"
+    users ||--o{ messages : "sender_id"

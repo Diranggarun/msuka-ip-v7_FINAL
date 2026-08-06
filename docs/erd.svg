@@ -1,0 +1,175 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1230" height="745" viewBox="0 0 1230 745" font-family="Segoe UI, Arial, sans-serif">
+<rect width="1230" height="745" fill="#ffffff"/>
+<text x="615" y="34" text-anchor="middle" font-size="17" font-weight="700" fill="#4a0000">MSUkaIP — Entity-Relationship Diagram</text>
+<defs><marker id="crow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto">
+  <path d="M0,5 L9,0 M0,5 L9,5 M0,5 L9,10" stroke="#6B0000" fill="none" stroke-width="1.2"/></marker></defs>
+<path d="M578,372.5 C615,372.5 615,607.5 652,607.5" stroke="#6B0000" fill="none" stroke-width="1.3" marker-end="url(#crow)" opacity=".75"/>
+<path d="M578,372.5 C615,372.5 615,398 652,398" stroke="#6B0000" fill="none" stroke-width="1.3" marker-end="url(#crow)" opacity=".75"/>
+<path d="M578,372.5 C615,372.5 615,398 652,398" stroke="#6B0000" fill="none" stroke-width="1.3" marker-end="url(#crow)" opacity=".75"/>
+<path d="M346,372.5 C309,372.5 309,447.5 272,447.5" stroke="#6B0000" fill="none" stroke-width="1.3" marker-end="url(#crow)" opacity=".75"/>
+<path d="M40,306 C156,306 156,447.5 272,447.5" stroke="#6B0000" fill="none" stroke-width="1.3" marker-end="url(#crow)" opacity=".75"/>
+<path d="M346,372.5 C309,372.5 309,306 272,306" stroke="#6B0000" fill="none" stroke-width="1.3" marker-end="url(#crow)" opacity=".75"/>
+<path d="M578,372.5 C615,372.5 615,163 652,163" stroke="#6B0000" fill="none" stroke-width="1.3" marker-end="url(#crow)" opacity=".75"/>
+<rect x="652" y="530" width="232" height="155" rx="7" fill="#fff" stroke="#6B0000" stroke-width="1.4"/>
+<path d="M652,556 h232" stroke="#6B0000" stroke-width="1.1"/>
+<rect x="652" y="530" width="232" height="26" rx="7" fill="#6B0000"/>
+<rect x="652" y="548" width="232" height="8" fill="#6B0000"/>
+<text x="662" y="548" font-size="12.5" font-weight="700" fill="#FFD700">audit_logs</text>
+<text x="662" y="569" font-size="10.5" fill="#2a1a0a" font-weight="700">id</text>
+<text x="874" y="569" font-size="9" text-anchor="end" fill="#8a7a6a">INTEGER PK</text>
+<text x="662" y="586" font-size="10.5" fill="#2a1a0a">user_id</text>
+<text x="874" y="586" font-size="9" text-anchor="end" fill="#8a7a6a">INTEGER FK</text>
+<text x="662" y="603" font-size="10.5" fill="#2a1a0a">action</text>
+<text x="874" y="603" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="662" y="620" font-size="10.5" fill="#2a1a0a">details</text>
+<text x="874" y="620" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="662" y="637" font-size="10.5" fill="#2a1a0a">created_at</text>
+<text x="874" y="637" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="662" y="654" font-size="10.5" fill="#2a1a0a">ip</text>
+<text x="874" y="654" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="662" y="671" font-size="10.5" fill="#2a1a0a">user_agent</text>
+<text x="874" y="671" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="652" y="698" font-size="9" fill="#7a6a5a">Security-relevant actions</text>
+<text x="652" y="709" font-size="9" fill="#7a6a5a">with actor, IP and device.</text>
+<text x="652" y="720" font-size="9" fill="#7a6a5a">(RA 10173 s.20)</text>
+<rect x="652" y="312" width="232" height="172" rx="7" fill="#fff" stroke="#6B0000" stroke-width="1.4"/>
+<path d="M652,338 h232" stroke="#6B0000" stroke-width="1.1"/>
+<rect x="652" y="312" width="232" height="26" rx="7" fill="#6B0000"/>
+<rect x="652" y="330" width="232" height="8" fill="#6B0000"/>
+<text x="662" y="330" font-size="12.5" font-weight="700" fill="#FFD700">calls</text>
+<text x="662" y="351" font-size="10.5" fill="#2a1a0a" font-weight="700">id</text>
+<text x="874" y="351" font-size="9" text-anchor="end" fill="#8a7a6a">INTEGER PK</text>
+<text x="662" y="368" font-size="10.5" fill="#2a1a0a">caller_id</text>
+<text x="874" y="368" font-size="9" text-anchor="end" fill="#8a7a6a">INTEGER FK</text>
+<text x="662" y="385" font-size="10.5" fill="#2a1a0a">receiver_id</text>
+<text x="874" y="385" font-size="9" text-anchor="end" fill="#8a7a6a">INTEGER FK</text>
+<text x="662" y="402" font-size="10.5" fill="#2a1a0a">status</text>
+<text x="874" y="402" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="662" y="419" font-size="10.5" fill="#2a1a0a">started_at</text>
+<text x="874" y="419" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="662" y="436" font-size="10.5" fill="#2a1a0a">ended_at</text>
+<text x="874" y="436" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="662" y="453" font-size="10.5" fill="#2a1a0a">duration</text>
+<text x="874" y="453" font-size="9" text-anchor="end" fill="#8a7a6a">INTEGER</text>
+<text x="662" y="470" font-size="10.5" fill="#2a1a0a">created_at</text>
+<text x="874" y="470" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="652" y="497" font-size="9" fill="#7a6a5a">Voice call records.</text>
+<text x="652" y="508" font-size="9" fill="#7a6a5a">Audio is peer-to-peer and</text>
+<text x="652" y="519" font-size="9" fill="#7a6a5a">is never stored.</text>
+<rect x="40" y="404" width="232" height="87" rx="7" fill="#fff" stroke="#6B0000" stroke-width="1.4"/>
+<path d="M40,430 h232" stroke="#6B0000" stroke-width="1.1"/>
+<rect x="40" y="404" width="232" height="26" rx="7" fill="#6B0000"/>
+<rect x="40" y="422" width="232" height="8" fill="#6B0000"/>
+<text x="50" y="422" font-size="12.5" font-weight="700" fill="#FFD700">group_members</text>
+<text x="50" y="443" font-size="10.5" fill="#2a1a0a" font-weight="700">id</text>
+<text x="262" y="443" font-size="9" text-anchor="end" fill="#8a7a6a">INTEGER PK</text>
+<text x="50" y="460" font-size="10.5" fill="#2a1a0a">group_id</text>
+<text x="262" y="460" font-size="9" text-anchor="end" fill="#8a7a6a">INTEGER FK</text>
+<text x="50" y="477" font-size="10.5" fill="#2a1a0a">user_id</text>
+<text x="262" y="477" font-size="9" text-anchor="end" fill="#8a7a6a">INTEGER FK</text>
+<text x="40" y="504" font-size="9" fill="#7a6a5a">Resolves users &lt;-&gt; groups.</text>
+<text x="40" y="515" font-size="9" fill="#7a6a5a">UNIQUE(group_id, user_id).</text>
+<rect x="40" y="254" width="232" height="104" rx="7" fill="#fff" stroke="#6B0000" stroke-width="1.4"/>
+<path d="M40,280 h232" stroke="#6B0000" stroke-width="1.1"/>
+<rect x="40" y="254" width="232" height="26" rx="7" fill="#6B0000"/>
+<rect x="40" y="272" width="232" height="8" fill="#6B0000"/>
+<text x="50" y="272" font-size="12.5" font-weight="700" fill="#FFD700">groups_table</text>
+<text x="50" y="293" font-size="10.5" fill="#2a1a0a" font-weight="700">id</text>
+<text x="262" y="293" font-size="9" text-anchor="end" fill="#8a7a6a">INTEGER PK</text>
+<text x="50" y="310" font-size="10.5" fill="#2a1a0a">name</text>
+<text x="262" y="310" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="50" y="327" font-size="10.5" fill="#2a1a0a">created_by</text>
+<text x="262" y="327" font-size="9" text-anchor="end" fill="#8a7a6a">INTEGER FK</text>
+<text x="50" y="344" font-size="10.5" fill="#2a1a0a">created_at</text>
+<text x="262" y="344" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="40" y="371" font-size="9" fill="#7a6a5a">Group chats.</text>
+<rect x="652" y="60" width="232" height="206" rx="7" fill="#fff" stroke="#6B0000" stroke-width="1.4"/>
+<path d="M652,86 h232" stroke="#6B0000" stroke-width="1.1"/>
+<rect x="652" y="60" width="232" height="26" rx="7" fill="#6B0000"/>
+<rect x="652" y="78" width="232" height="8" fill="#6B0000"/>
+<text x="662" y="78" font-size="12.5" font-weight="700" fill="#FFD700">messages</text>
+<text x="662" y="99" font-size="10.5" fill="#2a1a0a" font-weight="700">id</text>
+<text x="874" y="99" font-size="9" text-anchor="end" fill="#8a7a6a">INTEGER PK</text>
+<text x="662" y="116" font-size="10.5" fill="#2a1a0a">sender_id</text>
+<text x="874" y="116" font-size="9" text-anchor="end" fill="#8a7a6a">INTEGER FK</text>
+<text x="662" y="133" font-size="10.5" fill="#2a1a0a">conv_key</text>
+<text x="874" y="133" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="662" y="150" font-size="10.5" fill="#2a1a0a">type</text>
+<text x="874" y="150" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="662" y="167" font-size="10.5" fill="#2a1a0a">text</text>
+<text x="874" y="167" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="662" y="184" font-size="10.5" fill="#2a1a0a">file_name</text>
+<text x="874" y="184" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="662" y="201" font-size="10.5" fill="#2a1a0a">file_url</text>
+<text x="874" y="201" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="662" y="218" font-size="10.5" fill="#2a1a0a">file_size</text>
+<text x="874" y="218" font-size="9" text-anchor="end" fill="#8a7a6a">INTEGER</text>
+<text x="662" y="235" font-size="10.5" fill="#2a1a0a">file_type</text>
+<text x="874" y="235" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="662" y="252" font-size="10.5" fill="#2a1a0a">created_at</text>
+<text x="874" y="252" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="652" y="279" font-size="9" fill="#7a6a5a">One row per message.</text>
+<text x="652" y="290" font-size="9" fill="#7a6a5a">Body encrypted at rest</text>
+<text x="652" y="301" font-size="9" fill="#7a6a5a">(AES-256-GCM).</text>
+<rect x="958" y="244" width="232" height="257" rx="7" fill="#fff" stroke="#6B0000" stroke-width="1.4"/>
+<path d="M958,270 h232" stroke="#6B0000" stroke-width="1.1"/>
+<rect x="958" y="244" width="232" height="26" rx="7" fill="#6B0000"/>
+<rect x="958" y="262" width="232" height="8" fill="#6B0000"/>
+<text x="968" y="262" font-size="12.5" font-weight="700" fill="#FFD700">survey_responses</text>
+<text x="968" y="283" font-size="10.5" fill="#2a1a0a" font-weight="700">id</text>
+<text x="1180" y="283" font-size="9" text-anchor="end" fill="#8a7a6a">INTEGER PK</text>
+<text x="968" y="300" font-size="10.5" fill="#2a1a0a">respondent_name</text>
+<text x="1180" y="300" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="968" y="317" font-size="10.5" fill="#2a1a0a">respondent_type</text>
+<text x="1180" y="317" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="968" y="334" font-size="10.5" fill="#2a1a0a">device</text>
+<text x="1180" y="334" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="968" y="351" font-size="10.5" fill="#2a1a0a">response_date</text>
+<text x="1180" y="351" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="968" y="368" font-size="10.5" fill="#2a1a0a">scores_json</text>
+<text x="1180" y="368" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="968" y="385" font-size="10.5" fill="#2a1a0a">mean_a</text>
+<text x="1180" y="385" font-size="9" text-anchor="end" fill="#8a7a6a">REAL</text>
+<text x="968" y="402" font-size="10.5" fill="#2a1a0a">mean_b</text>
+<text x="1180" y="402" font-size="9" text-anchor="end" fill="#8a7a6a">REAL</text>
+<text x="968" y="419" font-size="10.5" fill="#2a1a0a">mean_c</text>
+<text x="1180" y="419" font-size="9" text-anchor="end" fill="#8a7a6a">REAL</text>
+<text x="968" y="436" font-size="10.5" fill="#2a1a0a">mean_d</text>
+<text x="1180" y="436" font-size="9" text-anchor="end" fill="#8a7a6a">REAL</text>
+<text x="968" y="453" font-size="10.5" fill="#2a1a0a">overall</text>
+<text x="1180" y="453" font-size="9" text-anchor="end" fill="#8a7a6a">REAL</text>
+<text x="968" y="470" font-size="10.5" fill="#2a1a0a">created_at</text>
+<text x="1180" y="470" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="968" y="487" font-size="10.5" fill="#2a1a0a">notes</text>
+<text x="1180" y="487" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="958" y="514" font-size="9" fill="#7a6a5a">Evaluation results.</text>
+<text x="958" y="525" font-size="9" fill="#7a6a5a">NO link to users — that</text>
+<text x="958" y="536" font-size="9" fill="#7a6a5a">absence is what makes the</text>
+<text x="958" y="547" font-size="9" fill="#7a6a5a">survey anonymous.</text>
+<rect x="346" y="278" width="232" height="189" rx="7" fill="#fff" stroke="#6B0000" stroke-width="1.4"/>
+<path d="M346,304 h232" stroke="#6B0000" stroke-width="1.1"/>
+<rect x="346" y="278" width="232" height="26" rx="7" fill="#6B0000"/>
+<rect x="346" y="296" width="232" height="8" fill="#6B0000"/>
+<text x="356" y="296" font-size="12.5" font-weight="700" fill="#FFD700">users</text>
+<text x="356" y="317" font-size="10.5" fill="#2a1a0a" font-weight="700">id</text>
+<text x="568" y="317" font-size="9" text-anchor="end" fill="#8a7a6a">INTEGER PK</text>
+<text x="356" y="334" font-size="10.5" fill="#2a1a0a">name</text>
+<text x="568" y="334" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="356" y="351" font-size="10.5" fill="#2a1a0a">email</text>
+<text x="568" y="351" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="356" y="368" font-size="10.5" fill="#2a1a0a">password_hash</text>
+<text x="568" y="368" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="356" y="385" font-size="10.5" fill="#2a1a0a">role</text>
+<text x="568" y="385" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="356" y="402" font-size="10.5" fill="#2a1a0a">account_status</text>
+<text x="568" y="402" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="356" y="419" font-size="10.5" fill="#2a1a0a">status</text>
+<text x="568" y="419" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="356" y="436" font-size="10.5" fill="#2a1a0a">created_at</text>
+<text x="568" y="436" font-size="9" text-anchor="end" fill="#8a7a6a">TEXT</text>
+<text x="356" y="453" font-size="10.5" fill="#2a1a0a">token_version</text>
+<text x="568" y="453" font-size="9" text-anchor="end" fill="#8a7a6a">INTEGER</text>
+<text x="346" y="480" font-size="9" fill="#7a6a5a">Accounts, roles, bcrypt hash,</text>
+<text x="346" y="491" font-size="9" fill="#7a6a5a">and the token version used</text>
+<text x="346" y="502" font-size="9" fill="#7a6a5a">for session revocation.</text>
+</svg>
