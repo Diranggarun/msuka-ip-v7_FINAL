@@ -656,7 +656,7 @@ app.get('/api/admin/stats/trends', verifyToken, adminOnly, async (req, res) => {
       for (const row of r) m.set(String(row.bk), Number(row.cnt) || 0);
       return m;
     });
-    const [msgMap, callMap, newUserMap, newPendingMap, activeMap] = await Promise.all([
+    const [msgMap, callMap, newUserMap, newPendingMap, activeMap, newGroupMap] = await Promise.all([
       // Messages created in bucket
       qBucketed(`SELECT strftime('${cfg.fmt}',created_at) AS bk, COUNT(*) AS cnt FROM messages WHERE created_at >= ? GROUP BY bk`, [oldest]),
       // Calls created in bucket
@@ -667,21 +667,28 @@ app.get('/api/admin/stats/trends', verifyToken, adminOnly, async (req, res) => {
       qBucketed(`SELECT strftime('${cfg.fmt}',created_at) AS bk, COUNT(*) AS cnt FROM users WHERE account_status='pending' AND created_at >= ? GROUP BY bk`, [oldest]),
       // Active users in bucket (distinct senders, proxy for "online" history)
       qBucketed(`SELECT strftime('${cfg.fmt}',created_at) AS bk, COUNT(DISTINCT sender_id) AS cnt FROM messages WHERE sender_id IS NOT NULL AND created_at >= ? GROUP BY bk`, [oldest]),
+      // Groups created in bucket — same shape as the others so the Group chats
+      // tile can plot a real history instead of one live number.
+      qBucketed(`SELECT strftime('${cfg.fmt}',created_at) AS bk, COUNT(*) AS cnt FROM groups_table WHERE created_at >= ? GROUP BY bk`, [oldest]),
     ]);
     // Baseline counts BEFORE the window so cumulative series stay accurate.
     const [[{baseUsers}]]    = await db.query('SELECT COUNT(*) AS baseUsers    FROM users    WHERE created_at < ?', [oldest]);
     const [[{baseMessages}]] = await db.query('SELECT COUNT(*) AS baseMessages FROM messages WHERE created_at < ?', [oldest]);
     const [[{baseCalls}]]    = await db.query('SELECT COUNT(*) AS baseCalls    FROM calls    WHERE created_at < ?', [oldest]);
+    const [[{baseGroups}]]   = await db.query('SELECT COUNT(*) AS baseGroups   FROM groups_table WHERE created_at < ?', [oldest]);
     let runUsers = Number(baseUsers)||0, runMessages = Number(baseMessages)||0, runCalls = Number(baseCalls)||0;
-    const out = { range, labels: [], totalUsers: [], onlineUsers: [], pendingUsers: [], totalMessages: [], totalCalls: [] };
+    let runGroups = Number(baseGroups)||0;
+    const out = { range, labels: [], totalUsers: [], onlineUsers: [], pendingUsers: [], totalMessages: [], totalCalls: [], totalGroups: [] };
     for (const b of buckets) {
       runUsers    += newUserMap.get(b.key)    || 0;
       runMessages += msgMap.get(b.key)        || 0;
       runCalls    += callMap.get(b.key)       || 0;
+      runGroups   += newGroupMap.get(b.key)   || 0;
       out.labels.push(b.key);
       out.totalUsers.push(runUsers);
       out.totalMessages.push(runMessages);
       out.totalCalls.push(runCalls);
+      out.totalGroups.push(runGroups);
       out.onlineUsers.push(activeMap.get(b.key) || 0);
       out.pendingUsers.push(newPendingMap.get(b.key) || 0);
     }

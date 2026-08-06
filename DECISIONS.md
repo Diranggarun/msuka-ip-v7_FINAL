@@ -261,6 +261,40 @@ wrong — the rail entries are markup, the logo is two declarations.
 
 ---
 
+## KPI tiles select what the chart plots
+
+**Decision:** Clicking a KPI tile plots that metric alone in the hero chart.
+Single-select: clicking the active tile returns to the default
+messages-against-users comparison. `/stats/trends` gained a `totalGroups` series
+so all five tiles behave identically.
+
+**Context:** Five tiles sat above a chart that always plotted the same two
+series. The numbers and the graph were describing different things, and there was
+no way to ask "show me calls over time".
+
+**Reasoning:** Single-select over a two-slot compare because compare needs a rule
+for what a third click replaces, and because mixing a cumulative series with a
+point-in-time one on a single y-axis misleads — `totalUsers`, `totalMessages`,
+`totalCalls` and `totalGroups` only ever climb, while `onlineUsers` rises and
+falls. The caption states which kind is on screen ("Total this period" vs "Latest
+reading") rather than leaving the axis to imply it.
+
+Group chats got a real series rather than being left unclickable. A tile that
+looks like a control and does nothing is the defect this project has now fixed
+three times. The alternative — plotting a flat line from the single live count —
+would have invented history the database does not hold.
+
+**Trade-offs:** The line colour is a chart-legible version of each tile's tone,
+not the literal `--tone`. The maroon tile's tone is near-black and would be
+invisible on the dark chart panel. So tile and line are related but not identical
+in colour, which is a small honesty cost paid for legibility.
+
+Selection is module state, not a DOM class. `loadStats()` calls
+`refreshOverview()` every five seconds; reading the choice back from the DOM would
+have reset the chart on every tick. Test 5.19 fails against exactly that mistake.
+
+---
+
 ## Stack divergence from the original plan
 
 The original capstone plan called for **FastAPI + React + Vite + Pydantic + Alembic migrations**. The actual build is **Node.js + Express + Socket.IO + vanilla HTML/JS + ad-hoc schema-init via `CREATE TABLE IF NOT EXISTS`**.

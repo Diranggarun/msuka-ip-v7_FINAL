@@ -851,6 +851,66 @@ test.describe('5. Admin Dashboard Tests', () => {
     console.log('✅ Monitor card expands via keyboard, renders 30 days, fetches once');
   });
 
+  test('5.19 Clicking a KPI tile plots that metric and survives a refresh', async ({ page }) => {
+    await expect(page.locator('#main-chart svg')).toBeVisible({ timeout: 8000 });
+    // Default state: two series, no tile pressed.
+    await expect(page.locator('.ov-title')).toHaveText('Traffic');
+    expect(await page.locator('.kpi-row .stat-card[aria-pressed="true"]').count()).toBe(0);
+
+    // Tiles are buttons, not divs with onclick — that is what makes Enter work.
+    expect(await page.locator('.kpi-row .stat-card').first().evaluate(el => el.tagName)).toBe('BUTTON');
+
+    await page.click('.kpi-row .stat-card[data-metric="calls"]');
+    await expect(page.locator('.ov-title')).toHaveText('Voice calls');
+    await expect(page.locator('.kpi-row .stat-card[data-metric="calls"]')).toHaveAttribute('aria-pressed', 'true');
+    // One series plotted means one legend entry; a two-item legend describing a
+    // single line is the kind of thing that reads fine and is simply wrong.
+    await expect(page.locator('.ov-legend span')).toHaveCount(1);
+
+    // loadStats() calls refreshOverview() every 5 seconds. If the choice lived
+    // in the DOM rather than in state, every tick would reset the chart.
+    // eslint-disable-next-line no-undef -- evaluated in the browser page context
+    await page.evaluate(() => refreshOverview());
+    await page.waitForTimeout(500);
+    await expect(page.locator('.ov-title')).toHaveText('Voice calls');
+    // eslint-disable-next-line no-undef -- evaluated in the browser page context
+    expect(await page.evaluate(() => selectedMetric)).toBe('calls');
+
+    // The range toggle must re-plot the SELECTED metric, not fall back.
+    await page.click('#range-toggle button[data-range="month"]');
+    await page.waitForTimeout(900);
+    await expect(page.locator('.ov-title')).toHaveText('Voice calls');
+    await page.click('#range-toggle button[data-range="day"]');
+    await page.waitForTimeout(700);
+
+    // Clicking the active tile clears back to the comparison view.
+    await page.click('.kpi-row .stat-card[data-metric="calls"]');
+    await expect(page.locator('.ov-title')).toHaveText('Traffic');
+    await expect(page.locator('.ov-legend span')).toHaveCount(2);
+    console.log('✅ KPI tile selects the plotted metric, survives refresh and range change');
+  });
+
+  test('5.20 Every KPI tile has a plottable series, including Group chats', async ({ page }) => {
+    await expect(page.locator('#main-chart svg')).toBeVisible({ timeout: 8000 });
+    // Group chats had no trend series at all until totalGroups was added; the
+    // tile was a control that could not plot anything. Assert every tile draws.
+    for (const metric of ['total', 'online', 'messages', 'calls', 'groups']) {
+      await page.click(`.kpi-row .stat-card[data-metric="${metric}"]`);
+      await page.waitForTimeout(450);
+      const drawn = await page.evaluate(() => {
+        // eslint-disable-next-line no-undef -- evaluated in the browser page context
+        const paths = [...document.querySelectorAll('#main-chart path[stroke]')]
+          .filter(p => p.getAttribute('stroke') !== 'none');
+        return { count: paths.length, d: (paths[0]?.getAttribute('d') || '').length };
+      });
+      expect(drawn.count, `${metric} plotted no line`).toBe(1);
+      expect(drawn.d, `${metric} produced an empty path`).toBeGreaterThan(10);
+      await page.click(`.kpi-row .stat-card[data-metric="${metric}"]`);
+      await page.waitForTimeout(250);
+    }
+    console.log('✅ All five metrics plot a real series');
+  });
+
   test('5.16 Overview is the landing tab and owns the hero chart', async ({ page }) => {
     await expect(page.locator('#tab-overview')).toHaveClass(/active/);
     await expect(page.locator('#main-chart svg')).toBeVisible({ timeout: 8000 });
