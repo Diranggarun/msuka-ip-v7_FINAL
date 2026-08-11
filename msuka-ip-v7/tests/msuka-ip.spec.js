@@ -30,9 +30,29 @@ async function studentLogin(page) {
 
 // Accept the post-login terms modal if it is showing. No-op when it isn't
 // (e.g. already accepted earlier in the same browser session).
+// Clear the gate only — scroll the terms and tick consent — without pressing
+// "I Agree". Lets a test assert the enable/disable transitions on their own.
+async function acceptAgreementGateOnly(page) {
+  await page.evaluate(() => {
+    for (const sel of ['.agree-body', '.agree-card']) {
+      // eslint-disable-next-line no-undef -- evaluated in the browser page context
+      const el = document.querySelector(sel);
+      if (el) el.scrollTop = el.scrollHeight;
+    }
+  });
+  // eslint-disable-next-line no-undef -- evaluated in the browser page context
+  await page.waitForFunction(() => !document.getElementById('agree-check').disabled,
+    null, { timeout: 4000 });
+  await page.check('#agree-check');
+}
+
 async function acceptAgreement(page) {
   const accept = page.locator('.agree-accept');
   if (await accept.isVisible().catch(() => false)) {
+    // The agreement is now gated: the consent box unlocks only after the terms
+    // have been scrolled to the end, and "I Agree" only after that box is
+    // ticked. So a test has to do what a user does.
+    await acceptAgreementGateOnly(page);
     await accept.click();
     await page.locator('#agree-overlay').waitFor({ state: 'hidden', timeout: 4000 });
   }
@@ -156,6 +176,16 @@ test.describe('1. Authentication Tests', () => {
     // The agreement overlays the app and must be dealt with first.
     await expect(page.locator('#agree-overlay')).toBeVisible();
     await expect(page.locator('#agree-title')).toContainText('Terms of Use');
+    // Consent is gated: "I Agree" is disabled until the box is ticked, and the
+    // box itself only unlocks once the terms have been read. The button being
+    // disabled on open holds regardless of whether the terms need scrolling.
+    await expect(page.locator('.agree-accept')).toBeDisabled();
+    // Unticking must put the button back — the gate is not one-way.
+    await acceptAgreementGateOnly(page);
+    await expect(page.locator('.agree-accept')).toBeEnabled();
+    await page.uncheck('#agree-check');
+    await expect(page.locator('.agree-accept')).toBeDisabled();
+    await page.check('#agree-check');
     await page.click('.agree-accept');
     await expect(page.locator('#agree-overlay')).toBeHidden();
     // After accepting, the chat is reachable.
