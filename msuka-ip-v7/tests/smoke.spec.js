@@ -63,7 +63,20 @@ test.describe('Smoke — notifications panel', () => {
     // Accept the post-login terms agreement, which overlays the app.
     const agree = page.locator('.agree-accept');
     if (await agree.isVisible().catch(() => false)) {
-      // Disabled until the consent box is ticked.
+      // The gate is two-stage: the terms must be scrolled to the end before the
+      // consent box unlocks, and only then does "I Agree". Same steps a user
+      // takes. (msuka-ip.spec.js has this as acceptAgreementGateOnly; these are
+      // separate spec files with no shared module, so it is repeated here.)
+      await page.evaluate(() => {
+        for (const sel of ['.agree-body', '.agree-card']) {
+          // eslint-disable-next-line no-undef -- evaluated in the browser page context
+          const el = document.querySelector(sel);
+          if (el) el.scrollTop = el.scrollHeight;
+        }
+      });
+      // eslint-disable-next-line no-undef -- evaluated in the browser page context
+      await page.waitForFunction(() => !document.getElementById('agree-check').disabled,
+        null, { timeout: 4000 });
       await page.check('#agree-check');
       await agree.click();
       await page.locator('#agree-overlay').waitFor({ state: 'hidden', timeout: 4000 });

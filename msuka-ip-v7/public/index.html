@@ -1516,6 +1516,15 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 .agree-consent input{width:22px;height:22px;flex-shrink:0;margin-top:1px;accent-color:var(--maroon);cursor:pointer;}
 .agree-consent label{font-size:.88rem;color:var(--text-mid);line-height:1.5;cursor:pointer;}
 .agree-consent strong{color:var(--maroon);}
+/* Disabled has to LOOK disabled, or the button just reads as broken. Dimming plus
+   not-allowed says "not yet" instead of "nothing happened". */
+.agree-consent input:disabled{cursor:not-allowed;opacity:.45;}
+.agree-consent input:disabled ~ div label{color:var(--text-light);cursor:not-allowed;}
+.agree-actions button:disabled{opacity:.5;cursor:not-allowed;box-shadow:none;}
+.agree-actions button:disabled:hover{transform:none;box-shadow:none;}
+/* The reason the checkbox is locked, shown only while it is locked. */
+.agree-gate{margin:6px 0 0;font-size:.78rem;font-weight:700;color:var(--maroon);}
+.agree-gate[hidden]{display:none;}
 .agree-actions{display:flex;gap:14px;padding:20px 30px 12px;flex-shrink:0;}
 .agree-actions button{display:flex;align-items:center;justify-content:center;gap:10px;padding:.9rem;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.95rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;border:none;transition:transform .12s,box-shadow .15s,background .15s;}
 .agree-actions button svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
@@ -1525,9 +1534,6 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 .agree-decline:hover{background:var(--maroon-soft);}
 .agree-accept{flex:1.6;background:var(--maroon);color:var(--gold-bright);box-shadow:var(--shadow-sm);}
 .agree-accept:hover:not(:disabled){transform:translateY(-1px);box-shadow:var(--shadow-md);}
-/* Visibly inert, not just unclickable: a button that looks pressable but does
-   nothing reads as broken rather than as a gate. */
-.agree-accept:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none;filter:grayscale(.35);}
 .agree-foot{display:flex;align-items:center;justify-content:center;gap:8px;padding:0 30px 20px;font-size:.8rem;color:var(--text-light);flex-shrink:0;}
 .agree-foot svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
 @media (max-width:560px){
@@ -2133,13 +2139,19 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
     <!-- Outside .agree-body on purpose: the body scrolls, and the consent line
          belongs with the buttons where it stays visible rather than below the
          fold at the end of the clause list. -->
+    <!-- Both controls start with the real disabled attribute, not a CSS class, so
+         the keyboard and screen readers agree with what the dimming shows.
+         updateAgreeGate() below is what lifts them. -->
     <div class="agree-consent">
-      <input type="checkbox" id="agree-check" onchange="syncAgreeButton()"/>
-      <label for="agree-check">I have read, understood, and agree to the <strong>Terms of Use</strong> and <strong>Data Privacy Policy</strong> of MSUkaIP.</label>
+      <input type="checkbox" id="agree-check" disabled/>
+      <div>
+        <label for="agree-check">I have read, understood, and agree to the <strong>Terms of Use</strong> and <strong>Data Privacy Policy</strong> of MSUkaIP.</label>
+        <p class="agree-gate" id="agree-gate">Please scroll down and read the full terms first.</p>
+      </div>
     </div>
     <div class="agree-actions">
       <button class="agree-decline" onclick="declineAgreement()"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>Decline</button>
-      <button class="agree-accept" id="agree-accept-btn" disabled onclick="acceptAgreement()"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>I Agree</button>
+      <button class="agree-accept" onclick="acceptAgreement()" disabled><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>I Agree</button>
     </div>
     <div class="agree-foot">
       <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
@@ -2372,29 +2384,58 @@ function launchApp(u){
 // The agreement pops after login and must be accepted to use the app. It shows
 // once per login session: the flag is cleared on logout (below), so a fresh
 // login shows it again, but returning from the feedback page does not re-nag.
+// Which element actually scrolls depends on the viewport: normally .agree-body,
+// but the short-viewport media query hands scrolling to .agree-card instead, so
+// ask both and take whichever one genuinely overflows. Returning null means
+// nothing overflows — on a tall window there is nothing left to scroll, and that
+// counts as read rather than trapping the user behind a gate they cannot clear.
+// The 6px slack absorbs fractional-pixel and browser-zoom rounding.
+function agreeScroller(){
+  const body=document.querySelector('.agree-body');
+  const card=document.querySelector('.agree-card');
+  if(body && body.scrollHeight > body.clientHeight + 6) return body;
+  if(card && card.scrollHeight > card.clientHeight + 6) return card;
+  return null;
+}
+// Two locks in sequence: reading the terms unlocks the checkbox, ticking the
+// checkbox unlocks "I Agree". Unlocking the checkbox is one-way — scrolling back
+// up does not re-lock it, which would be punishing rather than protective.
+function updateAgreeGate(){
+  const box=document.getElementById('agree-check');
+  const btn=document.querySelector('.agree-accept');
+  const hint=document.getElementById('agree-gate');
+  if(!box||!btn) return;
+  const el=agreeScroller();
+  const read = !el || el.scrollTop + el.clientHeight >= el.scrollHeight - 6;
+  if(read) box.disabled=false;
+  if(box.disabled) box.checked=false;
+  btn.disabled = box.disabled || !box.checked;
+  if(hint) hint.hidden = !box.disabled;
+}
+// Both candidates are watched because a resize can flip which one scrolls.
+document.querySelector('.agree-body')?.addEventListener('scroll',updateAgreeGate,{passive:true});
+document.querySelector('.agree-card')?.addEventListener('scroll',updateAgreeGate,{passive:true});
+document.getElementById('agree-check')?.addEventListener('change',updateAgreeGate);
+window.addEventListener('resize',updateAgreeGate);
+
 function maybeShowAgreement(u){
   let agreed=false;
   try{ agreed=sessionStorage.getItem('msuka_agreed')==='1'; }catch{}
   if(agreed) return;
   document.getElementById('agree-name').textContent=u.name||'user';
-  // Fresh consent every time this is shown — never inherit a previous tick.
+  // Re-lock on every showing, so a second login cannot inherit the first's state.
   const box=document.getElementById('agree-check');
-  if(box) box.checked=false;
-  syncAgreeButton();
+  if(box){ box.checked=false; box.disabled=true; }
   document.getElementById('agree-overlay').classList.add('show');
-}
-// The tick box is the consent, so the button is inert until it is ticked.
-function syncAgreeButton(){
-  const box=document.getElementById('agree-check');
-  const btn=document.getElementById('agree-accept-btn');
-  if(btn) btn.disabled=!(box && box.checked);
+  // Measured only after .show: a display:none dialog reports zero heights, which
+  // would look like "nothing to scroll" and unlock the gate immediately.
+  requestAnimationFrame(updateAgreeGate);
 }
 function acceptAgreement(){
-  // Guarded as well as disabled: a disabled attribute can be removed from the
-  // console, and consent is the one thing that should not be bypassable by
-  // poking at the DOM.
+  // Guard the function, not just the button — a stray programmatic call must not
+  // be able to dismiss the gate either.
   const box=document.getElementById('agree-check');
-  if(!box || !box.checked){ syncAgreeButton(); return; }
+  if(!box || !box.checked) return;
   try{ sessionStorage.setItem('msuka_agreed','1'); }catch{}
   document.getElementById('agree-overlay').classList.remove('show');
 }
