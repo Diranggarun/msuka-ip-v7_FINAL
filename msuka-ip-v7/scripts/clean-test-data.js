@@ -25,7 +25,7 @@ const DRY = process.argv.includes('--dry-run');
 // explicitly rather than as a wildcard for the same reason.
 const TEST_PATTERNS = [
   'pwreg\\_%', 'pwpending\\_%', 'pwlife\\_%', 'smoke\\_%', 'b6\\_%',
-  'pwchange\\_%', 'pwapi\\_%', 'testuser\\_%', 'wrong\\_%',
+  'pwchange\\_%', 'pwapi\\_%', 'testuser\\_%', 'wrong\\_%', 'rtc\\_%',
 ];
 const TEST_EXACT = ['shortpw@cics.msu.edu', 'test@cics.msu.edu'];
 
