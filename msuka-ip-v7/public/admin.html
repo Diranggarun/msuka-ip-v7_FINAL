@@ -81,7 +81,13 @@ button,.tab,.rail-btn{touch-action:manipulation;}
 .admin-main,#app{position:relative;z-index:1;}
 .admin-rail{background:linear-gradient(180deg,rgba(90,15,15,.92),rgba(107,0,0,.88) 50%,rgba(90,15,15,.92))!important;backdrop-filter:blur(12px) saturate(140%);-webkit-backdrop-filter:blur(12px) saturate(140%);border-right:1px solid rgba(212,160,23,.15)!important;box-shadow:2px 0 12px rgba(107,0,0,.25);}
 /* Chrome, like the rail — the top bar is navigation furniture, not content. */
-.topbar{background-image:var(--grain),linear-gradient(135deg,var(--chrome-deep),var(--chrome))!important;background-repeat:repeat,no-repeat;background-size:160px 160px,auto;background-blend-mode:overlay,normal;backdrop-filter:blur(14px) saturate(130%);-webkit-backdrop-filter:blur(14px) saturate(130%);border-bottom:1px solid var(--chrome-edge);color:var(--ink);}
+.topbar{background-image:var(--grain),linear-gradient(135deg,var(--chrome-deep),var(--chrome))!important;background-repeat:repeat,no-repeat;background-size:160px 160px,auto;background-blend-mode:overlay,normal;backdrop-filter:blur(14px) saturate(130%);-webkit-backdrop-filter:blur(14px) saturate(130%);border-bottom:1px solid var(--chrome-edge);color:var(--ink);z-index:60;}
+/* z-index is load-bearing, not cosmetic. .topbar carries a backdrop-filter,
+   and backdrop-filter creates a stacking context — so the notification
+   popover's own z-index:900 only ranks it INSIDE the bar. Without an explicit
+   z-index here the whole bar sits at auto, and the KPI tiles further down the
+   document painted straight over the open panel. The panel was there and
+   measurable the whole time; only the screenshot showed it buried. */
 .card,.stat-card{background:linear-gradient(160deg,rgba(255,253,250,.78),rgba(252,246,236,.72))!important;backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border:1px solid rgba(255,255,255,.55)!important;box-shadow:0 8px 30px rgba(74,0,0,.10),inset 0 1px 0 rgba(255,255,255,.6)!important;border-radius:18px!important;}
 .tabs{background:linear-gradient(160deg,rgba(255,253,250,.78),rgba(252,246,236,.72))!important;backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);border:1px solid rgba(255,255,255,.55)!important;border-radius:14px!important;box-shadow:0 4px 16px rgba(74,0,0,.08)!important;}
 
@@ -743,6 +749,49 @@ tr:hover td{background:var(--maroon-soft);}
   .lf-check input{min-height:0;width:22px;height:22px;}
 }
 
+/* ═══ Notification panel ══════════════════════════════════════════════════
+   Paper on the dark top bar, matching every other readable surface in the app.
+   Anchored to the bell rather than centred, so the eye does not have to travel
+   from what it clicked to what appeared. */
+.tb-notif-wrap{position:relative;flex-shrink:0;}
+.notif-pop{position:absolute;top:calc(100% + 10px);right:0;width:min(360px,calc(100vw - 32px));
+  background:var(--paper);border:1px solid var(--paper-line);border-radius:16px;
+  box-shadow:0 20px 50px -18px rgba(0,0,0,.55),0 0 0 1px rgba(212,160,23,.18);
+  z-index:900;overflow:hidden;
+  animation:notifIn var(--dur-base) var(--ease-out) both;}
+@keyframes notifIn{from{opacity:0;transform:translateY(-6px) scale(.985);}to{opacity:1;transform:none;}}
+@media (prefers-reduced-motion:reduce){.notif-pop{animation:none;}}
+.notif-head{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:.7rem .9rem;border-bottom:1px solid var(--paper-line);
+  font-family:'Cinzel',serif;font-size:.82rem;font-weight:700;color:var(--maroon-dark);}
+.notif-all{background:none;border:0;font-family:'Nunito',sans-serif;font-size:.72rem;font-weight:800;
+  color:var(--maroon);cursor:pointer;padding:3px 6px;border-radius:6px;
+  transition:background var(--dur-fast) var(--ease-out);}
+.notif-all:hover{background:var(--maroon-soft);}
+.notif-all:focus-visible{outline:2px solid var(--gold-dark);outline-offset:1px;}
+.notif-body{max-height:min(60vh,380px);overflow-y:auto;}
+.notif-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;
+  padding:.6rem .9rem;}
+.notif-row+.notif-row{border-top:1px solid var(--paper-line);}
+.notif-name{font-size:.82rem;font-weight:700;color:var(--text-dark);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.notif-meta{font-size:.68rem;color:var(--text-light);margin-top:1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.notif-ok{border:1px solid rgba(30,122,68,.3);background:rgba(30,122,68,.10);color:#1B7A44;
+  font-family:'Nunito',sans-serif;font-size:.72rem;font-weight:800;
+  padding:.32rem .7rem;border-radius:9px;cursor:pointer;white-space:nowrap;
+  transition:background var(--dur-fast) var(--ease-out),transform var(--dur-fast) var(--ease-out);}
+.notif-ok:hover{background:rgba(30,122,68,.18);}
+.notif-ok:active{transform:scale(.95);transition-duration:.06s;}
+.notif-ok:disabled{opacity:.5;cursor:default;}
+.notif-ok:focus-visible{outline:2px solid var(--gold-dark);outline-offset:1px;}
+.notif-empty{padding:1.5rem .9rem;text-align:center;font-size:.8rem;color:var(--text-light);line-height:1.6;}
+.notif-empty b{display:block;color:var(--text-mid);font-size:.86rem;margin-bottom:2px;}
+@media (max-width:768px){
+  .notif-pop{position:fixed;top:64px;right:12px;left:12px;width:auto;}
+  .notif-ok{min-height:44px;}
+}
+
 /* ═══ S1 · KPI tiles as chart selectors ═══════════════════════════════════
    The tiles are <button> now, so the browser's button defaults have to be
    undone — same treatment the monitor cards needed in A5, and for the same
@@ -947,13 +996,26 @@ tr:hover td{background:var(--maroon-soft);}
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.2-3.2"/></svg>
         <input type="search" id="tb-search-input" placeholder="Search users, messages…" aria-label="Search users and messages" oninput="globalSearch(this.value)"/>
       </label>
-      <button class="tb-icon" id="tb-bell" aria-label="Pending account requests" onclick="switchTab('pending',null,document.getElementById('rail-pending'))">
-        <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
-        <span class="tb-dot" id="tb-bell-count" hidden>0</span>
-      </button>
-      <a class="tb-icon" href="/" aria-label="Back to chat" data-tip="Back to Chat">
-        <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
-      </a>
+      <!-- The bell opens a panel rather than jumping straight to a tab: a count
+           with no detail makes you navigate away just to learn what it is about.
+           The panel answers that in place and lets the common case — approving
+           someone — happen without leaving the screen.
+           The "Back to chat" home link that sat here is gone: admins are blocked
+           from the chat portal by design, so it only ever led to a rejection. -->
+      <div class="tb-notif-wrap">
+        <button class="tb-icon" id="tb-bell" aria-label="Notifications"
+                aria-haspopup="dialog" aria-expanded="false" onclick="toggleNotifs(event)">
+          <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          <span class="tb-dot" id="tb-bell-count" hidden>0</span>
+        </button>
+        <div class="notif-pop" id="notif-pop" role="dialog" aria-label="Notifications" hidden>
+          <div class="notif-head">
+            <span>Notifications</span>
+            <button class="notif-all" onclick="openPendingFromNotifs()">View all</button>
+          </div>
+          <div class="notif-body" id="notif-body"></div>
+        </div>
+      </div>
       <div class="tb-me" title="Signed in as admin">
         <span class="tb-av" id="admin-av">A</span>
         <span class="tb-me-txt"><b id="admin-name-label">Admin</b><small>Administrator</small></span>
@@ -1814,6 +1876,9 @@ async function loadPending(){
       if(bell) bell.hidden=true;
     }
     renderPending();
+    // The bell badge and the panel read the same queue; refresh both together
+    // so they can never disagree about how many are waiting.
+    renderNotifs();
   }catch(err){console.error(err);}
 }
 
@@ -2306,6 +2371,73 @@ async function deleteGroupAdmin(id){
     if(!res.ok) return alert(data.error || 'Could not delete');
     loadGroups(); loadStats();
   }catch{ alert('Server error'); }
+}
+
+// ── Notifications ───────────────────────────────────────────────────────────
+// The bell reads the same pending queue the Pending tab does — one source, so
+// the badge and the panel can never disagree.
+function renderNotifs(){
+  const box=document.getElementById('notif-body');
+  if(!box) return;
+  const items=(pendingUsers||[]).slice(0,6);
+  if(!items.length){
+    box.innerHTML='<div class="notif-empty"><b>You are all caught up</b>'+
+      'New account requests will appear here.</div>';
+    return;
+  }
+  box.innerHTML=items.map(u=>`
+    <div class="notif-row" data-uid="${Number(u.id)}">
+      <span class="av" data-role="${esc(u.role)}">${esc(initials(u.name))}</span>
+      <div style="min-width:0">
+        <div class="notif-name">${esc(u.name)}</div>
+        <div class="notif-meta">${esc(u.email)} · ${new Date(u.created_at).toLocaleDateString()}</div>
+      </div>
+      <button class="notif-ok" onclick="approveFromNotifs(${Number(u.id)},this)">Approve</button>
+    </div>`).join('') +
+    (pendingUsers.length>items.length
+      ? `<div class="notif-empty" style="padding:.6rem;">and ${pendingUsers.length-items.length} more</div>`
+      : '');
+}
+
+function toggleNotifs(e){
+  if(e) e.stopPropagation();
+  const pop=document.getElementById('notif-pop');
+  const bell=document.getElementById('tb-bell');
+  const open=!pop.hidden;
+  pop.hidden=open;
+  bell.setAttribute('aria-expanded', open?'false':'true');
+  if(!open){ renderNotifs(); loadPending().then(renderNotifs); }
+}
+
+function closeNotifs(){
+  const pop=document.getElementById('notif-pop');
+  if(pop && !pop.hidden){
+    pop.hidden=true;
+    document.getElementById('tb-bell').setAttribute('aria-expanded','false');
+  }
+}
+
+// Click-away and Escape, because a popover with no way out except its own
+// button is a trap on a touchscreen.
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.tb-notif-wrap')) closeNotifs();
+});
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeNotifs(); });
+
+async function approveFromNotifs(id,btn){
+  btn.disabled=true; btn.textContent='…';
+  try{
+    const res=await fetch(`/api/admin/users/${id}/approve`,{method:'PUT',headers:{Authorization:`Bearer ${authToken}`}});
+    if(!res.ok){ btn.disabled=false; btn.textContent='Approve'; return; }
+    // Refresh the queue rather than just removing the row, so the badge, the
+    // panel and the Pending table all move together.
+    await loadPending(); renderNotifs(); loadUsers(); loadStats();
+  }catch{ btn.disabled=false; btn.textContent='Approve'; }
+}
+
+function openPendingFromNotifs(){
+  closeNotifs();
+  switchTab('pending',null,document.getElementById('rail-pending'));
 }
 
 // ── Broadcast ───────────────────────────────────────────────────────────────

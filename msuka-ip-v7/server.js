@@ -63,8 +63,34 @@ async function setupHttps() {
     const haveSans = fs.existsSync(sansPath) ? fs.readFileSync(sansPath, 'utf8').trim() : '';
     const stale = !fs.existsSync(keyPath) || !fs.existsSync(certPath) || haveSans !== wantSans;
 
+    // A locally-issued CA, generated once and reused. Browsers mark ANY
+    // certificate they do not trust as "Not secure", no matter how correct its
+    // SANs are — so a self-signed leaf can never clear that warning. Signing
+    // the server certificate with a CA that a device has been told to trust
+    // can: install certs/ca.crt once per device and the padlock goes green.
+    //
+    // The CA is deliberately separate from the server certificate and long
+    // lived, so a DHCP address change rebuilds only the leaf. Devices install
+    // the CA once and never again.
+    const caCertPath = path.join(certDir, 'ca.crt');
+    const caKeyPath  = path.join(certDir, 'ca.key');
+    fs.mkdirSync(certDir, { recursive: true });
+
+    const selfsigned = require('selfsigned');
+    if (!fs.existsSync(caCertPath) || !fs.existsSync(caKeyPath)) {
+      const ca = await selfsigned.generate(
+        [{ name: 'commonName', value: 'MSUkaIP Local CA' },
+         { name: 'organizationName', value: 'MSU CICS' }],
+        { days: 3650, keySize: 2048, algorithm: 'sha256',
+          extensions: [{ name: 'basicConstraints', cA: true, critical: true },
+                       { name: 'keyUsage', keyCertSign: true, cRLSign: true, critical: true }] }
+      );
+      fs.writeFileSync(caCertPath, ca.cert);
+      fs.writeFileSync(caKeyPath, ca.private);
+      console.log('🔏  Generated the MSUkaIP local CA (certs/ca.crt) — install it on a device to remove the browser warning.');
+    }
+
     if (stale) {
-      const selfsigned = require('selfsigned');
       const altNames = [
         { type: 2, value: 'localhost' },      // type 2 = DNS name
         { type: 2, value: 'msukaip.lan' },
@@ -73,13 +99,22 @@ async function setupHttps() {
       ];
       const pems = await selfsigned.generate(
         [{ name: 'commonName', value: 'msukaip.lan' }],
-        { days: 3650, keySize: 2048, extensions: [{ name: 'subjectAltName', altNames }] }
+        { days: 825, keySize: 2048, algorithm: 'sha256',
+          // 825 days: browsers reject server certificates with longer lifetimes.
+          // The old 3650-day cert was over that limit.
+          extensions: [
+            { name: 'basicConstraints', cA: false },
+            { name: 'keyUsage', digitalSignature: true, keyEncipherment: true },
+            { name: 'extKeyUsage', serverAuth: true },
+            { name: 'subjectAltName', altNames },
+          ],
+          ca: { cert: fs.readFileSync(caCertPath, 'utf8'), key: fs.readFileSync(caKeyPath, 'utf8') },
+        }
       );
-      fs.mkdirSync(certDir, { recursive: true });
       fs.writeFileSync(keyPath, pems.private);
       fs.writeFileSync(certPath, pems.cert);
       fs.writeFileSync(sansPath, wantSans);
-      console.log(`🔐  Generated self-signed TLS certificate (valid for: ${wantSans})`);
+      console.log(`🔐  Issued a TLS certificate for: ${wantSans}`);
     }
     httpsServer = https.createServer({ key: fs.readFileSync(keyPath), cert: fs.readFileSync(certPath) }, app);
     io.attach(httpsServer);
@@ -87,6 +122,18 @@ async function setupHttps() {
     console.warn(`⚠️   HTTPS disabled (${e.message}) — voice calls will only work on http://localhost:${process.env.PORT || 3000}.`);
   }
 }
+// The CA a device has to install to trust this server. Deliberately public and
+// unauthenticated: it is a PUBLIC certificate, it contains no secret, and a
+// phone has to fetch it before it can log in. certs/ca.key never leaves the
+// server — only the .crt is served.
+app.get('/msukaip-ca.crt', (req, res) => {
+  const caPath = path.join(__dirname, 'certs', 'ca.crt');
+  if (!fs.existsSync(caPath)) return res.status(404).send('CA not generated yet — start the server over HTTPS once.');
+  res.setHeader('Content-Type', 'application/x-x509-ca-cert');
+  res.setHeader('Content-Disposition', 'attachment; filename="MSUkaIP-Local-CA.crt"');
+  res.send(fs.readFileSync(caPath));
+});
+
 // ── Security headers (OWASP A05: Security Misconfiguration) ───────────────────
 // Set on every response before any route. No external dependency (Helmet) — the
 // header set is small and each line is defensible in oral defense.
