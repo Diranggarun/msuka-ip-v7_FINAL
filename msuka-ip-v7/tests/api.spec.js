@@ -11,7 +11,7 @@
 // ═══════════════════════════════════════════════════════════════════
 const { test, expect, request } = require('@playwright/test');
 
-const BASE_URL    = 'http://localhost:3000';
+const BASE_URL    = process.env.BASE_URL || 'http://localhost:3000';
 const ADMIN_EMAIL = 'admin@cics.msu.edu';
 const ADMIN_PASS  = 'admin123';
 const USER_EMAIL  = 'student@cics.msu.edu';

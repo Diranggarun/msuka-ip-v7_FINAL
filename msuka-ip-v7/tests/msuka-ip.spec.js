@@ -10,7 +10,7 @@
 const { test, expect } = require('@playwright/test');
 
 // ── Test Config ───────────────────────────────────────────────────
-const BASE_URL    = 'http://localhost:3000';
+const BASE_URL    = process.env.BASE_URL || 'http://localhost:3000';
 const ADMIN_EMAIL = 'admin@cics.msu.edu';
 const ADMIN_PASS  = 'admin123';
 const USER_EMAIL  = 'student@cics.msu.edu';
@@ -33,6 +33,9 @@ async function studentLogin(page) {
 async function acceptAgreement(page) {
   const accept = page.locator('.agree-accept');
   if (await accept.isVisible().catch(() => false)) {
+    // The button is disabled until the consent box is ticked, so a test has to
+    // give consent the same way a person does.
+    await page.check('#agree-check');
     await accept.click();
     await page.locator('#agree-overlay').waitFor({ state: 'hidden', timeout: 4000 });
   }
@@ -156,6 +159,10 @@ test.describe('1. Authentication Tests', () => {
     // The agreement overlays the app and must be dealt with first.
     await expect(page.locator('#agree-overlay')).toBeVisible();
     await expect(page.locator('#agree-title')).toContainText('Terms of Use');
+    // Consent is a gate: the button does nothing until the box is ticked.
+    await expect(page.locator('.agree-accept')).toBeDisabled();
+    await page.check('#agree-check');
+    await expect(page.locator('.agree-accept')).toBeEnabled();
     await page.click('.agree-accept');
     await expect(page.locator('#agree-overlay')).toBeHidden();
     // After accepting, the chat is reachable.

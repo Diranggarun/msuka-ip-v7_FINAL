@@ -4,6 +4,17 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>MSUkaIP – Feedback</title>
+  <!-- Home-screen install. Without a manifest and an apple-touch-icon the
+       installed app gets a blank placeholder tile, which is what phones were
+       showing. theme-color paints the Android status bar maroon so the app
+       does not sit under a white strip. -->
+  <link rel="manifest" href="/manifest.webmanifest"/>
+  <meta name="theme-color" content="#6B0000"/>
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="MSUkaIP"/>
 <link href="/fonts/google-fonts.css" rel="stylesheet"/>
 <style>
 :root{
@@ -142,6 +153,9 @@ button,label{touch-action:manipulation;}
 /* QUESTION ROW */
 .question-row{padding:.65rem 0;border-bottom:1px solid var(--gray-100);}
 .question-row:last-child{border-bottom:none;}
+/* Inline validation — replaces alert() so a suppressed dialog can't hide it. */
+.field-invalid{outline:2px solid var(--maroon);outline-offset:3px;border-radius:var(--r-sm);}
+.field-error{color:var(--maroon);font-size:.72rem;font-weight:700;margin-top:.35rem;}
 .q-text{font-size:.85rem;color:var(--text-dark);font-weight:600;margin-bottom:.5rem;line-height:1.4;}
 .q-num{display:inline-block;width:20px;height:20px;border-radius:50%;background:var(--maroon-soft);color:var(--maroon);font-size:.65rem;font-weight:800;text-align:center;line-height:20px;margin-right:5px;flex-shrink:0;}
 .likert-scale{display:flex;gap:6px;flex-wrap:wrap;}
@@ -199,6 +213,9 @@ button,label{touch-action:manipulation;}
 .note-count.over{color:#B23A2E;font-weight:800;}
 @media (max-width:600px){
   .note-foot{flex-direction:column;gap:4px;}
+  /* Two columns left the dropdowns ~101px wide, so "Select your role..." was cut
+     mid-word on a 360px Android. One column per field below 600px. */
+  .info-grid{grid-template-columns:minmax(0,1fr);}
 }
 </style>
 </head>
@@ -241,11 +258,11 @@ button,label{touch-action:manipulation;}
     <h3 style="display:flex;align-items:center;gap:7px;"><svg class="fi-lg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Respondent Information</h3>
     <div class="info-grid">
       <div class="info-group">
-        <label>Full Name (Optional)</label>
+        <label for="resp-name">Full Name (Optional)</label>
         <input type="text" id="resp-name" placeholder="Leave blank to stay anonymous"/>
       </div>
       <div class="info-group">
-        <label>Respondent Type</label>
+        <label for="resp-type">Respondent Type</label>
         <select id="resp-type">
           <option value="">Select your role…</option>
           <option value="Student (3rd Year IT/CS)">Student (3rd Year IT/CS)</option>
@@ -255,11 +272,11 @@ button,label{touch-action:manipulation;}
         </select>
       </div>
       <div class="info-group">
-        <label>Date</label>
+        <label for="resp-date">Date</label>
         <input type="date" id="resp-date"/>
       </div>
       <div class="info-group">
-        <label>Device Used for Testing</label>
+        <label for="resp-device">Device Used for Testing</label>
         <select id="resp-device">
           <option value="">Select device…</option>
           <option value="Desktop/Laptop (Windows)">Desktop/Laptop (Windows)</option>
@@ -461,32 +478,54 @@ function updateNoteCount(){
   c.classList.toggle('over', el.value.length >= 1000);
 }
 
+// Inline validation instead of alert(). iOS adds a "Suppress dialogs" button to
+// repeated alerts, and once a respondent taps it every later prompt is silently
+// swallowed — the Submit button then looks like it simply does nothing. Marking
+// the field also shows *where* the problem is, which an alert never did.
+function flagField(el, message) {
+  document.querySelectorAll('.field-error').forEach(n => n.remove());
+  document.querySelectorAll('.field-invalid').forEach(n => n.classList.remove('field-invalid'));
+  if (!el) return;
+  el.classList.add('field-invalid');
+  const note = document.createElement('div');
+  note.className   = 'field-error';
+  note.textContent = message;
+  el.insertAdjacentElement('afterend', note);
+  el.scrollIntoView({ behavior:'smooth', block:'center' });
+  if (typeof el.focus === 'function') el.focus({ preventScroll:true });
+}
+
 async function submitQuestionnaire() {
   const type   = document.getElementById('resp-type').value;
   const device = document.getElementById('resp-device').value;
   const name   = document.getElementById('resp-name').value;
   const date   = document.getElementById('resp-date').value;
 
-  if (!type)   return alert('Please select your respondent type before submitting.');
-  if (!device) return alert('Please select the device you used for testing.');
+  if (!type)   return flagField(document.getElementById('resp-type'),   'Please select your respondent type before submitting.');
+  if (!device) return flagField(document.getElementById('resp-device'), 'Please select the device you used for testing.');
 
   // Collect all answers
   const sectionScores = {};
-  let allAnswered = true;
+  let allAnswered  = true;
+  let firstMissing = null;   // so we can scroll the respondent to the gap
 
   Object.entries(sections).forEach(([sec, data]) => {
     const scores = [];
     data.questions.forEach((_, i) => {
       const name  = `q_${sec}_${i}`;
       const sel   = document.querySelector(`input[name="${name}"]:checked`);
-      if (!sel) { allAnswered = false; return; }
+      if (!sel) { allAnswered = false; if (!firstMissing) firstMissing = name; return; }
       scores.push(parseInt(sel.value));
     });
     const mean = scores.length ? (scores.reduce((a,b)=>a+b,0)/scores.length) : 0;
     sectionScores[sec] = { title: data.title, scores, mean };
   });
 
-  if (!allAnswered) return alert('Please answer all questions before submitting.');
+  if (!allAnswered) {
+    const input = document.querySelector(`input[name="${firstMissing}"]`);
+    return flagField(input ? input.closest('.question-row') : null,
+                     'Please answer this question before submitting.');
+  }
 
   // Overall weighted mean
   const allMeans  = Object.values(sectionScores).map(s=>s.mean);

@@ -4,6 +4,17 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>MSUkaIP – Admin Dashboard</title>
+  <!-- Home-screen install. Without a manifest and an apple-touch-icon the
+       installed app gets a blank placeholder tile, which is what phones were
+       showing. theme-color paints the Android status bar maroon so the app
+       does not sit under a white strip. -->
+  <link rel="manifest" href="/manifest.webmanifest"/>
+  <meta name="theme-color" content="#6B0000"/>
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="MSUkaIP"/>
 <link href="/fonts/google-fonts.css" rel="stylesheet"/>
 <style>
 :root{
@@ -466,7 +477,11 @@ tr:hover td{background:var(--maroon-soft);}
   .admin-rail::after{top:0;bottom:auto;left:0;right:0;width:auto;height:3px;
     background:linear-gradient(90deg,transparent,var(--gold),var(--gold-bright),var(--gold),transparent);}
   .admin-rail-logo{display:none;}
-  .rail-tab{flex:1 0 auto;min-width:44px;min-height:48px;justify-content:center;border-radius:10px;}
+  /* width:auto is required. The desktop rail is vertical and sets width:100% on
+     .rail-tab; once the rail turns horizontal here, flex-basis:auto reads that
+     100% and every tab became a full screen wide, so a phone showed one tab at
+     a time inside a 3557px scroll strip. Sizing to the icon fits them all. */
+  .rail-tab{flex:0 0 auto;width:auto;min-width:44px;min-height:48px;justify-content:center;border-radius:10px;}
 
   .admin-main{order:1;min-width:0;width:100%;}
   .container{padding:.9rem .7rem;max-width:100%;}
@@ -480,6 +495,16 @@ tr:hover td{background:var(--maroon-soft);}
      stretching the page. Keeps the body free of horizontal scroll. */
   .card{overflow-x:auto;padding:1rem .9rem;}
   table{min-width:520px;}
+
+  /* Forms are not tables — they must fit, not scroll. Two 192px columns inside a
+     267px card pushed the email and role fields off-screen, so adding a user
+     meant swiping sideways. One field per row below 768px. */
+  .form-grid{grid-template-columns:minmax(0,1fr);}
+
+  /* card-header is a nowrap flex row: title on the left, action buttons on the
+     right. At 320px the button group ran 8px past the screen and clipped
+     "Export CSV" — the control used to pull survey data. Let it wrap. */
+  .card-header{flex-wrap:wrap;gap:.5rem;}
 
   /* "← Back to Chat" is a real navigation control but rendered as bare text,
      so it was a 28px-wide tap target. Give it the 44px minimum. */
@@ -825,9 +850,9 @@ tr:hover td{background:var(--maroon-soft);}
       <p class="auth-sub3">Main Campus</p>
     </div>
     <div class="auth-form">
-      <label>Admin Email</label>
+      <label for="login-email">Admin Email</label>
       <input type="email" id="login-email" placeholder="admin@cics.msu.edu"/>
-      <label>Password</label>
+      <label for="login-password">Password</label>
       <div class="pw-wrap">
         <input type="password" id="login-password" placeholder="Your password"/>
         <button type="button" class="pw-toggle" aria-label="Show password" aria-pressed="false" onclick="togglePw(this,'login-password')">
@@ -1066,7 +1091,7 @@ tr:hover td{background:var(--maroon-soft);}
       <div class="card">
         <div class="card-header">
           <h3><svg class="hi" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5"/><path d="M15 19c0-2 2-3.5 4-3.5"/></svg>Approved Users</h3>
-          <input type="text" id="search-users" class="search-input" placeholder="Search users…" oninput="filterUsers()" style="width:220px;"/>
+          <input type="text" id="search-users" class="search-input" aria-label="Search approved users" placeholder="Search users…" oninput="filterUsers()" style="width:220px;"/>
         </div>
         <table>
           <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Role</th><th>Account</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
@@ -1092,10 +1117,10 @@ tr:hover td{background:var(--maroon-soft);}
       <div class="card">
         <div class="card-header"><h3><svg class="hi" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M3 21c0-3.5 3-6 7-6"/><path d="M19 14v6M16 17h6"/></svg>Add New User (Pre-approved)</h3></div>
         <div class="form-grid">
-          <div class="form-group"><label>Full Name</label><input type="text" id="new-name" placeholder="e.g. Juan dela Cruz"/></div>
-          <div class="form-group"><label>Institutional Email</label><input type="email" id="new-email" placeholder="e.g. juan@cics.msu.edu"/></div>
-          <div class="form-group"><label>Password</label><input type="password" id="new-password" placeholder="Set initial password"/></div>
-          <div class="form-group"><label>Role</label>
+          <div class="form-group"><label for="new-name">Full Name</label><input type="text" id="new-name" placeholder="e.g. Juan dela Cruz"/></div>
+          <div class="form-group"><label for="new-email">Institutional Email</label><input type="email" id="new-email" placeholder="e.g. juan@cics.msu.edu"/></div>
+          <div class="form-group"><label for="new-password">Password</label><input type="password" id="new-password" placeholder="Set initial password"/></div>
+          <div class="form-group"><label for="new-role">Role</label>
             <select id="new-role">
               <option value="student">Student</option>
               <option value="faculty">Faculty</option>
@@ -1161,7 +1186,7 @@ tr:hover td{background:var(--maroon-soft);}
           <h3><svg class="hi" viewBox="0 0 24 24"><path d="M11 5L4 9v6l7 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18 6a8 8 0 0 1 0 12"/></svg>Send an Announcement</h3>
         </div>
         <p class="bc-note">Posted to Global Chat and pushed to everyone signed in. It cannot be recalled.</p>
-        <textarea id="bc-text" class="bc-text" rows="3" maxlength="500"
+        <textarea id="bc-text" class="bc-text" aria-label="Broadcast message" rows="3" maxlength="500"
                   placeholder="e.g. System maintenance this Saturday, 8-10 AM."
                   oninput="updateBroadcastCount()"></textarea>
         <div class="bc-foot">
@@ -1306,7 +1331,8 @@ async function loadFeedback(){
     const res=await fetch('/api/admin/survey',{headers:{Authorization:`Bearer ${authToken}`}});
     if(!res.ok) return;
     const data=await res.json();
-    const responses=data.responses||[];
+    feedbackRows=Array.isArray(data.responses)?data.responses:[];
+    const responses=feedbackRows;
     const summary=data.summary||{};
 
     // Rail badge
@@ -1347,9 +1373,16 @@ async function loadFeedback(){
     }
 
     // Table
+    renderFeedbackRows(responses);
+  }catch(err){console.error('loadFeedback',err);}
+}
+
+// Split out so the top-bar search can re-render a filtered subset without
+// refetching or disturbing the summary block above the table.
+function renderFeedbackRows(responses){
     const tbody=document.getElementById('feedback-tbody');
     if(!responses.length){
-      tbody.innerHTML='<tr><td colspan="12" class="empty">No responses yet</td></tr>';
+      tbody.innerHTML='<tr><td colspan="12" class="empty">No responses match</td></tr>';
       return;
     }
     tbody.innerHTML=responses.map((r,i)=>`
@@ -1369,7 +1402,6 @@ async function loadFeedback(){
         <td style="color:var(--text-light);font-size:.76rem">${new Date(r.created_at).toLocaleString()}</td>
         <td><button class="btn-sm btn-warning" onclick="viewFeedbackDetail(${r.id})"><svg class="bi" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View</button></td>
       </tr>`).join('');
-  }catch(err){console.error('loadFeedback',err);}
 }
 
 async function viewFeedbackDetail(id){
@@ -1787,6 +1819,9 @@ async function loadPending(){
 
 // ── Stage 5 · pending requests table ───────────────────────────────────────
 let pendingUsers=[], pendingPage=1, pendingTerm='';
+// Rows kept so the top-bar search can re-render a filtered view without
+// re-fetching. Each list owns its own array; there is no shared 'rows'.
+let monitorRows=[], messageRows=[], feedbackRows=[];
 const PENDING_PER_PAGE=10;
 
 // The search filters the DATA, not the visible rows. Hiding rows would only
@@ -2020,15 +2055,66 @@ function startClock(){
 }
 // One search box over both tables: it drives the Users list and, when the
 // pending tab is showing, filters those cards too.
+// One box, applied to whatever list is on screen. Searching every tab at once
+// and showing combined results would be a different feature; this matches what
+// the box says it does — search what you are looking at.
+const SEARCH_HINT = {
+  overview:'Search users, messages…', pending:'Search pending requests…',
+  users:'Search users…', groups:'Search groups…', logs:'Search the audit log…',
+  monitor:'Search login activity…', feedback:'Search feedback…',
+  messages:'Search messages…', add:'Search users, messages…',
+};
+
+// Does any of `fields` contain the term? Undefined fields are simply skipped.
+const matches = (term, ...fields) =>
+  !term || fields.some(f => String(f ?? '').toLowerCase().includes(term));
+
+function updateSearchHint(){
+  const box=document.getElementById('tb-search-input');
+  if(box) box.placeholder = SEARCH_HINT[currentTab] || 'Search…';
+}
+
 function globalSearch(q){
   const term=String(q||'').toLowerCase().trim();
-  const su=document.getElementById('search-users');
-  if(su){ su.value=q; filterUsers(); }
-  // Pending is paginated now, so filtering has to happen in the data and reset
-  // to page 1 — hiding rows would only search the page currently displayed.
-  pendingTerm=term;
-  pendingPage=1;
-  renderPending();
+  switch(currentTab){
+    case 'users': {
+      const su=document.getElementById('search-users');
+      if(su) su.value=q;
+      filterUsers();
+      break;
+    }
+    case 'pending':
+      // Paginated, so the filter has to happen in the data and reset to page 1
+      // — hiding rows would only ever search the page on screen.
+      pendingTerm=term; pendingPage=1; renderPending();
+      break;
+    case 'groups':
+      renderGroups(adminGroups.filter(g=>matches(term,g.name,g.creator)));
+      break;
+    case 'logs': {
+      // The audit log filters on the server, so hand the term to its own box.
+      const lq=document.getElementById('log-q');
+      if(lq){ lq.value=q; logPage=1; loadLogs(); }
+      break;
+    }
+    case 'monitor':
+      renderMonitor(monitorRows.filter(u=>matches(term,u.name,u.email,u.role)));
+      break;
+    case 'feedback':
+      renderFeedbackRows(feedbackRows.filter(r=>
+        matches(term,r.respondent_name,r.respondent_type,r.device,r.notes)));
+      break;
+    case 'messages':
+      renderMessages(messageRows.filter(m=>matches(term,m.sender,m.type,m.text)));
+      break;
+    default: {
+      // Overview and Add User have no list of their own, so the box falls back
+      // to the users list rather than doing nothing.
+      const su=document.getElementById('search-users');
+      if(su) su.value=q;
+      filterUsers();
+    }
+  }
 }
 
 async function addUser(){
@@ -2163,10 +2249,18 @@ async function runBackup(){
 let adminGroups = [];
 
 async function loadGroups(){
-  const tb = document.getElementById('groups-tbody');
   try{
     const res = await fetch('/api/admin/groups',{headers:{Authorization:`Bearer ${authToken}`}});
-    adminGroups = await res.json();
+    const body = await res.json();
+    adminGroups = Array.isArray(body) ? body : [];
+    renderGroups(adminGroups);
+  }catch{ document.getElementById('groups-tbody').innerHTML = '<tr><td colspan="6" class="empty">Could not load groups</td></tr>'; }
+}
+
+function renderGroups(list){
+  const tb = document.getElementById('groups-tbody');
+  {
+    const adminGroups = list;
     if(!Array.isArray(adminGroups) || !adminGroups.length){
       // There are zero groups today, so this is the state that shows first.
       tb.innerHTML = '<tr><td colspan="6" class="empty">No group chats yet.<br>' +
@@ -2185,7 +2279,7 @@ async function loadGroups(){
           <button class="btn-sm btn-danger" onclick="deleteGroupAdmin(${Number(g.id)})"><svg class="bi" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>Delete</button>
         </div></td>
       </tr>`).join('');
-  }catch{ tb.innerHTML = '<tr><td colspan="6" class="empty">Could not load groups</td></tr>'; }
+  }
 }
 
 async function viewGroupMembers(id){
@@ -2332,9 +2426,25 @@ async function loadLogs(){
 async function loadMessages(){
   try{
     const res=await fetch('/api/admin/messages',{headers:{Authorization:`Bearer ${authToken}`}});
-    const msgs=await res.json();
+    const body=await res.json();
+    // This route answers 403 by design: message CONTENT is private even from
+    // administrators. Keep the cache an array so the search cannot trip over
+    // an error object, and say why the table is empty rather than showing a
+    // bare "no messages", which would read as "nobody has chatted".
+    messageRows=Array.isArray(body)?body:[];
+    if(!Array.isArray(body)){
+      document.getElementById('messages-tbody').innerHTML=
+        '<tr><td colspan="5" class="empty">Message content is private and is not shown to administrators.<br>'+
+        '<span style="font-size:.8rem;">Only counts and metadata appear in the dashboard.</span></td></tr>';
+      return;
+    }
+    renderMessages(messageRows);
+  }catch{}
+}
+
+function renderMessages(msgs){
     const tbody=document.getElementById('messages-tbody');
-    if(!msgs.length){tbody.innerHTML='<tr><td colspan="5" class="empty">No messages yet</td></tr>';return;}
+    if(!msgs.length){tbody.innerHTML='<tr><td colspan="5" class="empty">No messages match</td></tr>';return;}
     tbody.innerHTML=msgs.map((m,i)=>`
       <tr>
         <td style="color:var(--text-light);font-size:.8rem">${i+1}</td>
@@ -2343,7 +2453,6 @@ async function loadMessages(){
         <td style="color:var(--text-dark);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(m.text)}</td>
         <td style="color:var(--text-light);font-size:.78rem">${new Date(m.created_at).toLocaleString()}</td>
       </tr>`).join('');
-  }catch{}
 }
 
 // Escape user-controlled strings before putting them in innerHTML (names and
@@ -2414,11 +2523,17 @@ function monSeriesHtml(d){
 }
 
 async function loadLoginActivity(){
-  const grid=document.getElementById('monitor-grid');
   try{
     const res=await fetch('/api/admin/login-activity',{headers:{Authorization:`Bearer ${authToken}`}});
-    const users=await res.json();
-    if(!Array.isArray(users)||!users.length){grid.innerHTML='<p class="empty">No login records yet</p>';return;}
+    const body=await res.json();
+    monitorRows=Array.isArray(body)?body:[];
+    renderMonitor(monitorRows);
+  }catch{document.getElementById('monitor-grid').innerHTML='<p class="empty">Could not load login activity</p>';}
+}
+
+function renderMonitor(users){
+    const grid=document.getElementById('monitor-grid');
+    if(!Array.isArray(users)||!users.length){grid.innerHTML='<p class="empty">No login records match</p>';return;}
     grid.innerHTML=users.map(u=>{
       const failed=Number(u.failed)||0, ok=Number(u.successes)||0;
       const last=u.last_login?new Date(u.last_login.replace(' ','T')).toLocaleString():'Never signed in';
@@ -2446,10 +2561,13 @@ async function loadLoginActivity(){
         <div class="mon-series" hidden></div>
       </button>`;
     }).join('');
-  }catch{grid.innerHTML='<p class="empty">Could not load login activity</p>';}
 }
 
+// Which tab is open. The top-bar search needs it to know what to filter.
+let currentTab='overview';
+
 function switchTab(name,btn,railBtn){
+  currentTab=name;
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.rail-tab').forEach(b=>b.classList.remove('active'));
@@ -2461,6 +2579,7 @@ function switchTab(name,btn,railBtn){
     _chartStale = false;
     renderMainChart(_chartSeries.a, _chartSeries.b);
   }
+  updateSearchHint();
   if(name==='groups') loadGroups();
   if(name==='monitor') loadLoginActivity();
   // loadAll() never fetches messages, so the panel needs its own trigger.

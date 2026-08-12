@@ -14,7 +14,7 @@
 // ═══════════════════════════════════════════════════════════════════
 const { test, expect, request } = require('@playwright/test');
 
-const BASE_URL    = 'http://localhost:3000';
+const BASE_URL    = process.env.BASE_URL || 'http://localhost:3000';
 const ADMIN_EMAIL = 'admin@cics.msu.edu';
 const ADMIN_PASS  = 'admin123';
 const USER_EMAIL  = 'student@cics.msu.edu';
@@ -63,6 +63,8 @@ test.describe('Smoke — notifications panel', () => {
     // Accept the post-login terms agreement, which overlays the app.
     const agree = page.locator('.agree-accept');
     if (await agree.isVisible().catch(() => false)) {
+      // Disabled until the consent box is ticked.
+      await page.check('#agree-check');
       await agree.click();
       await page.locator('#agree-overlay').waitFor({ state: 'hidden', timeout: 4000 });
     }

@@ -107,6 +107,26 @@ app.use((req,res,next)=>{
   if (req.secure) res.setHeader('Strict-Transport-Security','max-age=31536000; includeSubDomains');
   next();
 });
+// ── Send LAN clients to HTTPS so the microphone is available ─────────────────
+// Browsers only expose getUserMedia on a secure origin. `localhost` counts as
+// one, so the server machine may stay on :3000, but a phone typing the LAN
+// address lands on a page where the mic is blocked for good — which silently
+// kills voice calls and voice messages. Redirect those navigations to the HTTPS
+// port instead of letting anyone reach the insecure origin by accident.
+//   - Only GET/HEAD: a redirect on POST would drop the request body.
+//   - /socket.io/ is skipped so an open session is not torn down mid-switch.
+//   - localhost is skipped: already a secure origin, and the Playwright suite
+//     drives the app there.
+//   - 302 (temporary), never 301/308 — a permanent redirect would be cached by
+//     every phone's browser and would be painful to undo if HTTPS ever fails.
+app.use((req,res,next)=>{
+  if (!httpsServer || req.secure) return next();
+  if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+  if (req.path.startsWith('/socket.io/')) return next();
+  const host = (req.hostname || '').toLowerCase();
+  if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return next();
+  return res.redirect(302, `https://${host}:${HTTPS_PORT}${req.originalUrl}`);
+});
 app.use(express.json());
 app.use(express.static(path.join(__dirname,'public'),{
   setHeaders:(res,filePath)=>{
@@ -1130,11 +1150,35 @@ app.get('/api/admin/survey.csv', verifyToken, adminOnly, async (req, res) => {
       const s = String(v).replace(/"/g, '""');
       return /[",\r\n]/.test(s) ? `"${s}"` : s;
     };
-    const header = ['id','name','type','device','date','mean_a','mean_b','mean_c','mean_d','overall','notes','scores_json','created_at'];
-    const lines = [header.join(',')];
-    for (const r of rows) {
-      lines.push([r.id, r.respondent_name, r.respondent_type, r.device, r.response_date, r.mean_a, r.mean_b, r.mean_c, r.mean_d, r.overall, r.notes, r.scores_json, r.created_at].map(csvEsc).join(','));
+    // Flatten every individual answer into its own column. scores_json is a
+    // blob: correct, complete, and useless in a spreadsheet. Chapter 4 needs a
+    // per-question mean for the item-analysis table, which means one column per
+    // statement. Widths come from the data rather than being hardcoded, so an
+    // extra question on the form does not silently truncate the export.
+    const parsed = rows.map(r => { try { return JSON.parse(r.scores_json) || {}; } catch { return {}; } });
+    const SECTIONS = ['a','b','c','d'];
+    const widths = {};
+    for (const sec of SECTIONS) {
+      widths[sec] = Math.max(0, ...parsed.map(p => Array.isArray(p[sec]?.scores) ? p[sec].scores.length : 0));
     }
+    const qCols = [];
+    for (const sec of SECTIONS) for (let i = 0; i < widths[sec]; i++) qCols.push(`${sec}${i + 1}`);
+
+    const header = ['id','name','type','device','date',
+      ...qCols,
+      'mean_a','mean_b','mean_c','mean_d','overall','notes','created_at'];
+    const lines = [header.join(',')];
+    rows.forEach((r, idx) => {
+      const p = parsed[idx];
+      const answers = [];
+      for (const sec of SECTIONS) {
+        const sc = Array.isArray(p[sec]?.scores) ? p[sec].scores : [];
+        for (let i = 0; i < widths[sec]; i++) answers.push(sc[i] ?? '');
+      }
+      lines.push([r.id, r.respondent_name, r.respondent_type, r.device, r.response_date,
+        ...answers,
+        r.mean_a, r.mean_b, r.mean_c, r.mean_d, r.overall, r.notes, r.created_at].map(csvEsc).join(','));
+    });
     await logAudit(req.user.id,'EXPORT_SURVEY_CSV',`Exported survey CSV (${rows.length} rows)`,req);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="msukaip-survey.csv"');
@@ -1512,7 +1556,17 @@ setupDatabase().then(async ()=>{
     console.log(`🛡️   Admin:   http://localhost:${PORT}/admin.html`);
   });
   if (httpsServer) httpsServer.listen(HTTPS_PORT,'0.0.0.0',()=>{
-    const lan = Object.values(os.networkInterfaces()).flat().find(i=>i && i.family==='IPv4' && !i.internal);
-    console.log(`🔐  Voice calls from LAN clients: https://${lan?lan.address:'<this-machine-ip>'}:${HTTPS_PORT}`);
+    // One laptop usually holds several IPv4 addresses: the wifi adapter plus
+    // virtual ones from VirtualBox or WSL. Taking the *first* non-internal
+    // address printed the VirtualBox address (192.168.56.1), which no phone on
+    // the wifi can ever reach. Print every candidate with its adapter name and
+    // let the operator pick the wifi one. 169.254.* is skipped: that is the
+    // link-local fallback Windows assigns when DHCP fails, so it is never usable.
+    const lans = Object.entries(os.networkInterfaces())
+      .flatMap(([name, addrs]) => (addrs || []).map(a => ({ name, ...a })))
+      .filter(a => a.family === 'IPv4' && !a.internal && !a.address.startsWith('169.254.'));
+    if (!lans.length) { console.log(`🔐  Voice calls: https://<this-machine-ip>:${HTTPS_PORT}`); return; }
+    console.log('🔐  Voice calls from LAN clients — use the address on your wifi adapter:');
+    for (const a of lans) console.log(`      https://${a.address}:${HTTPS_PORT}   (${a.name})`);
   });
 });

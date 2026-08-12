@@ -295,6 +295,30 @@ have reset the chart on every tick. Test 5.19 fails against exactly that mistake
 
 ---
 
+## Redirecting LAN clients from HTTP to HTTPS
+
+Field testing at CICS showed every tester reaching the app on
+`http://<lan-ip>:3000` — the address that gets typed because it needs no
+certificate warning. On that origin the browser hides `getUserMedia` entirely,
+so voice calls and voice messages are impossible. The app detected this and
+explained it in a dialog, but by then the tester had already picked the wrong
+address, and VoIP is Specific Objective 2.
+
+The server now issues a `302` from HTTP to `https://<host>:3443` for LAN
+clients, so the insecure origin cannot be reached by accident.
+
+Trade-off accepted: everyone now meets the self-signed certificate warning on
+first visit and must tap through it once. That is a worse first impression than
+a page that loads instantly, but the alternative is a demo where the headline
+feature silently cannot run. Three exemptions keep the redirect from breaking
+things — `localhost` (already a secure origin, and the Playwright suite drives
+the app there), `/socket.io/` (so an open session is not torn down mid-switch),
+and non-GET methods (a redirected POST loses its body). The status is `302` and
+deliberately not `301`/`308`: a permanent redirect would be cached by every
+phone's browser and would be painful to undo if HTTPS ever failed to start.
+
+---
+
 ## Stack divergence from the original plan
 
 The original capstone plan called for **FastAPI + React + Vite + Pydantic + Alembic migrations**. The actual build is **Node.js + Express + Socket.IO + vanilla HTML/JS + ad-hoc schema-init via `CREATE TABLE IF NOT EXISTS`**.

@@ -201,6 +201,118 @@ alone re-sent the old name to everyone.
 JWT's copy stays stale until the next sign-in, which only affects that user's own
 token, not what others see.
 
+### Phone shows "Voice features are blocked on this address"
+**Cause:** the phone opened `http://<lan-ip>:3000`. Browsers only expose
+`getUserMedia` on a secure origin; `localhost` qualifies but a LAN IP over plain
+HTTP does not, so the microphone is unavailable and calls/voice messages die.
+**Fix:** the server now 302-redirects LAN clients from HTTP to
+`https://<host>:3443`, so nobody can land on the insecure origin. `localhost`,
+`/socket.io/`, and non-GET requests are exempt — redirecting a POST would drop
+its body, and the Playwright suite drives the app on `http://localhost:3000`.
+
+### Login card and hero text cut off on a 360px Android, with no way to scroll
+**Cause:** two hard-coded widths. `.auth-card` was `width:400px`, which overflows
+any screen under 440px, and `.landing-wrap` used `grid-template-columns:1fr` —
+shorthand for `minmax(auto,1fr)`, whose `auto` floor is the item's min-content
+width, so that 400px card stretched the whole column. `#auth-screen` sets
+`overflow-x:hidden`, so the excess was clipped rather than scrollable: measured
+`scrollWidth` 360 while 30 elements extended to 411–456px.
+**Fix:** `width:min(400px,100%)` on the card and `minmax(0,1fr)` on the grid.
+Verified 0 overflowing elements at both 360px and 320px on all three pages.
+
+### Random test failures that move around between runs (9.10, 9.12, 13.x, smoke)
+**Cause:** this is the real root of the "Firefox feedback-form flake" in
+CLAUDE.md, and it is not Firefox-specific. `playwright.config.js` defines two
+projects, Chrome and Firefox, and Playwright runs them **concurrently against
+the same server and the same database**. Tests that mutate shared state then
+race each other:
+  - `9.10` changes a user's password while the other browser is authenticating
+    as that user, so one of the two sees a dead credential.
+  - `9.12` asserts audit-log totals that the other browser is actively growing.
+  - `13.x` / smoke failures are timeouts from two browsers plus video capture
+    competing for the machine.
+The giveaway is that the failing set changes between runs while the pass count
+stays the same, and every failure passes when run on its own.
+
+**Fix:** run one project at a time before treating anything as a regression:
+
+```
+npx playwright test --project=Chrome  --workers=1
+npx playwright test --project=Firefox --workers=1
+```
+
+Verified 2026-08-11: **114 passed / 0 failed on each project** run this way,
+against the same build where the combined run reported 12-14 failures. If you
+need the combined run to be trustworthy, the projects need separate databases
+(`SQLITE_PATH`) and separate ports rather than a shared backend.
+
+One genuine environment note: `9.12` asserts `all.total > 100`, so it needs an
+*aged* audit log. The live DB has tens of thousands of rows; a brand-new scratch
+DB starts empty and fails that line until the suite's own activity fills it.
+
+### Screen reader announces form fields as unlabelled ("edit text, blank")
+**Cause:** 24 controls across the three pages had a visible `<label>` sitting
+beside them, but with no `for` attribute and no wrapping — nothing associated
+the label with its input. Visually it looked correct, which is why it survived;
+programmatically the fields had no name. Tapping the label also failed to focus
+the field, losing a tap target that matters on a phone.
+Found by auditing against WCAG 2.1 SC 1.3.1 / 4.1.2 (`ui-ux-pro-max`, rule
+"Form Labels", severity High), not by anything visible on screen.
+**Fix:** `for` on every label paired with an id; `aria-label` on the controls
+that have no visible label by design (conversation search, emoji search, the two
+file inputs, the message box, admin user search, broadcast box). Test 14.6
+guards all three pages. Verified 0 unnamed controls of 19 / 115 / 14.
+
+### Login screen scrolls only a little, then stops dead
+**Cause:** `body` is the app shell — `height:100vh; overflow:hidden` — so the
+page itself never scrolls and `#auth-screen` is what scrolls. But `#auth-screen`
+used `min-height:100vh`, so it *grew* to its content (1085px in an 800px
+window). The excess was clipped by the body, and its own scroll range is content
+minus **its own** height, not minus the viewport — 100px instead of 285px. A
+swipe moved barely at all and stopped, and the login button below the fold was
+only reachable because scrolling condenses the sticky header and reclaims space.
+**Fix:** `height:100vh; height:100dvh` instead of `min-height:100vh`, pinning it
+to the viewport so its scroll range covers the whole overflow. Range went
+100px → 285px and the sign-in button is reachable by ordinary scrolling. `dvh`
+is listed second so mobile browsers, where the URL bar makes `vh` overshoot,
+take it and older engines keep the `vh` fallback.
+Do **not** "fix" this by removing `max-height` from `.auth-card` — that cap is
+what keeps the taller Create Account form on screen, and tests 1.11 and 1.12
+guard it.
+
+### Admin dashboard shows one nav tab at a time on a phone
+**Cause:** the desktop rail is vertical and sets `width:100%` on `.rail-tab`. The
+mobile media query turns the rail horizontal with `flex:1 0 auto`, whose
+`flex-basis:auto` reads that same `width:100%` — so every tab became a full
+screen wide, giving a 3557px scroll strip holding ten tabs.
+**Fix:** `flex:0 0 auto;width:auto` in the mobile block, so tabs size to their
+icon. Rail scroll width 3557px → 444px; eight of ten tabs visible at 360px. The
+44px minimum is kept deliberately — shrinking to fit all ten would mean 36px
+targets, below the accessible minimum, so the short swipe is the better trade.
+
+### "Export CSV" unreachable on the admin Feedback panel at 320px
+**Cause:** `.card-header` is a `flex-wrap:nowrap` row — title left, buttons
+right. On a 320px screen the button group ran 8px past the viewport and clipped
+the export control, which is how survey data leaves the system for Chapter 4.
+**Fix:** `.card-header{flex-wrap:wrap;gap:.5rem;}` below 768px.
+
+### Add-user form fields off-screen on the admin dashboard
+**Cause:** `.form-grid` stayed at `1fr 1fr` on mobile — two 192px columns inside
+a 267px card, pushing email and role past the edge. The `.card` has
+`overflow-x:auto` so it technically scrolled, but a form is not a table and
+should fit rather than scroll.
+**Fix:** `grid-template-columns:minmax(0,1fr)` below 768px. Note the wide tables
+in the same cards are *intentional* — `table{min-width:520px}` inside
+`.card{overflow-x:auto}` is the deliberate responsive-table pattern, so table
+overflow there is by design and must not be "fixed".
+
+### Survey submit button appears to do nothing on iPhone
+**Cause:** validation used `alert()`. iOS adds a "Suppress dialogs" button to
+repeated alerts; once a respondent taps it, every later prompt is swallowed
+silently, so an incomplete form just refuses to submit with no explanation.
+**Fix:** `flagField()` shows the message next to the offending field, scrolls it
+into view, and outlines it — which also tells the respondent *where* the gap is.
+
 ## Adding new entries
 
 When you hit a new error and solve it, add a section using this format:

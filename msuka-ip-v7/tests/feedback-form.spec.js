@@ -10,7 +10,9 @@
 // ═══════════════════════════════════════════════════════════════════
 const { test, expect } = require('@playwright/test');
 
-const BASE_URL = 'http://localhost:3000';
+// Override with BASE_URL=http://localhost:3100 to run against a scratch server
+// (e.g. one started with SQLITE_PATH set) instead of the live one on :3000.
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
 // Question counts per section — see feedback.html `sections` object.
 const SECTIONS = { a: 5, b: 7, c: 5, d: 5 };
@@ -44,27 +46,34 @@ test.describe('12. Feedback Form — rendering & validation', () => {
     console.log('✅ Date pre-filled with today');
   });
 
+  // 12.3/12.4 assert the inline message, not a dialog. Validation moved off
+  // alert() because iOS offers "Suppress dialogs" on repeated alerts, and once a
+  // respondent taps it every later prompt is swallowed silently.
   test('12.3 submitting without a respondent type is blocked', async ({ page }) => {
     await page.goto(`${BASE_URL}/feedback.html`);
-    // Dismiss the alert as soon as it appears so the click can resolve.
-    const dialogMsg = new Promise(resolve =>
-      page.once('dialog', d => { d.dismiss(); resolve(d.message()); }));
+    let dialogAppeared = false;
+    page.on('dialog', d => { dialogAppeared = true; d.dismiss(); });
     await page.click('.btn-submit');
-    expect(await dialogMsg).toMatch(/respondent type/i);
+    await expect(page.locator('.field-error')).toHaveText(/respondent type/i);
+    await expect(page.locator('#resp-type')).toHaveClass(/field-invalid/);
     await expect(page.locator('#result-overlay')).not.toHaveClass(/open/);
-    console.log('✅ Missing respondent type blocks submission');
+    expect(dialogAppeared, 'validation must not use a blocking dialog').toBe(false);
+    console.log('✅ Missing respondent type blocks submission (inline)');
   });
 
   test('12.4 submitting with unanswered questions is blocked', async ({ page }) => {
     await page.goto(`${BASE_URL}/feedback.html`);
     await page.selectOption('#resp-type', 'Faculty Member');
     await page.selectOption('#resp-device', 'Desktop/Laptop (Windows)');
-    const dialogMsg = new Promise(resolve =>
-      page.once('dialog', d => { d.dismiss(); resolve(d.message()); }));
+    let dialogAppeared = false;
+    page.on('dialog', d => { dialogAppeared = true; d.dismiss(); });
     await page.click('.btn-submit');
-    expect(await dialogMsg).toMatch(/answer all questions/i);
+    // the message is attached to the first unanswered question, not the page top
+    await expect(page.locator('.field-error')).toHaveText(/answer this question/i);
+    await expect(page.locator('.question-row.field-invalid')).toHaveCount(1);
     await expect(page.locator('#result-overlay')).not.toHaveClass(/open/);
-    console.log('✅ Unanswered questions block submission');
+    expect(dialogAppeared, 'validation must not use a blocking dialog').toBe(false);
+    console.log('✅ Unanswered questions block submission (inline)');
   });
 
 });

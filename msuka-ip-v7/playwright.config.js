@@ -12,7 +12,7 @@ module.exports = defineConfig({
   ],
 
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: process.env.BASE_URL || 'http://localhost:3000',
     headless: true,         // npm run test:headed to watch in a real window
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
