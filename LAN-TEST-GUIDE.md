@@ -79,6 +79,42 @@ you did not actually get an address from the network.
 
 Also ignore `192.168.56.1` — that is your VirtualBox adapter, not the wifi.
 
+### 4b. Remove the "Not secure" warning (optional, 2 minutes per device)
+
+The server issues its certificate from a local certificate authority it
+generates on first start. Browsers do not trust that authority until you tell
+them to — which is why the address bar says **Not secure** and why a phone shows
+a warning before it will load the page.
+
+Installing the CA once per device replaces the warning with a normal padlock.
+Worth doing on the laptop and on whichever phone you demo with; respondents
+filling the survey can just tap through the warning.
+
+**Download it** (on the device, over the LAN):
+
+```
+https://<your-ip>:3443/msukaip-ca.crt
+```
+
+**Windows:** open the downloaded file → Install Certificate → **Local Machine** →
+Place all certificates in the following store → Browse → **Trusted Root
+Certification Authorities** → Finish. Restart the browser.
+
+**Android:** Settings → Security → Encryption & credentials → Install a
+certificate → **CA certificate** → pick the downloaded file. Android warns that
+someone could monitor your traffic; that warning is about installing *any* CA and
+is expected here, because the CA is yours.
+
+**iOS:** open the link in Safari → Allow → Settings → Profile Downloaded →
+Install. Then **Settings → General → About → Certificate Trust Settings** and
+switch it on. iOS will not trust it until that second step.
+
+This is safe because the private key never leaves the server — only the public
+`.crt` is served, and `certs/ca.key` is not reachable over HTTP.
+
+**If you skip this,** everything still works. You just click through the warning
+once per device, exactly as before.
+
 ### 5. Start the server
 
 ```

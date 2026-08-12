@@ -67,7 +67,7 @@ Or change `PORT=3001` in `.env`.
 
 ### `Voice features are blocked on this address…` alert
 **Cause:** Browser blocks `getUserMedia` on non-secure origins — the page was opened via plain `http://<lan-ip>:3000`.
-**Fix:** Open the app at `https://<server-ip>:3443` and accept the self-signed-certificate warning once. The server generates the cert into `certs/` automatically and prints the URL at startup (see `DEPLOYMENT.md` §6). On the server host itself, `http://localhost:3000` also works.
+**Fix:** Open the app at `https://<server-ip>:3443`. The server generates its certificate into `certs/` on first start and prints the URL. The browser will warn that it does not trust it — click through once, or install the local CA from `https://<server-ip>:3443/msukaip-ca.crt` to remove the warning entirely (steps in `LAN-TEST-GUIDE.md` §4b). On the server host itself, `http://localhost:3000` also works.
 
 ### `Microphone permission denied` alert
 **Cause:** The user (or a site setting) actually denied mic permission.
@@ -312,6 +312,36 @@ repeated alerts; once a respondent taps it, every later prompt is swallowed
 silently, so an incomplete form just refuses to submit with no explanation.
 **Fix:** `flagField()` shows the message next to the offending field, scrolls it
 into view, and outlines it — which also tells the respondent *where* the gap is.
+
+### A popover opens, is "visible", and is still painted over
+
+**Cause:** `.topbar` carries a `backdrop-filter`, and backdrop-filter creates a
+stacking context. The notification panel's `z-index:900` therefore only ranked it
+*inside* the top bar; the bar itself was at `z-index:auto` and lost to content
+further down the document, so the KPI tiles drew straight over the open panel.
+
+**Fix:** an explicit `z-index` on `.topbar`, commented as load-bearing so nobody
+tidies it away.
+
+**Why it was missed:** every measurement passed. The element was rendered, its
+computed visibility was correct, and a Playwright check said so. Only the
+screenshot showed it buried — and `document.elementFromPoint` inside the panel's
+own bounds is what finally named the culprit. If a popover looks wrong but reads
+as visible, hit-test a point inside it rather than trusting `isVisible()`.
+
+### `messageRows.filter is not a function`
+
+**Cause:** the top-bar search caches each list's rows so it can re-render a
+filtered view. `/api/admin/messages` answers **403 by design** — message content
+is private even from administrators — so the cache held `{error: ...}` rather
+than an array, and the first search on that tab threw.
+
+**Fix:** every cache is guarded with `Array.isArray(body) ? body : []`, and the
+Messages tab now states that content is withheld instead of rendering a bare "no
+messages", which read as "nobody has chatted".
+
+**Worth remembering:** a route that returns a non-array on purpose will break any
+code that assumes the happy shape. The 403 was correct; the caller was not.
 
 ## Adding new entries
 
