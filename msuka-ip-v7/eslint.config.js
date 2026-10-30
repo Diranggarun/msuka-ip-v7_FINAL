@@ -18,7 +18,8 @@ const sharedRules = {
 
 module.exports = [
   {
-    ignores: ['node_modules/**', 'playwright-report/**', 'test-results/**'],
+    // frontend/vendor/ holds third-party minified files (Alpine.js), not our code.
+    ignores: ['node_modules/**', 'playwright-report/**', 'test-results/**', 'frontend/vendor/**'],
   },
   {
     files: ['**/*.js'],
@@ -40,6 +41,7 @@ module.exports = [
       globals: {
         ...globals.browser,
         io: 'readonly',
+        Alpine: 'readonly',   // set by frontend/vendor/alpine-csp.min.js
       },
     },
     rules: {

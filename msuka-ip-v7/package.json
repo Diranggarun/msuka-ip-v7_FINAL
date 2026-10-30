@@ -15,7 +15,8 @@
     "build:site": "node scripts/build-landing-site.js",
     "backup": "node scripts/backup.js",
     "db:audit": "node backend/db-audit.js",
-    "db:migrate-from-mysql": "node scripts/migrate-mysql-to-sqlite.js"
+    "db:migrate-from-mysql": "node scripts/migrate-mysql-to-sqlite.js",
+    "vendor:alpine": "node -e \"require('fs').copyFileSync('node_modules/@alpinejs/csp/dist/cdn.min.js','frontend/vendor/alpine-csp.min.js')\""
   },
   "dependencies": {
     "@alpinejs/csp": "^3.17.5",

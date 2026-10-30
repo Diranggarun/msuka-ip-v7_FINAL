@@ -18,8 +18,8 @@ const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 const SECTIONS = { a: 5, b: 7, c: 5, d: 5 };
 const TOTAL_QUESTIONS = Object.values(SECTIONS).reduce((a, b) => a + b, 0); // 22
 
-// Clicks the Likert label for every question. Radio <input>s are
-// display:none, so we click the visible <label for="..."> instead.
+// Clicks the Likert label for every question. Radio <input>s are visually
+// hidden (1px, opacity 0), so we click the visible <label for="..."> instead.
 async function answerAll(page, value) {
   for (const [sec, count] of Object.entries(SECTIONS)) {
     for (let i = 0; i < count; i++) {

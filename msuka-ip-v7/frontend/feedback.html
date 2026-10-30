@@ -10,6 +10,11 @@
        does not sit under a white strip. -->
   <link rel="manifest" href="/manifest.webmanifest"/>
   <meta name="theme-color" content="#721922"/>
+  <!-- Alpine.js (CSP build), served from our own server so it works offline.
+       The CSP build never uses eval(), so the server's CSP stays as strict as
+       before. `defer` runs it after the page is parsed, by which time the
+       inline script at the bottom has registered the `survey` component. -->
+  <script defer src="/vendor/alpine-csp.min.js"></script>
   <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png"/>
   <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -204,6 +209,9 @@ button,label{touch-action:manipulation;}
    near the top): centred, the one-line labels pushed 2-4 below the two-line 1 and 5,
    so the numbers in a row did not line up. */
 .likert-option label{justify-content:flex-start;}
+/* The labels come in as plain text with "\n" ("Strongly\nAgree"); pre-line
+   turns that newline into a line break without needing HTML. */
+.likert-option .opt-label{white-space:pre-line;}
 
 /* PROGRESS: sticks to the top while scrolling so the respondent always sees
    how many of the 22 are left. pointer-events:none means that while it sits
@@ -230,6 +238,7 @@ button,label{touch-action:manipulation;}
 .result-overall{background:linear-gradient(135deg,var(--maroon),var(--maroon-light));color:#fff;border-radius:12px;padding:1.2rem;text-align:center;margin-bottom:1.2rem;}
 .result-overall .score{font-family:'Cinzel',serif;font-size:2.5rem;font-weight:700;color:var(--gold-bright);}
 .result-overall .out-of{font-size:.8rem;color:rgba(255,255,255,.7);margin-top:2px;}
+.interp-icon{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;margin-right:6px;}
 .result-overall .interpretation{font-size:.85rem;font-weight:700;margin-top:.4rem;color:var(--gold-bright);}
 .result-breakdown{display:flex;flex-direction:column;gap:8px;margin-bottom:1.2rem;}
 .result-row{display:flex;align-items:center;gap:10px;}
@@ -267,7 +276,23 @@ button,label{touch-action:manipulation;}
 }
 </style>
 </head>
-<body>
+<!-- x-data="survey": the whole page is one Alpine component (registered at the
+     bottom). Everything inside can read its state, e.g. x-text="progressText". -->
+<body x-data="survey">
+<!-- Icon sprite: each <symbol> is drawn elsewhere with <use href="#ico-…">.
+     The Alpine CSP build forbids x-html, so icons are picked by id, never
+     injected as HTML strings. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="ico-a" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="1.5"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></symbol>
+  <symbol id="ico-b" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.36.36.58.86.6 1.36"/></symbol>
+  <symbol id="ico-c" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+  <symbol id="ico-d" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></symbol>
+  <symbol id="ico-strong-agree" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="ico-agree" viewBox="0 0 24 24"><path d="M7 11v8a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-3l1-3a2 2 0 0 0-2-2 5 5 0 0 1-2 2l-4 4z"/><line x1="3" y1="11" x2="7" y2="11"/></symbol>
+  <symbol id="ico-neutral" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></symbol>
+  <symbol id="ico-disagree" viewBox="0 0 24 24"><path d="M17 13v-8a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3l-1 3a2 2 0 0 0 2 2 5 5 0 0 1 2-2l4-4z"/><line x1="21" y1="13" x2="17" y2="13"/></symbol>
+  <symbol id="ico-strong-disagree" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+</svg>
 
 <div class="topbar">
   <div class="topbar-title">
@@ -288,12 +313,13 @@ button,label{touch-action:manipulation;}
   </div>
 </div>
 
-<div class="container">
+<!-- There is no <form>, so every radio's change event bubbles up to here. -->
+<div class="container" @change="countAnswers">
 
-  <!-- Progress: filled in by updateProgress() below -->
+  <!-- Progress: Alpine re-renders both lines whenever `answered` changes -->
   <div class="survey-progress">
-    <div class="progress-text" id="progress-count" aria-live="polite">0 of 22 answered</div>
-    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+    <div class="progress-text" id="progress-count" aria-live="polite" x-text="progressText">0 of 22 answered</div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill" :style="progressStyle"></div></div>
   </div>
 
   <!-- Scale Legend -->
@@ -312,11 +338,11 @@ button,label{touch-action:manipulation;}
     <div class="info-grid">
       <div class="info-group">
         <label for="resp-name">Full Name (Optional)</label>
-        <input type="text" id="resp-name" placeholder="Leave blank to stay anonymous"/>
+        <input type="text" id="resp-name" x-model="name" placeholder="Leave blank to stay anonymous"/>
       </div>
       <div class="info-group">
         <label for="resp-type">Respondent Type</label>
-        <select id="resp-type">
+        <select id="resp-type" x-model="type">
           <option value="">Select your role…</option>
           <option value="Student (3rd Year IT/CS)">Student (3rd Year IT/CS)</option>
           <option value="Student (4th Year IT/CS)">Student (4th Year IT/CS)</option>
@@ -326,11 +352,11 @@ button,label{touch-action:manipulation;}
       </div>
       <div class="info-group">
         <label for="resp-date">Date</label>
-        <input type="date" id="resp-date"/>
+        <input type="date" id="resp-date" x-model="date"/>
       </div>
       <div class="info-group">
         <label for="resp-device">Device Used for Testing</label>
-        <select id="resp-device">
+        <select id="resp-device" x-model="device">
           <option value="">Select device…</option>
           <option value="Desktop/Laptop (Windows)">Desktop/Laptop (Windows)</option>
           <option value="Android Smartphone">Android Smartphone</option>
@@ -341,53 +367,37 @@ button,label{touch-action:manipulation;}
     </div>
   </div>
 
-  <!-- SECTION A: System Usability -->
-  <div class="section-card">
-    <div class="section-header">
-      <div class="section-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="1.5"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
-      <div>
-        <h3>Section A — System Usability</h3>
-        <p>Evaluates the ease of use and interface clarity of MSUkaIP</p>
+  <!-- SECTIONS A-D: one template, repeated by Alpine for each entry in `sections`.
+       x-text inserts plain text (escaped), so a question can never inject HTML. -->
+  <template x-for="section in sections" :key="section.key">
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon"><svg viewBox="0 0 24 24"><use :href="'#ico-' + section.key"/></svg></div>
+        <div>
+          <h3 x-text="section.heading"></h3>
+          <p x-text="section.blurb"></p>
+        </div>
+      </div>
+      <div :id="'section-' + section.key">
+        <template x-for="q in section.questions" :key="q.name">
+          <div class="question-row">
+            <div class="q-text"><span class="q-num" x-text="q.num"></span><span x-text="q.text"></span></div>
+            <div class="likert-scale">
+              <template x-for="opt in options" :key="opt.value">
+                <div class="likert-option">
+                  <input type="radio" :name="q.name" :id="q.name + '_' + opt.value" :value="opt.value"/>
+                  <label :for="q.name + '_' + opt.value">
+                    <span class="num" x-text="opt.value"></span>
+                    <span class="opt-label" x-text="opt.label"></span>
+                  </label>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
       </div>
     </div>
-    <div id="section-a"></div>
-  </div>
-
-  <!-- SECTION B: Functionality -->
-  <div class="section-card">
-    <div class="section-header">
-      <div class="section-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.36.36.58.86.6 1.36"/></svg></div>
-      <div>
-        <h3>Section B — Functionality</h3>
-        <p>Evaluates the accuracy and completeness of system features</p>
-      </div>
-    </div>
-    <div id="section-b"></div>
-  </div>
-
-  <!-- SECTION C: Performance -->
-  <div class="section-card">
-    <div class="section-header">
-      <div class="section-icon"><svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
-      <div>
-        <h3>Section C — Performance</h3>
-        <p>Evaluates system speed, stability, and responsiveness under CICS LAN</p>
-      </div>
-    </div>
-    <div id="section-c"></div>
-  </div>
-
-  <!-- SECTION D: User Satisfaction -->
-  <div class="section-card">
-    <div class="section-header">
-      <div class="section-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></div>
-      <div>
-        <h3>Section D — User Satisfaction</h3>
-        <p>Evaluates overall satisfaction and comparison with internet-dependent platforms</p>
-      </div>
-    </div>
-    <div id="section-d"></div>
-  </div>
+  </template>
 
   <!-- OPEN COMMENT -->
   <div class="section-card">
@@ -404,10 +414,10 @@ button,label{touch-action:manipulation;}
       </label>
       <textarea id="resp-notes" class="note-input" rows="4" maxlength="1000"
                 placeholder="e.g. Sending files was easy, but I could not tell when someone had read my message."
-                oninput="updateNoteCount()"></textarea>
+                x-model="note"></textarea>
       <div class="note-foot">
         <span class="note-hint">Your comment is stored with your ratings and stays anonymous unless you gave a name above.</span>
-        <span class="note-count" id="note-count">0 / 1000</span>
+        <span class="note-count" id="note-count" x-text="noteCountText" :class="{ over: note.length >= 1000 }">0 / 1000</span>
       </div>
     </div>
   </div>
@@ -415,39 +425,51 @@ button,label{touch-action:manipulation;}
   <!-- SUBMIT -->
   <div class="submit-section">
     <p>Thank you for rating <strong>MSUkaIP</strong>. Your answers go into the Chapter 4 results of the capstone study.</p>
-    <button class="btn-submit" onclick="submitQuestionnaire()" style="display:inline-flex;align-items:center;gap:8px;"><svg style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Submit Feedback</button>
+    <button class="btn-submit" @click="submit"style="display:inline-flex;align-items:center;gap:8px;"><svg style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Submit Feedback</button>
   </div>
 
 </div>
 
-<!-- RESULT MODAL -->
-<div id="result-overlay">
+<!-- RESULT MODAL: .open (display:flex) follows result.open; @click.self closes it
+     only when the dark backdrop itself is clicked, not the card inside it. -->
+<div id="result-overlay" :class="{ open: result.open }" @click.self="closeResult">
   <div class="result-card">
     <h2 style="display:flex;align-items:center;justify-content:center;gap:8px;"><svg style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>Feedback Summary</h2>
     <p class="subtitle">MSUkaIP — Your Feedback Summary</p>
     <div class="result-overall">
-      <div class="score" id="res-overall">0.00</div>
+      <div class="score" id="res-overall" x-text="result.overall">0.00</div>
       <div class="out-of">Overall Weighted Mean (out of 5.00)</div>
-      <div class="interpretation" id="res-interpretation">—</div>
+      <div class="interpretation" id="res-interpretation"><svg class="interp-icon" viewBox="0 0 24 24" x-show="result.level"><use :href="'#ico-' + result.level"/></svg><span x-text="result.interpretation">—</span></div>
     </div>
-    <div class="result-breakdown" id="res-breakdown"></div>
+    <div class="result-breakdown" id="res-breakdown">
+      <template x-for="row in result.rows" :key="row.title">
+        <div class="result-row">
+          <div class="result-label" x-text="'Section: ' + row.title"></div>
+          <div class="result-bar-wrap"><div class="result-bar" :style="'width:' + row.percent + '%'"></div></div>
+          <div class="result-val" x-text="row.mean"></div>
+        </div>
+      </template>
+    </div>
     <div style="background:var(--gray-100);border-radius:8px;padding:.75rem;font-size:.75rem;color:var(--text-mid);line-height:1.6;margin-bottom:1rem;">
       <strong style="color:var(--maroon-dark);">Interpretation Guide:</strong><br>
       4.50 – 5.00 → Strongly Agree &nbsp;|&nbsp; 3.50 – 4.49 → Agree<br>
       2.50 – 3.49 → Neutral &nbsp;|&nbsp; 1.50 – 2.49 → Disagree &nbsp;|&nbsp; 1.00 – 1.49 → Strongly Disagree
     </div>
     <div class="result-actions">
-      <button class="btn-print" onclick="window.print()" style="display:inline-flex;align-items:center;gap:6px;"><svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Print Results</button>
-      <button class="btn-close-result" onclick="closeResult()" style="display:inline-flex;align-items:center;gap:6px;"><svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Close</button>
+      <button class="btn-print" @click="print"style="display:inline-flex;align-items:center;gap:6px;"><svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Print Results</button>
+      <button class="btn-close-result" @click="closeResult"style="display:inline-flex;align-items:center;gap:6px;"><svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Close</button>
     </div>
   </div>
 </div>
 
 <script>
 // ── Questions Data ──────────────────────────────────────────────────────────
-const sections = {
-  a: {
-    title: 'System Usability',
+// Each section's icon is the <symbol id="ico-<key>"> in the sprite at the top of <body>.
+const SECTIONS = [
+  {
+    key: 'a', title: 'System Usability',
+    heading: 'Section A — System Usability',
+    blurb: 'Evaluates the ease of use and interface clarity of MSUkaIP',
     questions: [
       'The MSUkaIP interface is easy to navigate and understand.',
       'The functions and menus of the system are clearly labeled and intuitive.',
@@ -456,8 +478,10 @@ const sections = {
       'The system design (layout, colors, and icons) is visually appropriate for academic use.',
     ]
   },
-  b: {
-    title: 'Functionality',
+  {
+    key: 'b', title: 'Functionality',
+    heading: 'Section B — Functionality',
+    blurb: 'Evaluates the accuracy and completeness of system features',
     questions: [
       'Text messages are delivered accurately and completely to the intended recipients.',
       'File transfer (PDF/DOCX) works reliably within the local network.',
@@ -468,8 +492,10 @@ const sections = {
       'The admin broadcast announcement reaches all active users instantly.',
     ]
   },
-  c: {
-    title: 'Performance',
+  {
+    key: 'c', title: 'Performance',
+    heading: 'Section C — Performance',
+    blurb: 'Evaluates system speed, stability, and responsiveness under CICS LAN',
     questions: [
       'The system loads quickly when accessed through the CICS Wi-Fi network.',
       'Text messages are delivered with minimal delay (less than 1 second) within the LAN.',
@@ -478,8 +504,10 @@ const sections = {
       'The core chat features (text, files, and voice messages) continue to function on the CICS LAN even when internet connectivity is limited.',
     ]
   },
-  d: {
-    title: 'User Satisfaction',
+  {
+    key: 'd', title: 'User Satisfaction',
+    heading: 'Section D — User Satisfaction',
+    blurb: 'Evaluates overall satisfaction and comparison with internet-dependent platforms',
     questions: [
       'MSUkaIP effectively addresses the communication problems caused by internet outages in CICS.',
       'I would use MSUkaIP as a primary communication tool during internet disruptions.',
@@ -488,61 +516,32 @@ const sections = {
       'I would recommend MSUkaIP to other students and faculty in CICS.',
     ]
   }
-};
+];
 
-const labels = ['Strongly\nDisagree','Disagree','Neutral','Agree','Strongly\nAgree'];
+const OPTIONS = [
+  { value: 1, label: 'Strongly\nDisagree' },
+  { value: 2, label: 'Disagree' },
+  { value: 3, label: 'Neutral' },
+  { value: 4, label: 'Agree' },
+  { value: 5, label: 'Strongly\nAgree' },
+];
 
-// ── Render questions ────────────────────────────────────────────────────────
-let qNum = 0;
-Object.entries(sections).forEach(([sec, data]) => {
-  const container = document.getElementById('section-' + sec);
-  container.innerHTML = data.questions.map((q, i) => {
-    qNum++;
-    const name = `q_${sec}_${i}`;
-    return `
-      <div class="question-row">
-        <div class="q-text"><span class="q-num">${qNum}</span>${q}</div>
-        <div class="likert-scale">
-          ${[1,2,3,4,5].map(v => `
-            <div class="likert-option">
-              <input type="radio" name="${name}" id="${name}_${v}" value="${v}"/>
-              <label for="${name}_${v}">
-                <span class="num">${v}</span>
-                <span>${labels[v-1].split('\n').join('<br>')}</span>
-              </label>
-            </div>`).join('')}
-        </div>
-      </div>`;
-  }).join('');
-});
-
-// Set today's date as local YYYY-MM-DD. Not valueAsDate: it works in UTC (so it
-// showed yesterday before 8 AM in PH, UTC+8) and WebKit can throw on it, which
-// stopped the rest of this script (the result overlay's close handler below).
-const today = new Date();
-document.getElementById('resp-date').value =
-  `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-
-// ── Progress ────────────────────────────────────────────────────────────────
-// Answered = checked radios; total = rendered question rows (22). There is no
-// <form> element, so 'change' is listened for on .container: every radio's
-// change event bubbles up to it.
-function updateProgress() {
-  const answered = document.querySelectorAll('.likert-option input:checked').length;
-  const total    = document.querySelectorAll('.question-row').length;
-  document.getElementById('progress-count').textContent = `${answered} of ${total} answered`;
-  document.getElementById('progress-fill').style.transform = `scaleX(${total ? answered / total : 0})`;
+// Give every question its running number (1-22) and its radio-group name
+// (q_a_0 … q_d_4). The tests and the scoring below both rely on those names.
+function numberQuestions(sections) {
+  let num = 0;
+  return sections.map(s => ({
+    ...s,
+    questions: s.questions.map((text, i) => ({ text, num: ++num, name: `q_${s.key}_${i}` }))
+  }));
 }
-document.querySelector('.container').addEventListener('change', updateProgress);
-updateProgress();
+const TOTAL_QUESTIONS = SECTIONS.reduce((n, s) => n + s.questions.length, 0); // 22
 
-// ── Submit ──────────────────────────────────────────────────────────────────
-function updateNoteCount(){
-  const el = document.getElementById('resp-notes');
-  const c  = document.getElementById('note-count');
-  if (!el || !c) return;
-  c.textContent = `${el.value.length} / 1000`;
-  c.classList.toggle('over', el.value.length >= 1000);
+// Local YYYY-MM-DD. Not valueAsDate: it works in UTC (so it showed yesterday
+// before 8 AM in PH, UTC+8) and WebKit can throw on it.
+function localToday() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
 // Inline validation instead of alert(). iOS adds a "Suppress dialogs" button to
@@ -562,109 +561,101 @@ function flagField(el, message) {
   if (typeof el.focus === 'function') el.focus({ preventScroll:true });
 }
 
-async function submitQuestionnaire() {
-  const type   = document.getElementById('resp-type').value;
-  const device = document.getElementById('resp-device').value;
-  const name   = document.getElementById('resp-name').value;
-  const date   = document.getElementById('resp-date').value;
+// Interpretation of the overall mean. level picks the icon in the sprite at
+// the top of <body> (#ico-strong-agree …), so the modal stays emoji-free.
+function interpret(overall) {
+  if (overall >= 4.50) return { level: 'strong-agree',    text: 'Strongly Agree — Excellent System' };
+  if (overall >= 3.50) return { level: 'agree',           text: 'Agree — Good System' };
+  if (overall >= 2.50) return { level: 'neutral',         text: 'Neutral — Acceptable System' };
+  if (overall >= 1.50) return { level: 'disagree',        text: 'Disagree — Needs Improvement' };
+  return                      { level: 'strong-disagree', text: 'Strongly Disagree — Poor System' };
+}
 
-  if (!type)   return flagField(document.getElementById('resp-type'),   'Please select your respondent type before submitting.');
-  if (!device) return flagField(document.getElementById('resp-device'), 'Please select the device you used for testing.');
+// ── The Alpine component ────────────────────────────────────────────────────
+// Everything the page shows lives in this one object. Alpine watches it:
+// change a property (e.g. this.answered = 3) and every x-text / :class /
+// x-for that reads it re-renders by itself — no getElementById needed.
+// 'alpine:init' fires once Alpine has loaded, before it scans the page.
+document.addEventListener('alpine:init', () => {
+  Alpine.data('survey', () => ({
+    sections: numberQuestions(SECTIONS),
+    options:  OPTIONS,
+    name: '', type: '', device: '', date: localToday(), note: '',
+    answered: 0,
+    result: { open: false, overall: '0.00', level: '', interpretation: '—', rows: [] },
 
-  // Collect all answers
-  const sectionScores = {};
-  let allAnswered  = true;
-  let firstMissing = null;   // so we can scroll the respondent to the gap
+    // Getters are computed values: Alpine recalculates them when what they read changes.
+    get progressText()  { return `${this.answered} of ${TOTAL_QUESTIONS} answered`; },
+    // scaleX instead of width: transform animates without re-laying-out the page.
+    get progressStyle() { return `transform:scaleX(${this.answered / TOTAL_QUESTIONS})`; },
+    get noteCountText() { return `${this.note.length} / 1000`; },
 
-  Object.entries(sections).forEach(([sec, data]) => {
-    const scores = [];
-    data.questions.forEach((_, i) => {
-      const name  = `q_${sec}_${i}`;
-      const sel   = document.querySelector(`input[name="${name}"]:checked`);
-      if (!sel) { allAnswered = false; if (!firstMissing) firstMissing = name; return; }
-      scores.push(parseInt(sel.value));
-    });
-    const mean = scores.length ? (scores.reduce((a,b)=>a+b,0)/scores.length) : 0;
-    sectionScores[sec] = { title: data.title, scores, mean };
-  });
+    countAnswers() {
+      this.answered = this.$root.querySelectorAll('.likert-option input:checked').length;
+    },
+    print()       { window.print(); },
+    closeResult() { this.result.open = false; },
 
-  if (!allAnswered) {
-    const input = document.querySelector(`input[name="${firstMissing}"]`);
-    return flagField(input ? input.closest('.question-row') : null,
-                     'Please answer this question before submitting.');
-  }
+    async submit() {
+      if (!this.type)   return flagField(document.getElementById('resp-type'),   'Please select your respondent type before submitting.');
+      if (!this.device) return flagField(document.getElementById('resp-device'), 'Please select the device you used for testing.');
 
-  // Overall weighted mean
-  const allMeans  = Object.values(sectionScores).map(s=>s.mean);
-  const overall   = allMeans.reduce((a,b)=>a+b,0) / allMeans.length;
+      // Collect all answers, section by section
+      const sectionScores = {};
+      let firstMissing = null;   // so we can scroll the respondent to the gap
+      for (const s of this.sections) {
+        const scores = [];
+        for (const q of s.questions) {
+          const sel = document.querySelector(`input[name="${q.name}"]:checked`);
+          if (sel) scores.push(parseInt(sel.value));
+          else if (!firstMissing) firstMissing = q.name;
+        }
+        const mean = scores.length ? scores.reduce((a,b)=>a+b,0) / scores.length : 0;
+        sectionScores[s.key] = { title: s.title, scores, mean };
+      }
+      if (firstMissing) {
+        const input = document.querySelector(`input[name="${firstMissing}"]`);
+        return flagField(input ? input.closest('.question-row') : null,
+                         'Please answer this question before submitting.');
+      }
 
-  // Interpretation
-  let interpretation = '';
-  // Wrap each interpretation with an inline SVG so the result modal stays
-  // emoji-free and matches the icon language used elsewhere in the page.
-  const svg = inner => `<svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;margin-right:6px;" viewBox="0 0 24 24">${inner}</svg>`;
-  const checkBadge = svg('<polyline points="20 6 9 17 4 12"/>');
-  const thumbsUp   = svg('<path d="M7 11v8a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-3l1-3a2 2 0 0 0-2-2 5 5 0 0 1-2 2l-4 4z"/><line x1="3" y1="11" x2="7" y2="11"/>');
-  const neutral    = svg('<circle cx="12" cy="12" r="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>');
-  const thumbsDown = svg('<path d="M17 13v-8a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3l-1 3a2 2 0 0 0 2 2 5 5 0 0 1 2-2l4-4z"/><line x1="21" y1="13" x2="17" y2="13"/>');
-  const xMark      = svg('<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>');
+      // Overall weighted mean = mean of the four section means
+      const means   = Object.values(sectionScores).map(s => s.mean);
+      const overall = means.reduce((a,b)=>a+b,0) / means.length;
 
-  if (overall >= 4.50)      interpretation = checkBadge + 'Strongly Agree — Excellent System';
-  else if (overall >= 3.50) interpretation = thumbsUp   + 'Agree — Good System';
-  else if (overall >= 2.50) interpretation = neutral    + 'Neutral — Acceptable System';
-  else if (overall >= 1.50) interpretation = thumbsDown + 'Disagree — Needs Improvement';
-  else                      interpretation = xMark      + 'Strongly Disagree — Poor System';
+      // Show results: assigning to this.result is all it takes to fill the modal
+      this.result = {
+        open: true,
+        overall: overall.toFixed(2),
+        level: interpret(overall).level,
+        interpretation: interpret(overall).text,
+        rows: Object.values(sectionScores).map(s => ({
+          title: s.title, mean: s.mean.toFixed(2), percent: (s.mean / 5) * 100
+        }))
+      };
 
-  // Show results
-  document.getElementById('res-overall').textContent = overall.toFixed(2);
-  document.getElementById('res-interpretation').innerHTML = interpretation;
-
-  const breakdown = document.getElementById('res-breakdown');
-  breakdown.innerHTML = Object.values(sectionScores).map(s => `
-    <div class="result-row">
-      <div class="result-label">Section: ${s.title}</div>
-      <div class="result-bar-wrap"><div class="result-bar" style="width:${(s.mean/5)*100}%"></div></div>
-      <div class="result-val">${s.mean.toFixed(2)}</div>
-    </div>`).join('');
-
-  document.getElementById('result-overlay').classList.add('open');
-
-  // Persist to server (anonymous endpoint — no auth required)
-  try {
-    const resp = await fetch('/api/survey', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: name || null,
-        type, device, date,
-        sectionScores,
-        overall: Number(overall.toFixed(2)),
-        notes: (document.getElementById('resp-notes')?.value || '').trim() || null
-      })
-    });
-    if (!resp.ok) {
-      const err = await resp.json().catch(()=>({}));
-      console.warn('Survey save failed:', err.error || resp.statusText);
-    } else {
-      console.log('📊 Survey response saved to server.');
+      // Persist to server (anonymous endpoint — no auth required)
+      try {
+        const resp = await fetch('/api/survey', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: this.name || null,
+            type: this.type, device: this.device, date: this.date,
+            sectionScores,
+            overall: Number(overall.toFixed(2)),
+            notes: this.note.trim() || null
+          })
+        });
+        if (!resp.ok) {
+          const err = await resp.json().catch(()=>({}));
+          console.warn('Survey save failed:', err.error || resp.statusText);
+        }
+      } catch (e) {
+        console.warn('Survey save network error:', e.message);
+      }
     }
-  } catch (e) {
-    console.warn('Survey save network error:', e.message);
-  }
-
-  console.log('📊 MSUkaIP Evaluation Submitted:', {
-    name: name || 'Anonymous', type, device, date,
-    sectionScores, overall: overall.toFixed(2), interpretation
-  });
-}
-
-function closeResult() {
-  document.getElementById('result-overlay').classList.remove('open');
-}
-
-// Close modal on overlay click
-document.getElementById('result-overlay').addEventListener('click', e => {
-  if (e.target === document.getElementById('result-overlay')) closeResult();
+  }));
 });
 </script>
 </body>

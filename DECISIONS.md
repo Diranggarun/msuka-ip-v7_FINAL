@@ -440,3 +440,16 @@ Trade-off: students can no longer text each other one-to-one, only in CICS Chat 
 "Navigation bar" was read as the left icon rail (the same element is the phone's bottom tab bar). The five middle buttons (Messages, CICS Chat, Notifications, Admin, Settings) carry `data-reorder`; Feedback and Sign Out stay pinned under the spacer because they have no other entry point and should not wander. The order is a JSON list of button ids in `localStorage` under `msuka_nav_order_<email>`; on load only ids that match a real reorderable button are applied, so an edited value cannot inject anything. Storage is wrapped in try/catch so a blocked store just means the order is not remembered.
 
 Input: native HTML5 drag events for the mouse; a 400 ms press-and-hold with `touchmove`/`elementFromPoint` for touch (HTML5 drag events do not fire from a finger on most phones); Alt+Arrow for keyboard users. All three call the same `moveNavBtn()`. Reduced motion: the drag state is a plain dim + dashed outline with its transition removed; the existing hover-nudge cancellation already applies. Trade-off: the touch path is the most code to explain, and it is the one not covered by an automated test (Playwright's touch emulation cannot hold-then-drag reliably); the mouse test runs in Chromium only because Playwright's HTML5 drag is unreliable in Firefox, while the keyboard test and the persistence check run in both.
+
+## Alpine.js on the feedback page (CSP build, vendored)
+
+The frontend had no framework. The feedback page now uses **Alpine.js**: one ~70 KB file, no build step, added with a `<script>` tag. It fits the project's rules where the alternatives did not:
+- **React / Vue / Svelte / Angular** need a bundler (Vite/webpack) and a rewrite of the page. That breaks "no build step" and leaves code that is harder to explain line by line.
+- **Bootstrap / Tailwind** would replace the fixed MSU maroon/gold tokens and Cinzel/Nunito.
+- **Alpine** goes on top of the existing HTML. The page is one component (`Alpine.data('survey', …)`); the markup reads its state with `x-text`, `:class`, `x-model` and `x-for`, so the page re-renders itself when the state changes (no `getElementById` bookkeeping).
+
+Choices inside that:
+- **The CSP build (`@alpinejs/csp`), not the standard one.** Standard Alpine evaluates attribute expressions with `new Function()`, which needs `'unsafe-eval'` in the Content-Security-Policy. The CSP build has its own small expression parser, so `server.js`'s CSP is unchanged. It also forbids `x-html`, so the page never inserts HTML strings: icons come from an inline SVG `<symbol>` sprite picked by id with `<use href>`, and all text goes through `x-text` (escaped).
+- **Vendored, not CDN.** Offline LAN. The file is copied from `node_modules` to `frontend/vendor/alpine-csp.min.js` (`npm run vendor:alpine` after an upgrade) and served by `express.static`. ESLint ignores `frontend/vendor/`.
+- **Feedback page only, for now.** It is the simplest page. `admin.html` (tabs, modals, tables) is the next candidate. `index.html` (chat, sockets, WebRTC) stays plain JS: rewriting it is the most risk for the least gain.
+- **Answers are still read from the DOM** (`input:checked`) at submit, as before, rather than bound into Alpine state. It kept the scoring code and the radio ids the tests click unchanged.
