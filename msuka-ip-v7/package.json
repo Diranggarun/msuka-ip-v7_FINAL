@@ -12,11 +12,13 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "preflight": "node scripts/preflight.js",
+    "build:site": "node scripts/build-landing-site.js",
     "backup": "node scripts/backup.js",
     "db:audit": "node backend/db-audit.js",
     "db:migrate-from-mysql": "node scripts/migrate-mysql-to-sqlite.js"
   },
   "dependencies": {
+    "@alpinejs/csp": "^3.17.5",
     "bcryptjs": "^2.4.3",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
