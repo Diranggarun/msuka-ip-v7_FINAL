@@ -378,6 +378,47 @@ test.describe('9. Authorization & Security', () => {
     console.log(`✅ Backup created (${Math.round(size/1024)}KB), traversal refused, snapshot cleaned up`);
   });
 
+  test('9.16 logout revokes the token for REST, ?token= media and new logins still work', async () => {
+    // Throwaway account: logout bumps token_version, which would also kill the
+    // shared demo student's token that the other tests are using.
+    // Random suffix: Chromium and Firefox run this at the same moment, and a
+    // shared address would let one browser's logout revoke the other's token.
+    const email = `pwlogout_${Date.now()}_${Math.random().toString(36).slice(2, 8)}@cics.msu.edu`;
+    expect((await ctx.post('/api/register', { data: { name: 'PW Logout', email, password: 'logout123' } })).ok()).toBeTruthy();
+    const pending = await (await ctx.get('/api/admin/pending', { headers: { Authorization: `Bearer ${adminToken}` } })).json();
+    await ctx.put(`/api/admin/users/${pending.find(u => u.email === email).id}/approve`, { headers: { Authorization: `Bearer ${adminToken}` } });
+    const token = (await (await ctx.post('/api/login', { data: { email, password: 'logout123' } })).json()).token;
+    const h = { headers: { Authorization: `Bearer ${token}` } };
+
+    const up = await ctx.post('/api/upload', { ...h, multipart: {
+      convKey: 'group_general', file: { name: 'pw-logout.png', mimeType: 'image/png', buffer: PNG_1x1 } } });
+    const fileUrl = (await up.json()).file_url;
+    expect((await ctx.get(`${fileUrl}?token=${token}`)).ok()).toBeTruthy();
+
+    expect((await ctx.post('/api/logout', h)).ok()).toBeTruthy();
+    // Same token, every way the server accepts one: all dead.
+    expect((await ctx.put('/api/user/profile', { data: { name: 'Nope' }, ...h })).status()).toBe(401);
+    expect((await ctx.get(`${fileUrl}?token=${token}`)).status()).toBe(401);
+    expect((await ctx.post('/api/logout', h)).status()).toBe(401);
+    // Logging in again issues a token for the new token_version.
+    const again = (await (await ctx.post('/api/login', { data: { email, password: 'logout123' } })).json()).token;
+    expect((await ctx.put('/api/user/profile', { data: { name: 'PW Logout' }, headers: { Authorization: `Bearer ${again}` } })).ok()).toBeTruthy();
+    console.log('✅ Logout revoked the token (header + ?token=), fresh login works');
+  });
+
+  test('9.17 forged tokens are rejected (alg:none, wrong secret)', async () => {
+    const jwt = require('jsonwebtoken');
+    const claims = { id: 1, email: ADMIN_EMAIL, name: 'Admin', role: 'admin', tv: 0 };
+    const b64 = o => Buffer.from(JSON.stringify(o)).toString('base64url');
+    const unsigned = `${b64({ alg: 'none', typ: 'JWT' })}.${b64(claims)}.`;
+    const wrongKey = jwt.sign(claims, 'not-the-server-secret');
+    for (const forged of [unsigned, wrongKey]) {
+      const r = await ctx.get('/api/admin/stats', { headers: { Authorization: `Bearer ${forged}` } });
+      expect(r.status()).toBe(401);
+    }
+    console.log('✅ alg:none and wrong-secret tokens rejected (401)');
+  });
+
   test('9.5 admin can read aggregate stats with a valid token', async () => {
     const r = await ctx.get('/api/admin/stats', { headers: { Authorization: `Bearer ${adminToken}` } });
     expect(r.ok()).toBeTruthy();

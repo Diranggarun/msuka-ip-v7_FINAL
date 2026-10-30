@@ -16,7 +16,7 @@
 //   node scripts/clean-test-data.js             # delete
 //
 // Take a backup first: npm run backup
-const db = require('../db');
+const db = require('../backend/db');
 
 const DRY = process.argv.includes('--dry-run');
 

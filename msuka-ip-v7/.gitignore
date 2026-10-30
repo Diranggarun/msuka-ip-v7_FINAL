@@ -1,8 +1,8 @@
 node_modules/
 .env
 .env.local
-public/uploads/*
-!public/uploads/.gitkeep
+frontend/uploads/*
+!frontend/uploads/.gitkeep
 playwright-report/
 test-results/
 *.log

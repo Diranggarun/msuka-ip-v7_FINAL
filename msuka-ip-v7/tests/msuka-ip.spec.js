@@ -4,7 +4,7 @@
 //  Tests: Login, Register, Chat, File Upload, Admin Dashboard
 //
 //  Selectors updated for the modernized UI (icon-rail navigation,
-//  single-page index.html, Global Chat opened from the rail).
+//  single-page index.html, CICS Chat opened from the rail).
 // ═══════════════════════════════════════════════════════════════════
 
 const { test, expect } = require('@playwright/test');
@@ -18,7 +18,7 @@ const USER_PASS   = 'student123';
 
 // ── Shared helpers ────────────────────────────────────────────────
 async function studentLogin(page) {
-  await page.goto(BASE_URL);
+  await page.goto(`${BASE_URL}/index.html`);
   await page.fill('#login-email', USER_EMAIL);
   await page.fill('#login-password', USER_PASS);
   await page.click('button.btn-login');
@@ -26,6 +26,15 @@ async function studentLogin(page) {
   // A user must accept the terms agreement after login before the chat is
   // usable; it overlays the app, so tests dismiss it exactly as a user would.
   await acceptAgreement(page);
+}
+
+// Acceptance is stored on the account (users.agreed_at), so earlier tests have used up
+// the demo student's one-time prompt. Clear it to see the first-login state again.
+function resetAgreement() {
+  const { DatabaseSync } = require('node:sqlite');
+  const dbh = new DatabaseSync(require('path').join(__dirname, '..', 'msukaip.db'));
+  dbh.prepare('UPDATE users SET agreed_at=NULL WHERE email=?').run(USER_EMAIL);
+  dbh.close();
 }
 
 // Accept the post-login terms modal if it is showing. No-op when it isn't
@@ -64,9 +73,13 @@ async function adminLogin(page) {
   await page.fill('#login-password', ADMIN_PASS);
   await page.click('button.btn-primary');
   await page.waitForSelector('#app', { state: 'visible', timeout: 8000 });
+  // The rail groups (Accounts, Monitoring) start closed. Open them the
+  // way an admin would, so the tests can click the tabs inside. Heads are
+  // hidden on the narrow icon rail, where every tab is already showing.
+  for (const head of await page.locator('.rail-group-head:visible').all()) await head.click();
 }
 
-// Global Chat is opened from the icon-rail. The conversation object is
+// CICS Chat is opened from the icon-rail. The conversation object is
 // created once the Socket.IO connection is up, so wait for it first.
 async function openGlobalChat(page) {
   await page.waitForFunction(
@@ -84,7 +97,7 @@ async function openGlobalChat(page) {
 test.describe('1. Authentication Tests', () => {
 
   test('1.1 Login page loads correctly', async ({ page }) => {
-    await page.goto(BASE_URL);
+    await page.goto(`${BASE_URL}/index.html`);
     // The landing hero is the page's single <h1>; the MSUkaIP brand label sits
     // in the sign-in card beside it.
     await expect(page.locator('h1')).toBeVisible();
@@ -95,7 +108,7 @@ test.describe('1. Authentication Tests', () => {
   });
 
   test('1.2 Register tab switches correctly', async ({ page }) => {
-    await page.goto(BASE_URL);
+    await page.goto(`${BASE_URL}/index.html`);
     await page.click('#tab-register-btn');
     await expect(page.locator('#reg-name')).toBeVisible();
     await expect(page.locator('#reg-email')).toBeVisible();
@@ -104,7 +117,7 @@ test.describe('1. Authentication Tests', () => {
   });
 
   test('1.3 Login with invalid credentials shows error', async ({ page }) => {
-    await page.goto(BASE_URL);
+    await page.goto(`${BASE_URL}/index.html`);
     // Unique email per run: a fixed one accumulates failures across repeated
     // suite runs and trips the 5-attempt lockout (429), which would return
     // "Too many failed attempts" instead of the "Invalid credentials" this
@@ -118,7 +131,7 @@ test.describe('1. Authentication Tests', () => {
   });
 
   test('1.4 Login with empty fields shows error', async ({ page }) => {
-    await page.goto(BASE_URL);
+    await page.goto(`${BASE_URL}/index.html`);
     await page.click('button.btn-login');
     await expect(page.locator('#login-msg')).toContainText('fill in all fields');
     console.log('✅ Empty login validation works');
@@ -135,7 +148,7 @@ test.describe('1. Authentication Tests', () => {
   test('1.6 Admin is redirected from the chat login to the Admin Dashboard', async ({ page }) => {
     // By design, admin accounts cannot sign in on the chat page — the
     // /api/login endpoint rejects them and points them at /admin.html.
-    await page.goto(BASE_URL);
+    await page.goto(`${BASE_URL}/index.html`);
     await page.fill('#login-email', ADMIN_EMAIL);
     await page.fill('#login-password', ADMIN_PASS);
     await page.click('button.btn-login');
@@ -145,7 +158,7 @@ test.describe('1. Authentication Tests', () => {
   });
 
   test('1.7 Register with mismatched passwords shows error', async ({ page }) => {
-    await page.goto(BASE_URL);
+    await page.goto(`${BASE_URL}/index.html`);
     await page.click('#tab-register-btn');
     await page.fill('#reg-name', 'Test User');
     await page.fill('#reg-email', 'test@cics.msu.edu');
@@ -157,7 +170,7 @@ test.describe('1. Authentication Tests', () => {
   });
 
   test('1.8 Register with short password shows error', async ({ page }) => {
-    await page.goto(BASE_URL);
+    await page.goto(`${BASE_URL}/index.html`);
     await page.click('#tab-register-btn');
     await page.fill('#reg-name', 'Test User');
     await page.fill('#reg-email', 'test@cics.msu.edu');
@@ -169,7 +182,8 @@ test.describe('1. Authentication Tests', () => {
   });
 
   test('1.9 Terms agreement appears after login and must be accepted', async ({ page }) => {
-    await page.goto(BASE_URL);
+    resetAgreement();
+    await page.goto(`${BASE_URL}/index.html`);
     await page.fill('#login-email', USER_EMAIL);
     await page.fill('#login-password', USER_PASS);
     await page.click('button.btn-login');
@@ -193,6 +207,17 @@ test.describe('1. Authentication Tests', () => {
     console.log('✅ Agreement shown, accepted, chat unlocked');
   });
 
+  test('1.9b Terms agreement is not shown again on the next login', async ({ page }) => {
+    // Plain login, not studentLogin(): that helper would quietly accept the gate if it showed.
+    await page.goto(`${BASE_URL}/index.html`);
+    await page.fill('#login-email', USER_EMAIL);
+    await page.fill('#login-password', USER_PASS);
+    await page.click('button.btn-login');
+    await page.waitForSelector('#app', { state: 'visible', timeout: 8000 });
+    await expect(page.locator('#agree-overlay')).toBeHidden();
+    await expect(page.locator('.left-panel')).toBeVisible();
+  });
+
   // Regression guard: .auth-card once had overflow:hidden with no height cap,
   // which clipped the taller Create Account form on short viewports so the
   // submit button could not be reached. The fix (max-height + overflow-y:auto)
@@ -200,7 +225,7 @@ test.describe('1. Authentication Tests', () => {
   // that happens again.
   test('1.11 register submit stays reachable on a short viewport', async ({ page }) => {
     await page.setViewportSize({ width: 420, height: 600 });
-    await page.goto(BASE_URL);
+    await page.goto(`${BASE_URL}/index.html`);
     await page.click('#tab-register-btn');
     // Without the height cap the card simply grows past the bottom of the
     // screen (805px tall in a 600px window) and nothing can scroll to its
@@ -219,7 +244,8 @@ test.describe('1. Authentication Tests', () => {
   });
 
   test('1.10 Declining the agreement signs the user out', async ({ page }) => {
-    await page.goto(BASE_URL);
+    resetAgreement();
+    await page.goto(`${BASE_URL}/index.html`);
     await page.fill('#login-email', USER_EMAIL);
     await page.fill('#login-password', USER_PASS);
     await page.click('button.btn-login');
@@ -249,7 +275,7 @@ test.describe('1. Authentication Tests', () => {
       // in Firefox with video capture on — over the 15s default. Triple it.
       test.slow();
       await page.setViewportSize({ width: 420, height: vh });
-      await page.goto(BASE_URL);
+      await page.goto(`${BASE_URL}/index.html`);
       // .auth-card animates in (cardIn, .6s after a .52s delay). Scrolling before
       // that settles measures a still-transforming box and gives a bogus result.
       await page.waitForFunction(() => {
@@ -289,7 +315,7 @@ test.describe('1. Authentication Tests', () => {
   test('1.13 switching auth tabs resets the card scroll state', async ({ page }) => {
     test.slow();   // same entry-animation + settle cost as 1.12
     await page.setViewportSize({ width: 420, height: 560 });
-    await page.goto(BASE_URL);
+    await page.goto(`${BASE_URL}/index.html`);
     await page.waitForFunction(() => {
       // eslint-disable-next-line no-undef -- evaluated in the browser page context
       const c = document.querySelector('.auth-card');
@@ -328,28 +354,30 @@ test.describe('2. Messenger UI Tests', () => {
   });
 
   // The rail carries only the destinations that have no filter-pill equivalent.
-  // Groups and Private moved to the #nav-groups / #nav-private pills, which fire
-  // the identical switchNav() calls the removed rail rows used to.
+  // Groups moved to the #nav-groups pill, which fires the identical
+  // switchNav() call the removed rail row used to.
   test('2.1 Icon-rail navigation buttons are visible', async ({ page }) => {
     await expect(page.locator('#rail-global')).toBeVisible();
     await expect(page.locator('#rail-globalchat')).toBeVisible();
     await expect(page.locator('#rail-notif')).toBeVisible();
     await expect(page.locator('#nav-groups')).toBeVisible();
-    await expect(page.locator('#nav-private')).toBeVisible();
+    await expect(page.locator('#nav-private')).toHaveCount(0); // private chat was removed
     console.log('✅ Rail destinations + list filter pills visible');
   });
 
-  test('2.2 Global Chat opens from the rail', async ({ page }) => {
+  test('2.2 CICS Chat opens from the rail', async ({ page }) => {
     await openGlobalChat(page);
     await expect(page.locator('#section-globalchat')).toBeVisible();
     await expect(page.locator('#chat-panel')).toBeVisible();
-    await expect(page.locator('#chat-title')).toContainText('Global Chat');
-    console.log('✅ Global Chat opens correctly');
+    await expect(page.locator('#chat-title')).toContainText('CICS Chat');
+    console.log('✅ CICS Chat opens correctly');
   });
 
   // The New Group affordance is now the floating + in the conversation list, which
   // is on screen for every tab rather than only inside the Groups section.
   test('2.3 Groups section is reachable and the New Group + is available', async ({ page }) => {
+    // The + only creates groups, so it is hidden on the All list.
+    await expect(page.locator('.fab-new-group')).toBeHidden();
     await page.click('#nav-groups');
     await expect(page.locator('#section-groups')).toBeVisible();
     await expect(page.locator('.fab-new-group')).toBeVisible();
@@ -357,18 +385,12 @@ test.describe('2. Messenger UI Tests', () => {
     console.log('✅ Groups section visible with the floating New Group button');
   });
 
-  test('2.4 Private section is reachable', async ({ page }) => {
-    await page.click('#nav-private');
-    await expect(page.locator('#section-private')).toBeVisible();
-    console.log('✅ Private section visible');
-  });
-
-  test('2.5 Opening Global Chat shows message area', async ({ page }) => {
+  test('2.5 Opening CICS Chat shows message area', async ({ page }) => {
     await openGlobalChat(page);
     await expect(page.locator('#chat-panel')).toBeVisible();
     await expect(page.locator('#messages-area')).toBeVisible();
     await expect(page.locator('#msg-input')).toBeVisible();
-    console.log('✅ Global Chat message area visible');
+    console.log('✅ CICS Chat message area visible');
   });
 
   test('2.6 Input row has all buttons', async ({ page }) => {
@@ -418,7 +440,12 @@ test.describe('2. Messenger UI Tests', () => {
     const total = await page.evaluate(() => {
       /* eslint-disable no-undef -- evaluated in the browser page context */
       Object.values(conversations).forEach(c => { c.unread = 0; });
-      const target = Object.entries(conversations).find(([k]) => k !== 'group_general');
+      // With private chat gone the demo student may belong to a single group, and a
+      // filter that "narrows" needs one row to keep and one to drop. Add a
+      // client-side-only group so the test does not depend on seeded data.
+      conversations['group_9999'] = { type: 'group', id: 9999, name: 'Filter test group',
+        messages: [], unread: 0, lastMsg: 'hi', lastTime: '2026-01-01 08:00:00' };
+      const target = Object.entries(conversations).find(([k]) => k !== 'group_general' && k !== 'group_9999');
       if (target) target[1].unread = 3;
       renderAllList();
       return { rows: document.querySelectorAll('#all-list .conv-item').length, marked: !!target };
@@ -526,12 +553,11 @@ test.describe('2. Messenger UI Tests', () => {
     console.log('✅ Reduced-transparency fallback disables blur and paints both panels opaque');
   });
 
-  test('2.14 Global Chat offers no group call, and the server refuses one', async ({ page }) => {
+  test('2.14 CICS Chat offers no group call, and the server refuses one', async ({ page }) => {
     await openGlobalChat(page);
-    // Global Chat is a group by key, but calling it would be a full mesh across
+    // CICS Chat is a group by key, but calling it would be a full mesh across
     // every approved account — N(N-1)/2 peer connections.
     await expect(page.locator('#group-call-btn')).toBeHidden();
-    await expect(page.locator('#call-btn')).toBeHidden();
 
     // Hiding the button is not the guard. Ask the server directly, the way the
     // console would.
@@ -543,13 +569,79 @@ test.describe('2. Messenger UI Tests', () => {
       /* eslint-enable no-undef */
     }));
     expect(refusal).toMatch(/does not support group calls/i);
-    console.log('✅ Global Chat group call hidden in UI and refused by the server');
+    console.log('✅ CICS Chat group call hidden in UI and refused by the server');
   });
 
-  test('2.10 Logout button works', async ({ page }) => {
+  test('2.14b The server refuses a private_* conversation', async ({ page }) => {
+    // Private chat was removed from the UI; a stale or hand-made client must
+    // still get nothing back, even for a key whose rows remain in the database.
+    const history = await page.evaluate(() => new Promise(resolve => {
+      /* eslint-disable no-undef -- evaluated in the browser page context */
+      const t = setTimeout(() => resolve('(no reply)'), 4000);
+      socket.once('messages:history', ({ key, messages }) => { clearTimeout(t); resolve({ key, count: messages.length }); });
+      socket.emit('messages:get', { key: 'private_kisha@cics.msu.edu' });
+      /* eslint-enable no-undef */
+    }));
+    expect(history).toEqual({ key: 'private_kisha@cics.msu.edu', count: 0 });
+    console.log('✅ private_* history refused by the server');
+  });
+
+  // The five middle rail buttons can be reordered and the order is remembered
+  // per account. The ids come back in DOM order, so this reads the real order.
+  const railOrder = page => page.evaluate(() =>
+    // eslint-disable-next-line no-undef -- evaluated in the browser page context
+    [...document.querySelectorAll('.rail-btn[data-reorder]')].map(b => b.id));
+
+  test('2.15 Alt+Arrow reorders the rail and the order survives a reload', async ({ page }) => {
+    await page.focus('#rail-notif');
+    await page.keyboard.press('Alt+ArrowUp'); // Notifications moves above CICS Chat
+    expect((await railOrder(page)).slice(0, 3)).toEqual(['rail-global', 'rail-notif', 'rail-globalchat']);
+
+    const saved = await page.evaluate(email => localStorage.getItem('msuka_nav_order_' + email), USER_EMAIL);
+    expect(JSON.parse(saved).slice(0, 3)).toEqual(['rail-global', 'rail-notif', 'rail-globalchat']);
+
+    await page.reload();
+    await page.waitForSelector('#app', { state: 'visible', timeout: 12000 });
+    expect((await railOrder(page)).slice(0, 3)).toEqual(['rail-global', 'rail-notif', 'rail-globalchat']);
+
+    // Pinned buttons (Feedback, Sign Out) never take part.
+    await expect(page.locator('.rail-btn[title="Sign Out"]')).not.toHaveAttribute('draggable', 'true');
+    await page.evaluate(email => localStorage.removeItem('msuka_nav_order_' + email), USER_EMAIL);
+    console.log('✅ Rail order changes with Alt+Arrow, is saved per account, and survives reload');
+  });
+
+  test('2.16 Dragging a rail button with the mouse reorders it', async ({ page, browserName }) => {
+    test.skip(browserName !== 'chromium', 'Playwright HTML5 drag-and-drop is only reliable in Chromium');
+    await page.locator('#rail-settings').dragTo(page.locator('#rail-global'), { targetPosition: { x: 20, y: 3 } });
+    expect((await railOrder(page))[0]).toBe('rail-settings');
+    await page.evaluate(email => localStorage.removeItem('msuka_nav_order_' + email), USER_EMAIL);
+    console.log('✅ Dragging Settings above Messages reorders the rail');
+  });
+
+  test('2.10 Logout button works and asks the server to revoke the token', async ({ page }) => {
+    // Answer /api/logout here instead of letting it reach the server: a real
+    // revoke would bump the shared demo student's token_version and sign out
+    // every other test running as that account. API test 9.16 covers the real revoke.
+    let logoutAuth = null;
+    await page.route('**/api/logout', route => {
+      logoutAuth = route.request().headers()['authorization'];
+      route.fulfill({ status: 200, contentType: 'application/json', body: '{"message":"Logged out"}' });
+    });
     await page.click('button[onclick="logout()"]');
     await expect(page.locator('#auth-screen')).toBeVisible();
-    console.log('✅ Logout works — back to login screen');
+    await expect.poll(() => logoutAuth).toMatch(/^Bearer .+/);
+    console.log('✅ Logout works — server revoke requested, back to login screen');
+  });
+
+  test('2.17 Socket.IO handshake rejects a forged token', async ({ page }) => {
+    const err = await page.evaluate(() => new Promise(resolve => {
+      // eslint-disable-next-line no-undef -- io is the page's socket.io client
+      const s = io({ auth: { token: 'not-a-real-token' }, reconnection: false });
+      s.on('connect', () => { s.disconnect(); resolve('connected'); });
+      s.on('connect_error', e => resolve(e.message));
+    }));
+    expect(err).toBe('Invalid token');
+    console.log('✅ Socket handshake refused a forged token');
   });
 
 });
@@ -693,6 +785,24 @@ test.describe('5. Admin Dashboard Tests', () => {
     await page.click('button.rail-tab[title="Users"]');
     await expect(page.locator('#users-tbody')).toBeVisible();
     console.log('✅ Users table visible');
+  });
+
+  test('5.21 Delete dialog is announced, focuses Cancel, and Escape returns focus', async ({ page }) => {
+    // Opens the dialog and backs out. Nothing is ever deleted.
+    await page.click('button.rail-tab[title="Users"]');
+    const trigger = page.locator('#users-tbody .btn-danger').first();
+    await trigger.click();
+    const dialog = page.locator('#modal-content[role="dialog"][aria-modal="true"]');
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toHaveAccessibleName(/delete/i);
+    // The safe choice holds focus, so a stray Enter cancels instead of deleting.
+    await expect(page.locator('#modal-content .btn-cancel')).toBeFocused();
+    // The destructive button must be readable: white on solid red, not maroon on red.
+    await expect(page.locator('#modal-content .btn-confirm.danger')).toHaveCSS('color', 'rgb(255, 255, 255)');
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#modal-overlay')).not.toBeVisible();
+    await expect(trigger).toBeFocused();
+    console.log('✅ Delete dialog: role + name, Cancel focused, Escape closes and restores focus');
   });
 
   test('5.5 Add User tab shows form', async ({ page }) => {
@@ -1011,7 +1121,7 @@ test.describe('5. Admin Dashboard Tests', () => {
 test.describe('6. Performance & Availability Tests', () => {
 
   test('6.1 System loads without internet (LAN only check)', async ({ page }) => {
-    await page.goto(BASE_URL);
+    await page.goto(`${BASE_URL}/index.html`);
     // If server responds, system is working on LAN
     await expect(page.locator('#auth-screen')).toBeVisible({ timeout: 3000 });
     console.log('✅ System accessible on local network');
@@ -1019,7 +1129,7 @@ test.describe('6. Performance & Availability Tests', () => {
 
   test('6.2 Page load time under 3 seconds', async ({ page }) => {
     const start = Date.now();
-    await page.goto(BASE_URL);
+    await page.goto(`${BASE_URL}/index.html`);
     await page.waitForSelector('#login-email');
     const elapsed = Date.now() - start;
     expect(elapsed).toBeLessThan(3000);
@@ -1027,7 +1137,7 @@ test.describe('6. Performance & Availability Tests', () => {
   });
 
   test('6.3 Login response under 2 seconds', async ({ page }) => {
-    await page.goto(BASE_URL);
+    await page.goto(`${BASE_URL}/index.html`);
     await page.fill('#login-email', USER_EMAIL);
     await page.fill('#login-password', USER_PASS);
     const start = Date.now();
@@ -1040,7 +1150,7 @@ test.describe('6. Performance & Availability Tests', () => {
 
   test('6.4 UI is responsive on mobile viewport', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 }); // iPhone 14 size
-    await page.goto(BASE_URL);
+    await page.goto(`${BASE_URL}/index.html`);
     await expect(page.locator('#auth-screen')).toBeVisible();
     await expect(page.locator('.auth-card')).toBeVisible();
     console.log('✅ UI visible on mobile viewport (390x844)');
@@ -1048,7 +1158,7 @@ test.describe('6. Performance & Availability Tests', () => {
 
   test('6.5 UI is responsive on tablet viewport', async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 }); // iPad size
-    await page.goto(BASE_URL);
+    await page.goto(`${BASE_URL}/index.html`);
     await expect(page.locator('#auth-screen')).toBeVisible();
     console.log('✅ UI visible on tablet viewport (768x1024)');
   });
@@ -1092,7 +1202,7 @@ test.describe('6. Performance & Availability Tests', () => {
 
   test('6.9 phone: no page scrolls sideways', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
-    for (const path of ['/', '/feedback.html', '/admin.html']) {
+    for (const path of ['/', '/index.html', '/feedback.html', '/admin.html']) {
       await page.goto(`${BASE_URL}${path}`);
       // eslint-disable-next-line no-undef -- evaluated in the browser page context
       const overflows = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
@@ -1106,7 +1216,7 @@ test.describe('6. Performance & Availability Tests', () => {
   // breakpoints so it can't silently regress.
   test('6.11 no page scrolls sideways at any phone width', async ({ page }) => {
     for (const width of [320, 375, 414]) {
-      for (const path of ['/', '/feedback.html', '/admin.html']) {
+      for (const path of ['/', '/index.html', '/feedback.html', '/admin.html']) {
         await page.setViewportSize({ width, height: 800 });
         await page.goto(`${BASE_URL}${path}`);
         // eslint-disable-next-line no-undef -- evaluated in the browser page context

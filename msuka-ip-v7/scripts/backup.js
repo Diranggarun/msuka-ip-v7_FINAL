@@ -29,7 +29,7 @@ const path = require('path');
 
 const stamp     = new Date().toISOString().replace(/[:.]/g, '-').replace('T', '_').slice(0, 19);
 const backupDir = path.join(__dirname, '..', 'backups');
-const uploads   = path.join(__dirname, '..', 'public', 'uploads');
+const uploads   = path.join(__dirname, '..', 'uploads');
 fs.mkdirSync(backupDir, { recursive: true });
 
 console.log(`\n📦  MSUkaIP backup — ${stamp}\n`);
@@ -38,7 +38,7 @@ console.log(`\n📦  MSUkaIP backup — ${stamp}\n`);
 //    the server is running thanks to WAL mode).
 const dbFile = path.join(backupDir, `db-${stamp}.db`);
 try {
-  const db = require('../db');
+  const db = require('../backend/db');
   console.log(`  → ${dbFile}`);
   db.raw.exec(`VACUUM INTO '${dbFile.replace(/'/g, "''")}'`);
   const size = fs.statSync(dbFile).size;
@@ -66,5 +66,5 @@ try {
 
 console.log(`\n✓ Backup complete in ${backupDir}\n`);
 console.log(`Restore later with (server stopped):`);
-console.log(`  Copy-Item "${dbFile}" "${require('../db').DB_PATH}" -Force`);
+console.log(`  Copy-Item "${dbFile}" "${require('../backend/db').DB_PATH}" -Force`);
 console.log(`  Expand-Archive "${zipFile}" -DestinationPath "${path.dirname(uploads)}" -Force\n`);

@@ -48,7 +48,11 @@ Or change `PORT=3001` in `.env`.
 
 ### `Invalid token` error after browser was left open overnight
 **Cause:** JWT expires after 8 hours.
-**Fix:** Log out and back in. To extend, change `expiresIn` in `jwt.sign(...)` inside `server.js` (currently `'8h'`).
+**Fix:** Log out and back in. To extend, change `expiresIn` in `JWT_SIGN_OPTS` inside `backend/server.js` (currently `'8h'`).
+
+### Chat suddenly returns to the login card: "You were signed out. Please sign in again."
+**Cause:** The server revoked the session (bumped `token_version`): the same account logged out on another tab or device, the password was changed, or an admin edited, rejected or deleted the account. The server force-disconnects the socket and the page reacts to `io server disconnect`. The admin dashboard notices the same thing within 5s through the `loadStats` poller (401).
+**Fix:** Expected behaviour. Sign in again. In tests, never click real logout as the shared demo student, because it signs out every parallel test using that account (see test 2.10, which answers `/api/logout` with `page.route`).
 
 ### Messages sent but never delivered to the recipient
 **Checklist:**
@@ -354,3 +358,28 @@ When you hit a new error and solve it, add a section using this format:
 ```
 
 Keep entries scannable. If a fix needs more than ~10 lines, link to a longer explanation in the relevant file's comments or in `DECISIONS.md`.
+
+
+### Feedback date shows yesterday / feedback page script error on iPhone
+**Cause:** `valueAsDate = new Date()` sets the date in UTC (PH is UTC+8, so before 8 AM it is still yesterday), and WebKit can throw `InvalidStateError` on it, which stops the rest of the inline script.
+**Fix:** set `input.value` to a local `YYYY-MM-DD` string built from `getFullYear/getMonth/getDate` (done in `feedback.html`).
+
+### Text looks thin in Playwright WebKit on Windows
+**Cause:** a rendering quirk of the Windows WebKit build: it reports Nunito/Cinzel 700–800 as loaded but draws a light weight. Chromium and Firefox render bold correctly.
+**Fix:** none needed in the app; confirm on a real iPhone before treating it as a bug.
+
+### `msukaip.local` opens on one device but times out on another
+**Cause:** the mDNS answer lists every IPv4 address on the server, including virtual adapters such as VirtualBox's `192.168.56.1` ("Ethernet 2"). A client that picks that address cannot reach it. (`169.254.*` addresses are already filtered out.)
+**Fix:** disable the unused virtual adapter on the server for the demo (Settings → Network & internet → Advanced network settings → Disable), or use `https://<wifi-ip>:3443`.
+
+### `http://msukaip.local:3000` jumps to https:// and fails
+**Cause:** HSTS. After one visit to `https://msukaip.local:3443` the browser uses HTTPS for that name on every port, and port 3000 speaks only HTTP.
+**Fix:** use the name over HTTPS only: `https://msukaip.local:3443`. On the server PC, `http://localhost:3000` still works.
+
+### `msukaip.local` does not open on a device (but the IP does)
+**Cause:** `.local` names are resolved by mDNS, which Android Chrome handles inconsistently, and a network with client isolation (the CICS wifi) blocks multicast between devices. The server also needs UDP 5353 open: if Windows Firewall blocks it, the server logs `mDNS stopped` or answers nothing.
+**Fix:** use `https://<server-ip>:3443`; on a laptop add `<server-ip>  msukaip.lan` to the hosts file and open `https://msukaip.lan:3443`; allow UDP 5353 inbound on the server (`New-NetFirewallRule -DisplayName "MSUkaIP mDNS" -Direction Inbound -Protocol UDP -LocalPort 5353 -Action Allow`). Check from the server with `ping msukaip.local`.
+
+### Cannot start a call: no Call button
+**Cause:** private chat was removed; the Call button is now on each *online* user's row in the **CICS Chat** panel (rail → CICS Chat). A user who is offline has no row.
+**Fix:** open CICS Chat and click Call next to the person's name once they are online.

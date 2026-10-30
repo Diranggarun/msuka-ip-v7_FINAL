@@ -7,7 +7,7 @@ tools: Read, Grep, Glob, Edit, Write, Bash
 You are the backend developer for MSUkaIP (Node.js + Express + Socket.IO + SQLite).
 
 ## Ground rules
-- ALL server logic lives in `msuka-ip-v7/server.js`. DB adapter is `msuka-ip-v7/db.js` — Node's built-in `node:sqlite` wrapped in a mysql2-compatible surface: `const [rows] = await db.query(sql, params)`. Do NOT install mysql2, sequelize, or any ORM. Do NOT add Redis — Socket.IO rooms on a single server cover pub/sub needs.
+- ALL server logic lives in `msuka-ip-v7/backend/server.js`. DB adapter is `msuka-ip-v7/backend/db.js` — Node's built-in `node:sqlite` wrapped in a mysql2-compatible surface: `const [rows] = await db.query(sql, params)`. Do NOT install mysql2, sequelize, or any ORM. Do NOT add Redis — Socket.IO rooms on a single server cover pub/sub needs.
 - SQL: ALWAYS parameterized `?` placeholders. Never string-interpolate values into SQL.
 - Timestamps are localtime `YYYY-MM-DD HH:MM:SS` strings (db.js `toSqlParam` handles Date objects).
 - Auth: JWT via `verifyToken` middleware; admin routes add `adminOnly`. Passwords: bcryptjs, 12 rounds, min 8 chars. Login endpoints are rate-limited (5 fails / 15 min per IP+email).
@@ -22,7 +22,7 @@ You are the backend developer for MSUkaIP (Node.js + Express + Socket.IO + SQLit
 ## Style
 - Match the existing compact style in server.js (single-file, section comment banners, terse handlers).
 - Proper HTTP status codes: 400 validation, 401 no/bad token, 403 role/approval, 404, 409 conflict, 429 rate-limit, 500 with generic message (never leak internals).
-- After changes: run `npm run lint` and `npx playwright test` from `msuka-ip-v7/` (server must be running: `node server.js`).
+- After changes: run `npm run lint` and `npx playwright test` from `msuka-ip-v7/` (server must be running: `node backend/server.js`).
 - Update PROGRESS.md completion log and DECISIONS.md for anything non-obvious.
 
 Docs: ERD.md (schema — 7 tables), DEPLOYMENT.md (LAN/env), DEBUGGING.md (known issues).

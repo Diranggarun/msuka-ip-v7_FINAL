@@ -10,7 +10,7 @@ LAN-first chat, file sharing, and voice-calling system for the College of Inform
 - **Database:** SQLite (Node built-in `node:sqlite`, Node 22.5+ — no native deps, no separate DB server; migrated from XAMPP/MySQL)
 - **Auth:** JWT (`jsonwebtoken`) + bcryptjs
 - **Encryption:** AES-256-GCM for chat message text
-- **Frontend:** Vanilla HTML/JS (no build step) — `public/index.html`, `public/admin.html`, `public/feedback.html`
+- **Frontend:** Vanilla HTML/JS (no build step) — `frontend/index.html`, `frontend/admin.html`, `frontend/feedback.html`
 
 ## Quick start (local dev)
 
@@ -22,10 +22,16 @@ notepad .env                  # set JWT_SECRET, AES_SECRET
 npm start
 ```
 
-Then open:
+Then open (on the server PC):
 - Chat → http://localhost:3000/
 - Admin → http://localhost:3000/admin.html
 - Feedback → http://localhost:3000/feedback.html
+
+Other devices on the LAN (voice calls need HTTPS): **https://msukaip.local:3443**
+— the server announces this name itself (mDNS); change it with `APP_HOST` in
+`.env` (must end in `.local`). If a device can't resolve it (some Android
+phones), use `https://<server-ip>:3443` instead. Setup details and the
+firewall rules are in `DEPLOYMENT.md` §6.
 
 Default seeded accounts (rotated on every server start, so demos can't drift):
 
@@ -41,17 +47,20 @@ Default seeded accounts (rotated on every server start, so demos can't drift):
 ```
 msuka-ip-v7_Final/
 ├── msuka-ip-v7/                  # Application code
-│   ├── server.js                 # Express + Socket.IO + all REST routes
-│   ├── db.js                     # SQLite adapter (node:sqlite, mysql2-compatible surface)
-│   ├── uploads/                  # User uploads — encrypted at rest, served via auth route (gitignored)
-│   ├── public/                   # Static frontend (3 HTML pages + fonts)
+│   ├── backend/                  # Server-side code
+│   │   ├── server.js             # Express + Socket.IO + all REST routes
+│   │   ├── db.js                 # SQLite adapter (node:sqlite, mysql2-compatible surface)
+│   │   └── db-audit.js           # Standalone schema + integrity audit script
+│   ├── frontend/                 # Static frontend (3 HTML pages + fonts), served by server.js
 │   │   ├── index.html            # Login + Chat SPA
 │   │   ├── admin.html            # Admin dashboard
 │   │   ├── feedback.html         # Anonymous Likert capstone survey
 │   │   ├── fonts/                # Self-hosted Cinzel + Nunito woff2
 │   │   └── msukaip-logo.png      # Brand logo
+│   ├── scripts/                  # Preflight, backup, migration and doc helpers
 │   ├── tests/                    # Playwright specs
-│   ├── db-audit.js               # Standalone schema + integrity audit script
+│   ├── uploads/                  # User uploads — encrypted at rest, served via auth route (gitignored)
+│   ├── msukaip.db                # SQLite database (gitignored)
 │   ├── .env.example              # Template for secrets / DB creds
 │   ├── package.json
 │   └── playwright.config.js
@@ -116,7 +125,7 @@ Audit the DB at any time:
 
 ```powershell
 cd msuka-ip-v7
-node db-audit.js
+node backend/db-audit.js
 ```
 
 This dumps FK relationships, indexes, row counts, orphan-record checks, and collation. Useful for verifying integrity before demo day.
@@ -125,7 +134,7 @@ This dumps FK relationships, indexes, row counts, orphan-record checks, and coll
 
 | Command | What it does |
 |---|---|
-| `npm start` | Run the server (`node server.js`) |
+| `npm start` | Run the server (`node backend/server.js`) |
 | `npm run dev` | Run with `nodemon` for auto-reload |
 | `npm test` | Run Playwright smoke tests |
 | `npm run test:headed` | Run Playwright with a visible browser |

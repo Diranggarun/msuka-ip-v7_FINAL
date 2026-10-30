@@ -150,7 +150,7 @@ function adminOnly(req,res,next) { if (req.user?.role !== 'admin') return res.st
 - `groups:get` → fetches the user's groups, joins each `group_<id>` room.
 - `messages:get` → returns the history of one conversation, decrypting chat/announcement/system rows.
 - `message:send` → 1:1 OR group depending on the key prefix. Encrypts the text, INSERTs, then emits. Wrapped in try/catch; on DB error, emits `message:error` back to the sender.
-- `broadcast:send` → admin-only, encrypts, INSERTs, emits to everyone.
+- Announcements are NOT a socket event: admins never open a socket, so the dashboard posts to `POST /api/admin/broadcast` (admin-only, encrypts, INSERTs, writes an audit row, emits `message:new` to everyone).
 - `typing:start/stop` → broadcasts to the room minus the sender.
 - `group:create` → wrapped in a transaction (BEGIN/COMMIT/ROLLBACK) so a partial failure leaves no orphaned group.
 - VoIP signaling: `call:initiate / accept / reject / end` plus `webrtc:offer / answer / ice-candidate` are pure relays — the server never carries audio.
@@ -206,6 +206,7 @@ Key client-side patterns:
 | "Why no migrations runner like Alembic / Knex?" | At this scale, idempotent `CREATE TABLE IF NOT EXISTS` + `try/catch ALTER TABLE` is simpler than a separate runner. If we cross 30+ schema changes we'd switch. |
 | "Why a separate `survey_responses` table instead of reusing `audit_logs`?" | Audit logs are user-action history. Survey responses are research data with strict structure (Likert means as DECIMAL, response date, etc.). Different lifecycle. |
 | "How do you know it works on the LAN?" | `npm run preflight` checks env + DB + LAN IP + firewall command. §7 of DEPLOYMENT.md is a 13-step smoke-test checklist. |
+| "How do devices find the server without DNS?" | The server answers mDNS (multicast DNS, UDP 5353) for `msukaip.local` with its LAN IPs; Windows, macOS and iOS resolve `.local` that way natively. The name is one setting, `APP_HOST` in `.env`, and the certificate lists it, so HTTPS is valid by name. Android may not resolve `.local`, so `https://<ip>:3443` always works too. Ports stay 3000/3443: no admin rights, no clash with IIS on 443. |
 | "What stops me reading another group's private messages?" | Both the history fetch (`messages:get`) and the send path (`message:send`) run `canAccessConv()`, which checks `group_members` before touching a `group_<id>` conversation. A non-member gets an empty history or a "not a member" error, and the attempt is audit-logged. We tested this with two accounts — a non-member is refused read and write. `group_general` is the deliberately open room. |
 | "How would I brute-force an account?" | You wouldn't get far — 5 wrong tries per IP+email locks that pair for 15 minutes (`429`), and passwords are bcrypt at 12 rounds (~400 ms each), so even offline guessing on a stolen hash is expensive. |
 
@@ -213,6 +214,7 @@ Key client-side patterns:
 
 ## 7. Demo-day script
 
+0. On a second device (same hotspot) open `https://msukaip.local:3443` (Android: `https://<server-ip>:3443`) — show the name working.
 1. Open admin: `http://localhost:3000/admin.html` → log in. Show dashboard.
 2. In another browser tab/window: register a new account → admin tab shows it under Pending → click Approve.
 3. Log in as the newly approved user → send a message to "Global Chat".

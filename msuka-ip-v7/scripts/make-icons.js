@@ -15,7 +15,7 @@ const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
 
-const PUB = path.join(__dirname, '..', 'public');
+const PUB = path.join(__dirname, '..', 'frontend');
 const CREAM = '#FDF8F0';
 
 // 192 and 512 are the two Android asks for; 180 is the iOS apple-touch-icon.

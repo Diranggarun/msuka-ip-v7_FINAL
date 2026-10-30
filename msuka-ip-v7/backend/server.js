@@ -10,11 +10,15 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto'); // Built-in Node.js — no install needed
 
+// Project root (one level up from backend/) — .env, certs/, uploads/, backups/
+// and the frontend/ pages all live there.
+const ROOT = path.join(__dirname, '..');
+
 // ── Minimal .env loader (no dotenv dependency) ───────────────────────────────
-// Reads KEY=VALUE lines from .env in this folder, skipping blanks and #comments.
+// Reads KEY=VALUE lines from .env in the project root, skipping blanks and #comments.
 (() => {
   try {
-    const envPath = path.join(__dirname, '.env');
+    const envPath = path.join(ROOT, '.env');
     if (!fs.existsSync(envPath)) return;
     for (const line of fs.readFileSync(envPath, 'utf8').split(/\r?\n/)) {
       const m = line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*)\s*$/i);
@@ -38,17 +42,25 @@ const io = new Server(server, { cors:{ origin:'*' } });
 // A self-signed cert is generated into certs/ on first run; each client
 // accepts the browser warning once.
 const HTTPS_PORT = process.env.HTTPS_PORT || 3443;
+// The name clients type instead of an IP. Set once (APP_HOST in .env) and used
+// for the certificate, the mDNS answer and the startup banner. mDNS only
+// resolves *.local names, so anything else is refused at boot.
+const APP_HOST = (process.env.APP_HOST || 'msukaip.local').trim().toLowerCase();
+if (!/^[a-z0-9-]+\.local$/.test(APP_HOST)) {
+  console.error(`❌  APP_HOST must look like "name.local" (got "${APP_HOST}").`);
+  process.exit(1);
+}
 let httpsServer = null;
 // Every IPv4 address a LAN client could use to reach this host.
 function lanIPv4s() {
   return Object.values(os.networkInterfaces()).flat()
-    .filter(i => i && i.family === 'IPv4' && !i.internal)
-    .map(i => i.address);
+    .filter(i => i && i.family === 'IPv4' && !i.internal && !i.address.startsWith('169.254.'))
+    .map(i => i.address); // 169.254.* = Windows' "DHCP failed" address, never reachable
 }
 
 async function setupHttps() {
   try {
-    const certDir  = path.join(__dirname, 'certs');
+    const certDir  = path.join(ROOT, 'certs');
     const keyPath  = path.join(certDir, 'key.pem');
     const certPath = path.join(certDir, 'cert.pem');
     const sansPath = path.join(certDir, '.sans'); // records which names the cert was built for
@@ -59,7 +71,7 @@ async function setupHttps() {
     // The LAN IP can change between sessions (DHCP), so we rebuild the cert
     // whenever the current address set differs from the one it was made for.
     const ips = lanIPv4s();
-    const wantSans = ['localhost', 'msukaip.lan', '127.0.0.1', ...ips].join(',');
+    const wantSans = ['localhost', APP_HOST, 'msukaip.lan', '127.0.0.1', ...ips].join(',');
     const haveSans = fs.existsSync(sansPath) ? fs.readFileSync(sansPath, 'utf8').trim() : '';
     const stale = !fs.existsSync(keyPath) || !fs.existsSync(certPath) || haveSans !== wantSans;
 
@@ -93,12 +105,13 @@ async function setupHttps() {
     if (stale) {
       const altNames = [
         { type: 2, value: 'localhost' },      // type 2 = DNS name
-        { type: 2, value: 'msukaip.lan' },
+        { type: 2, value: APP_HOST },         // announced over mDNS below
+        { type: 2, value: 'msukaip.lan' },    // kept for hosts-file setups
         { type: 7, ip: '127.0.0.1' },         // type 7 = IP address
         ...ips.map(ip => ({ type: 7, ip })),
       ];
       const pems = await selfsigned.generate(
-        [{ name: 'commonName', value: 'msukaip.lan' }],
+        [{ name: 'commonName', value: APP_HOST }],
         { days: 825, keySize: 2048, algorithm: 'sha256',
           // 825 days: browsers reject server certificates with longer lifetimes.
           // The old 3650-day cert was over that limit.
@@ -127,7 +140,7 @@ async function setupHttps() {
 // phone has to fetch it before it can log in. certs/ca.key never leaves the
 // server — only the .crt is served.
 app.get('/msukaip-ca.crt', (req, res) => {
-  const caPath = path.join(__dirname, 'certs', 'ca.crt');
+  const caPath = path.join(ROOT, 'certs', 'ca.crt');
   if (!fs.existsSync(caPath)) return res.status(404).send('CA not generated yet — start the server over HTTPS once.');
   res.setHeader('Content-Type', 'application/x-x509-ca-cert');
   res.setHeader('Content-Disposition', 'attachment; filename="MSUkaIP-Local-CA.crt"');
@@ -175,17 +188,28 @@ app.use((req,res,next)=>{
   return res.redirect(302, `https://${host}:${HTTPS_PORT}${req.originalUrl}`);
 });
 app.use(express.json());
-app.use(express.static(path.join(__dirname,'public'),{
+// index:'landing.html' makes "/" open the connection tutorial. The chat app
+// (login + messages) is still served at /index.html.
+app.use(express.static(path.join(ROOT,'frontend'),{
+  index:'landing.html',
   setHeaders:(res,filePath)=>{
     if(filePath.endsWith('.html')) res.setHeader('Cache-Control','no-store, no-cache, must-revalidate, max-age=0');
   }
 }));
+
+// The name and HTTPS port, so the pages don't hardcode them (no build step
+// means the HTML can't read .env). Public on purpose: both are already printed
+// on the landing page and contain nothing secret.
+app.get('/api/config', (req, res) => res.json({ host: APP_HOST, httpsPort: Number(HTTPS_PORT) }));
 
 // ── Secrets — read from environment, fall back to dev defaults ───────────────
 // For LAN/production deployment, set JWT_SECRET, AES_SECRET, AES_SALT, and
 // optionally SQLITE_PATH in a .env file or the OS environment. See .env.example.
 const IS_PROD    = process.env.NODE_ENV === 'production';
 const JWT_SECRET = process.env.JWT_SECRET || 'msuka-ip-secret-2025';
+// Pin the algorithm on both sides so a token can't pick its own (e.g. alg:none).
+const JWT_SIGN_OPTS   = { algorithm:'HS256', expiresIn:'8h' };
+const JWT_VERIFY_OPTS = { algorithms:['HS256'] };
 const AES_SECRET = process.env.AES_SECRET || 'MSUkaIP-CICS-AES256-SecureKey-2025!';
 const AES_SALT   = process.env.AES_SALT   || 'msukaip-salt';
 const AES_KEY    = crypto.scryptSync(AES_SECRET, AES_SALT, 32); // 256-bit key
@@ -239,19 +263,8 @@ console.log('🔐  AES-256-GCM encryption initialized');
 // route below. Files are encrypted at rest with the same AES-256-GCM key as
 // messages (RA 10173 §20 — images, documents and voice notes are message
 // content too).
-const UPLOAD_DIR = path.join(__dirname,'uploads');
+const UPLOAD_DIR = path.join(ROOT,'uploads');
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR,{recursive:true});
-
-// One-time migration: move any legacy files out of the world-readable
-// public/uploads/ into the private dir (they stay plaintext until re-uploaded;
-// readFileDecrypted handles both formats).
-const LEGACY_UPLOAD_DIR = path.join(__dirname,'public','uploads');
-if (fs.existsSync(LEGACY_UPLOAD_DIR)) {
-  for (const f of fs.readdirSync(LEGACY_UPLOAD_DIR)) {
-    if (f === '.gitkeep') continue;
-    try { fs.renameSync(path.join(LEGACY_UPLOAD_DIR, f), path.join(UPLOAD_DIR, f)); } catch {}
-  }
-}
 
 // At-rest file format: 'MSKAENC1' magic + 12-byte IV + 16-byte GCM tag + ciphertext.
 // Files without the magic are legacy plaintext and are served as-is.
@@ -316,10 +329,6 @@ async function seedDemoConversations() {
     } else ids[p.email] = rows[0].id;
   }
 
-  const [me] = await db.query('SELECT id FROM users WHERE email=?',['student@cics.msu.edu']);
-  if (!me.length) return;
-  const myId = me[0].id;
-
   // Idempotency: if any peer has already spoken, the seed has run before. This
   // keeps a restart from stacking duplicate history, without wiping anything the
   // real user has since written.
@@ -337,22 +346,6 @@ async function seedDemoConversations() {
   const say = async (senderId, convKey, text, when) => db.query(
     'INSERT INTO messages (sender_id,conv_key,type,text,created_at) VALUES (?,?,?,?,?)',
     [senderId, convKey, 'chat', encryptMessage(text), when]);
-
-  // Private threads. buildPrivateKey sorts the addresses, so the key matches
-  // exactly what the live send path would produce for the same two people.
-  const pk = e => buildPrivateKey('student@cics.msu.edu', e);
-  await say(ids['kisha@cics.msu.edu'], pk('kisha@cics.msu.edu'), 'Naka-submit ka na ba ng capstone chapter 2?', at(0,8,41));
-  await say(myId,                      pk('kisha@cics.msu.edu'), 'Hindi pa, tinatapos ko pa yung ERD ngayon.',  at(0,8,44));
-  await say(ids['kisha@cics.msu.edu'], pk('kisha@cics.msu.edu'), 'Alright! See you later.',                     at(0,8,47));
-
-  await say(ids['tommy@cics.msu.edu'], pk('tommy@cics.msu.edu'), 'Pakisend na lang yung defense schedule.',      at(0,8,28));
-  await say(ids['tommy@cics.msu.edu'], pk('tommy@cics.msu.edu'), 'Picking up the product now...',                at(0,8,30));
-
-  await say(ids['ghost@cics.msu.edu'], pk('ghost@cics.msu.edu'), 'Wassup, where you at??',                       at(0,8,12));
-
-  await say(myId,                      pk('dre@cics.msu.edu'),   'Send the file when you can.',                  at(1,21,15));
-
-  await say(ids['santos@cics.msu.edu'], pk('santos@cics.msu.edu'), 'Meeting moved to Thursday, 10:00 AM.',       at(2,18,45));
 
   // A little life in the broadcast channel too, dated earlier so the Global
   // Chat preview is not empty on first open.
@@ -398,8 +391,9 @@ async function setupDatabase() {
 // outstanding JWTs (logout, password change, reject, delete). RA 10173 Tier 2.
 async function tokenStillValid(payload) {
   try {
-    const [rows] = await db.query('SELECT token_version FROM users WHERE id=?',[payload.id]);
-    return rows.length > 0 && (rows[0].token_version||0) === (payload.tv||0);
+    const [rows] = await db.query('SELECT token_version, account_status FROM users WHERE id=?',[payload.id]);
+    return rows.length > 0 && rows[0].account_status === 'approved'
+      && (rows[0].token_version||0) === (payload.tv||0);
   } catch { return false; }
 }
 async function bumpTokenVersion(userId) {
@@ -416,7 +410,7 @@ async function verifyToken(req,res,next) {
   const auth=req.headers.authorization;
   if(!auth) return res.status(401).json({error:'No token'});
   try {
-    const payload=jwt.verify(auth.replace('Bearer ',''),JWT_SECRET);
+    const payload=jwt.verify(auth.replace('Bearer ',''),JWT_SECRET,JWT_VERIFY_OPTS);
     if(!await tokenStillValid(payload)) return res.status(401).json({error:'Session expired or revoked'});
     req.user=payload; next();
   }
@@ -431,7 +425,7 @@ async function verifyTokenAllowQuery(req,res,next) {
   const token = auth ? auth.replace('Bearer ','') : req.query.token;
   if(!token) return res.status(401).json({error:'No token'});
   try {
-    const payload = jwt.verify(token, JWT_SECRET);
+    const payload = jwt.verify(token, JWT_SECRET, JWT_VERIFY_OPTS);
     if(!await tokenStillValid(payload)) return res.status(401).json({error:'Session expired or revoked'});
     req.user = payload; next();
   }
@@ -525,13 +519,24 @@ app.post('/api/login', async (req,res) => {
     loginFailures.delete(rk);
     if(user.account_status==='pending')  return res.status(403).json({error:'Account pending admin approval.'});
     if(user.account_status==='rejected') return res.status(403).json({error:'Account rejected. Contact admin.'});
+    // Same rule tokenStillValid enforces — anything else (e.g. NULL from a migrated row) gets no token.
+    if(user.account_status!=='approved') return res.status(403).json({error:'Account not approved.'});
     // ADMIN accounts must use the Admin Dashboard — not the chat app
     if(user.role==='admin') return res.status(403).json({error:'Admin accounts must login at the Admin Dashboard. Please go to /admin.html'});
-    const token=jwt.sign({id:user.id,email:user.email,name:user.name,role:user.role,tv:user.token_version||0},JWT_SECRET,{expiresIn:'8h'});
+    const token=jwt.sign({id:user.id,email:user.email,name:user.name,role:user.role,tv:user.token_version||0},JWT_SECRET,JWT_SIGN_OPTS);
     await logAudit(user.id,'LOGIN',`${user.name} logged in via Chat`,req);
     console.log(`✅  Chat Login: ${user.name} (${user.role})`);
-    res.json({token,name:user.name,role:user.role});
+    res.json({token,name:user.name,role:user.role,agreed:!!user.agreed_at});
   } catch(err){ res.status(500).json({error:'Server error'}); }
+});
+
+// ── Terms of Use accepted — stored on the account so it is asked only once ────
+app.post('/api/agree', verifyToken, async(req,res)=>{
+  try {
+    await db.query("UPDATE users SET agreed_at=datetime('now','localtime') WHERE id=? AND agreed_at IS NULL",[req.user.id]);
+    await logAudit(req.user.id,'TERMS_ACCEPTED',`${req.user.name} accepted the Terms of Use`,req);
+    res.json({agreed:true});
+  } catch { res.status(500).json({error:'Server error'}); }
 });
 
 // ── Admin login (admin only — students & faculty are BLOCKED) ─────────────────
@@ -548,7 +553,7 @@ app.post('/api/admin/login', async (req,res) => {
     loginFailures.delete(rk);
     if(user.role!=='admin') { await logAudit(user.id,'LOGIN_FAILED',`Non-admin attempted Admin portal: ${user.email}`,req); return res.status(403).json({error:'Access denied. This portal is for Admin accounts only.'}); }
     if(user.account_status!=='approved') return res.status(403).json({error:'Account not approved.'});
-    const token=jwt.sign({id:user.id,email:user.email,name:user.name,role:user.role,tv:user.token_version||0},JWT_SECRET,{expiresIn:'8h'});
+    const token=jwt.sign({id:user.id,email:user.email,name:user.name,role:user.role,tv:user.token_version||0},JWT_SECRET,JWT_SIGN_OPTS);
     await logAudit(user.id,'LOGIN',`${user.name} logged in via Admin Dashboard`,req);
     console.log(`🛡️   Admin Login: ${user.name}`);
     res.json({token,name:user.name,role:user.role});
@@ -579,16 +584,10 @@ app.post('/api/upload', verifyToken, (req,res) => {
     const fileUrl=`/uploads/${req.file.filename}`;
     const msgType=isImage?'image':'file';
     const convKey=req.body.convKey||'group_general';
+    if (convKey.startsWith('private_')) { fs.unlink(req.file.path,()=>{}); return res.status(400).json({error:'Private chat has been removed'}); }
 
     try {
-      // For private chats, build consistent key
-      let realKey = convKey;
-      let targetEmail = null;
-      if (convKey.startsWith('private_')) {
-        targetEmail = convKey.replace('private_','');
-        realKey = buildPrivateKey(req.user.email, targetEmail);
-      }
-
+      const realKey = convKey;
       const [result]=await db.query(
         'INSERT INTO messages (sender_id,conv_key,type,text,file_name,file_url,file_size,file_type) VALUES (?,?,?,?,?,?,?,?)',
         [req.user.id,realKey,msgType,req.file.originalname,req.file.originalname,fileUrl,req.file.size,req.file.mimetype]
@@ -603,17 +602,7 @@ app.post('/api/upload', verifyToken, (req,res) => {
         timestamp:new Date().toISOString()
       };
 
-      if (targetEmail) {
-        // Private chat — send to target and sender only
-        const targetSocket = [...onlineUsers.entries()].find(([,u])=>u.email===targetEmail)?.[0];
-        if (targetSocket) io.to(targetSocket).emit('message:new',{...msg, convKey:'private_'+req.user.email});
-        // Send back to uploader
-        const senderSocket = [...onlineUsers.entries()].find(([,u])=>u.email===req.user.email)?.[0];
-        if (senderSocket) io.to(senderSocket).emit('message:new',{...msg, convKey});
-      } else {
-        // Group chat
-        io.to(realKey).emit('message:new',{...msg, convKey:realKey});
-      }
+      io.to(realKey).emit('message:new',{...msg, convKey:realKey});
 
       console.log(`📎  ${req.user.name} uploaded: ${req.file.originalname}`);
       res.json({message:'Uploaded',...msg, convKey});
@@ -637,25 +626,15 @@ app.post('/api/upload/voice', verifyToken, (req,res) => {
     catch { fs.unlink(req.file.path,()=>{}); return res.status(500).json({error:'Could not secure file — upload cancelled'}); }
     const fileUrl=`/uploads/${req.file.filename}`;
     const convKey=req.body.convKey||'group_general';
+    if(convKey.startsWith('private_')){ fs.unlink(req.file.path,()=>{}); return res.status(400).json({error:'Private chat has been removed'}); }
     try {
-      let realKey=convKey, targetEmail=null;
-      if(convKey.startsWith('private_')) {
-        targetEmail=convKey.replace('private_','');
-        realKey=buildPrivateKey(req.user.email,targetEmail);
-      }
+      const realKey=convKey;
       const [result]=await db.query(
         'INSERT INTO messages (sender_id,conv_key,type,text,file_name,file_url,file_size,file_type) VALUES (?,?,?,?,?,?,?,?)',
         [req.user.id,realKey,'voice','Voice message',req.file.originalname,fileUrl,req.file.size,req.file.mimetype]
       );
       const msg={id:result.insertId,type:'voice',sender:req.user.name,role:req.user.role,text:'Voice message',file_name:req.file.originalname,file_url:fileUrl,file_size:req.file.size,file_type:req.file.mimetype,timestamp:new Date().toISOString()};
-      if(targetEmail) {
-        const targetSocket=[...onlineUsers.entries()].find(([,u])=>u.email===targetEmail)?.[0];
-        if(targetSocket) io.to(targetSocket).emit('message:new',{...msg,convKey:'private_'+req.user.email});
-        const senderSocket=[...onlineUsers.entries()].find(([,u])=>u.email===req.user.email)?.[0];
-        if(senderSocket) io.to(senderSocket).emit('message:new',{...msg,convKey});
-      } else {
-        io.to(realKey).emit('message:new',{...msg,convKey:realKey});
-      }
+      io.to(realKey).emit('message:new',{...msg,convKey:realKey});
       res.json({message:'Voice uploaded',...msg});
     } catch(err){ res.status(500).json({error:'Server error'}); }
   });
@@ -938,7 +917,7 @@ app.get('/api/admin/login-activity',verifyToken,adminOnly,async(req,res)=>{
 // `npm run backup` was the only way to take one, and the deployment target is a
 // CICS-run LAN server rather than a developer's machine. VACUUM INTO is an
 // online, consistent snapshot — safe to run while the server is serving.
-const BACKUP_DIR = path.join(__dirname, 'backups');
+const BACKUP_DIR = path.join(ROOT, 'backups');
 // The one route here that serves a file by name, so the name is matched against
 // a strict shape and the resolved path is checked to be inside BACKUP_DIR.
 // Without both, this is a file-read primitive.
@@ -1020,10 +999,8 @@ app.delete('/api/admin/groups/:id',verifyToken,adminOnly,async(req,res)=>{
   catch { res.status(500).json({error:'Server error'}); }
 });
 
-// Announcement to everyone. The socket handler `broadcast:send` does the same
-// work, but admin.html opens no socket at all — so the capability existed and
-// was unreachable from the dashboard. This is the way in. Both paths write the
-// identical row so history stays consistent whichever was used.
+// Announcement to everyone. REST rather than a socket event because admin.html
+// opens no socket — admins never sign in to the chat app.
 app.post('/api/admin/broadcast',verifyToken,adminOnly,async(req,res)=>{
   try {
     const text = String(req.body?.text || '').trim();
@@ -1241,7 +1218,7 @@ io.use(async (socket,next)=>{
   const token=socket.handshake.auth?.token;
   if(!token) return next(new Error('Auth required'));
   try {
-    const payload=jwt.verify(token,JWT_SECRET);
+    const payload=jwt.verify(token,JWT_SECRET,JWT_VERIFY_OPTS);
     if(!await tokenStillValid(payload)) return next(new Error('Session expired or revoked'));
     socket.user=payload; next();
   }
@@ -1290,26 +1267,17 @@ io.on('connection', async(socket)=>{
 
   // Conversation summaries for the left panel.
   // Why this exists: nothing previously told the client which conversations a
-  // user already has. It learned of a private chat only when a message arrived
-  // live, or when the user opened it by hand — so on a fresh login the Private
-  // list was built from whoever happened to be online, and months of history
-  // were invisible. This returns ONE row per conversation (the newest message),
-  // which is all the list needs for its preview line, timestamp and ordering;
-  // full history stays with messages:get, which is fetched on demand.
+  // user already has. This returns ONE row per conversation (the newest
+  // message), which is all the list needs for its preview line, timestamp and
+  // ordering; full history stays with messages:get, which is fetched on demand.
   // Access is decided here, never by the client: the key set is the general
-  // room, the groups this user belongs to, and private keys carrying its own
-  // address, so no conversation the caller cannot see is ever enumerated.
+  // room and the groups this user belongs to, so no conversation the caller
+  // cannot see is ever enumerated.
   socket.on('conversations:get', async()=>{
     try {
       const [myGroups]=await db.query(
         'SELECT g.id FROM groups_table g INNER JOIN group_members gm ON g.id=gm.group_id WHERE gm.user_id=?',[id]);
       const keys=['group_general',...myGroups.map(g=>'group_'+g.id)];
-      // buildPrivateKey sorts the two addresses, so this user's email is on one
-      // side or the other — both patterns are checked.
-      const [privateKeys]=await db.query(
-        "SELECT DISTINCT conv_key FROM messages WHERE conv_key LIKE 'private\\_%' ESCAPE '\\' AND (conv_key LIKE ? OR conv_key LIKE ?)",
-        ['private_'+email+'__%','%__'+email]);
-      privateKeys.forEach(r=>keys.push(r.conv_key));
 
       const summaries=[];
       for(const key of keys){
@@ -1319,19 +1287,8 @@ io.on('connection', async(socket)=>{
             WHERE m.conv_key=? ORDER BY m.id DESC LIMIT 1`,[key]);
         if(!rows.length) continue;
         const m=rows[0];
-        // The client addresses a private chat as `private_<other email>`, while
-        // the database stores the sorted canonical key — translate here so the
-        // client keeps using the key shape the rest of its code expects.
-        let clientKey=key, peer=null;
-        if(key.startsWith('private_')){
-          const pair=key.slice('private_'.length).split('__');
-          const otherEmail=pair[0]===email?pair[1]:pair[0];
-          const [u]=await db.query('SELECT name,email,role FROM users WHERE email=?',[otherEmail]);
-          peer=u[0]||{name:otherEmail,email:otherEmail,role:'student'};
-          clientKey='private_'+peer.email;
-        }
         summaries.push({
-          convKey:clientKey, peer,
+          convKey:key,
           lastType:m.type,
           // Only chat text is encrypted at rest; file rows store the filename.
           lastText:m.type==='chat'?decryptMessage(m.text):(m.file_name||''),
@@ -1354,14 +1311,7 @@ io.on('connection', async(socket)=>{
         await logAudit(id,'ACCESS_DENIED',`Blocked messages:get on ${key}`,socket);
         return socket.emit('messages:history',{key,messages:[]});
       }
-      let rows;
-      if(key.startsWith('private_')) {
-        const targetEmail=key.replace('private_','');
-        const convKey=buildPrivateKey(email,targetEmail);
-        [rows]=await db.query(`SELECT m.id,m.conv_key,m.type,m.text,m.file_name,m.file_url,m.file_size,m.file_type,m.created_at AS timestamp,u.name AS sender,u.role FROM messages m LEFT JOIN users u ON m.sender_id=u.id WHERE m.conv_key=? ORDER BY m.created_at ASC LIMIT 100`,[convKey]);
-      } else {
-        [rows]=await db.query(`SELECT m.id,m.conv_key,m.type,m.text,m.file_name,m.file_url,m.file_size,m.file_type,m.created_at AS timestamp,u.name AS sender,u.role FROM messages m LEFT JOIN users u ON m.sender_id=u.id WHERE m.conv_key=? ORDER BY m.created_at ASC LIMIT 100`,[key]);
-      }
+      const [rows]=await db.query(`SELECT m.id,m.conv_key,m.type,m.text,m.file_name,m.file_url,m.file_size,m.file_type,m.created_at AS timestamp,u.name AS sender,u.role FROM messages m LEFT JOIN users u ON m.sender_id=u.id WHERE m.conv_key=? ORDER BY m.created_at ASC LIMIT 100`,[key]);
       // Decrypt text for chat/announcement messages
       const decrypted = rows.map(m => ({
         ...m,
@@ -1380,25 +1330,13 @@ io.on('connection', async(socket)=>{
         await logAudit(id,'ACCESS_DENIED',`Blocked message:send to ${convKey}`,socket);
         return socket.emit('message:error',{convKey,reason:'You are not a member of this conversation.'});
       }
-      let realKey=convKey;
-      if(convKey.startsWith('private_')) {
-        const targetEmail=convKey.replace('private_','');
-        realKey=buildPrivateKey(email,targetEmail);
-      }
       // Encrypt before storing in database
       const encrypted = encryptMessage(t);
-      const [result]=await db.query('INSERT INTO messages (sender_id,conv_key,type,text) VALUES (?,?,?,?)',[id,realKey,'chat',encrypted]);
+      const [result]=await db.query('INSERT INTO messages (sender_id,conv_key,type,text) VALUES (?,?,?,?)',[id,convKey,'chat',encrypted]);
       // Send plain text to clients (decrypted in transit via Socket.IO over LAN)
       const msg={id:result.insertId,type:'chat',sender:name,role,text:t,convKey,timestamp:new Date().toISOString()};
 
-      if(convKey.startsWith('private_')) {
-        const targetEmail=convKey.replace('private_','');
-        const targetSocket=[...onlineUsers.entries()].find(([,u])=>u.email===targetEmail)?.[0];
-        if(targetSocket) io.to(targetSocket).emit('message:new',{...msg,convKey:'private_'+email});
-        socket.emit('message:new',msg);
-      } else {
-        io.to(realKey).emit('message:new',{...msg,convKey:realKey});
-      }
+      io.to(convKey).emit('message:new',msg);
     } catch(err){
       console.error('Send error:',err.message);
       socket.emit('message:error', { convKey, reason: 'Failed to save message — please try again.' });
@@ -1424,20 +1362,7 @@ io.on('connection', async(socket)=>{
       }
       await logAudit(id,'DELETE_MESSAGE',`Deleted msg ${msgId} from ${m.conv_key}`,socket);
 
-      // Broadcast deletion. For private chats the canonical conv_key is sorted,
-      // but each client uses `private_<other_email>` locally — so emit per recipient.
-      if(m.conv_key.startsWith('private_')){
-        const parts=m.conv_key.replace('private_','').split('__');
-        const [emailA,emailB]=parts;
-        for(const [sid,u] of onlineUsers.entries()){
-          if(u.email===emailA||u.email===emailB){
-            const otherEmail = u.email===emailA ? emailB : emailA;
-            io.to(sid).emit('message:deleted',{id:msgId,convKey:'private_'+otherEmail});
-          }
-        }
-      } else {
-        io.to(m.conv_key).emit('message:deleted',{id:msgId,convKey:m.conv_key});
-      }
+      io.to(m.conv_key).emit('message:deleted',{id:msgId,convKey:m.conv_key});
       console.log(`🗑️   ${name} deleted message ${msgId}`);
     } catch(err){
       console.error('Delete message error:',err.message);
@@ -1445,31 +1370,10 @@ io.on('connection', async(socket)=>{
     }
   });
 
-  // Broadcast (admin) — also encrypted
-  socket.on('broadcast:send', async({text})=>{
-    if(role!=='admin') return;
-    const t=text?.trim(); if(!t) return;
-    try {
-      const encrypted = encryptMessage(t);
-      await db.query('INSERT INTO messages (sender_id,conv_key,type,text) VALUES (?,?,?,?)',[id,'group_general','announcement',encrypted]);
-      io.emit('message:new',{type:'announcement',sender:name,text:t,convKey:'group_general',timestamp:new Date().toISOString()});
-    } catch (err) {
-      console.error('Broadcast error:', err.message);
-      socket.emit('message:error', { convKey: 'group_general', reason: 'Broadcast failed — please try again.' });
-    }
-  });
-
-  // Typing — for private chats, send to the recipient's socket using THEIR convKey
-  // (i.e. private_<sender_email>); for groups, broadcast to the room.
+  // Typing — broadcast to everyone else in the group's room.
   const sendTyping=(convKey,typing)=>{
     if(!convKey) convKey='group_general';
-    if(convKey.startsWith('private_')) {
-      const targetEmail=convKey.replace('private_','').toLowerCase();
-      const targetSocket=[...onlineUsers.entries()].find(([,u])=>String(u.email).toLowerCase()===targetEmail)?.[0];
-      if(targetSocket) io.to(targetSocket).emit('typing:update',{name,convKey:'private_'+email,typing});
-    } else {
-      socket.broadcast.to(convKey).emit('typing:update',{name,convKey,typing});
-    }
+    socket.broadcast.to(convKey).emit('typing:update',{name,convKey,typing});
   };
   socket.on('typing:start',({convKey})=>sendTyping(convKey,true));
   socket.on('typing:stop', ({convKey})=>sendTyping(convKey,false));
@@ -1541,14 +1445,14 @@ io.on('connection', async(socket)=>{
     // A group call room is the group's own key, so only its members may join —
     // same access rule as the group's messages. Refusing here stops a non-member
     // from receiving a private call's peer list and WebRTC signaling.
-    // Global Chat is not callable. Every approved account is in it, and a group
+    // CICS Chat is not callable. Every approved account is in it, and a group
     // call here is a full mesh — each participant opens a peer connection to
     // every other, so N people means N(N-1)/2 connections and N-1 upstreams per
     // browser. That does not work at class size and would saturate the LAN long
     // before it failed politely. Refused on the server, not just hidden in the
     // UI, so it cannot be started from the console either.
     if(roomId === 'group_general'){
-      return socket.emit('room:error',{reason:'Global Chat does not support group calls. Start one from a group chat.'});
+      return socket.emit('room:error',{reason:'CICS Chat does not support group calls. Start one from a group chat.'});
     }
     if(!(await canAccessConv(id, roomId))){
       await logAudit(id,'ACCESS_DENIED',`Blocked room:join on ${roomId}`,socket);
@@ -1573,34 +1477,51 @@ io.on('connection', async(socket)=>{
   });
 });
 
-// Deterministic key for a 1:1 conversation. Sorting the two emails guarantees
-// that Alice→Bob and Bob→Alice resolve to the same conv_key — so both clients
-// query the same row set from `messages` regardless of who opens the chat.
-function buildPrivateKey(email1,email2) {
-  return 'private_'+(email1<email2?email1+'__'+email2:email2+'__'+email1);
-}
-
-// Authorization gate for group conversations (RA 10173 — access control).
-// A conv_key of the form `group_<id>` is private to its members. Without this
+// Authorization gate for conversations (RA 10173 — access control).
+// The only conversations are groups: a conv_key of the form `group_<id>` is
+// private to its members. Without this
 // check any authenticated user could read or post to any group just by guessing
 // the id, since the client supplies the key. `group_general` is the open
 // college-wide room and is intentionally exempt. Returns true if `userId` may
-// access `convKey`; non-group keys pass through (private 1:1 keys are already
-// bound to the caller's own email by buildPrivateKey).
+// access `convKey`. Any other key is refused: private 1:1 chat was removed, so
+// old `private_*` rows stay in the database but can no longer be read or written.
 async function canAccessConv(userId, convKey) {
-  if (!convKey || !convKey.startsWith('group_') || convKey === 'group_general') return true;
+  if (!convKey || !convKey.startsWith('group_')) return false;
+  if (convKey === 'group_general') return true;
   const gid = convKey.slice('group_'.length);
   if (!/^\d+$/.test(gid)) return false; // malformed group key
   const [rows] = await db.query('SELECT 1 FROM group_members WHERE group_id=? AND user_id=? LIMIT 1', [gid, userId]);
   return rows.length > 0;
 }
 
+// ── Hostname: answer mDNS queries for APP_HOST ───────────────────────────
+// The LAN has no DNS server, so the server itself announces its name over
+// multicast DNS (UDP 5353): a client asking "who is msukaip.local?" (APP_HOST)
+// gets the LAN IPs back. Windows 10/11, macOS and iOS resolve .local this way natively.
+// Fail-soft like setupHttps: if it can't start, the IP URL still works.
+function startMdns() {
+  try {
+    const mdns = require('multicast-dns')();
+    mdns.on('error', e => console.warn(`⚠️   mDNS stopped (${e.message}) — use the IP address instead.`));
+    mdns.on('query', q => {
+      const asked = q.questions.some(x => x.name.toLowerCase() === APP_HOST && (x.type === 'A' || x.type === 'ANY'));
+      if (!asked) return;
+      mdns.respond({ answers: lanIPv4s().map(ip => ({ name: APP_HOST, type: 'A', ttl: 120, data: ip })) });
+    });
+    console.log(`📡  mDNS: this server answers to ${APP_HOST}`);
+  } catch (e) {
+    console.warn(`⚠️   mDNS disabled (${e.message}) — use the IP address instead.`);
+  }
+}
+
 const PORT=process.env.PORT||3000;
 setupDatabase().then(async ()=>{
   await setupHttps();
+  startMdns();
   server.listen(PORT,'0.0.0.0',()=>{
-    console.log(`🚀  MSUkaIP: http://localhost:${PORT}`);
-    console.log(`🛡️   Admin:   http://localhost:${PORT}/admin.html`);
+    // With HTTPS up, the banner below leads with the name instead. Without it,
+    // localhost is the only address where voice works, so print that.
+    if (!httpsServer) console.log(`🚀  MSUkaIP: http://localhost:${PORT}   (on this PC only)`);
   });
   if (httpsServer) httpsServer.listen(HTTPS_PORT,'0.0.0.0',()=>{
     // One laptop usually holds several IPv4 addresses: the wifi adapter plus
@@ -1612,8 +1533,11 @@ setupDatabase().then(async ()=>{
     const lans = Object.entries(os.networkInterfaces())
       .flatMap(([name, addrs]) => (addrs || []).map(a => ({ name, ...a })))
       .filter(a => a.family === 'IPv4' && !a.internal && !a.address.startsWith('169.254.'));
-    if (!lans.length) { console.log(`🔐  Voice calls: https://<this-machine-ip>:${HTTPS_PORT}`); return; }
-    console.log('🔐  Voice calls from LAN clients — use the address on your wifi adapter:');
+    console.log(`🚀  MSUkaIP: https://${APP_HOST}:${HTTPS_PORT}`);
+    console.log(`🛡️   Admin:   https://${APP_HOST}:${HTTPS_PORT}/admin.html`);
+    if (!lans.length) console.log(`    ...or by IP: https://<this-machine-ip>:${HTTPS_PORT}`);
+    else console.log('    ...or by IP — use the address on your wifi adapter:');
     for (const a of lans) console.log(`      https://${a.address}:${HTTPS_PORT}   (${a.name})`);
+    console.log(`    (on this PC only: http://localhost:${PORT})`);
   });
 });

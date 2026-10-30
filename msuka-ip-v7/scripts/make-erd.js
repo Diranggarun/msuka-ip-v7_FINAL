@@ -11,7 +11,7 @@
 //
 const fs = require('fs');
 const path = require('path');
-const db = require('../db');
+const db = require('../backend/db');
 
 // Left-to-right column layout. users sits in the middle because six of the
 // seven relationships terminate on it; survey_responses is placed apart

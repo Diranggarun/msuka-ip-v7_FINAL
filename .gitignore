@@ -9,7 +9,7 @@ node_modules/
 
 # Uploads (user-generated content — private dir since the auth-route change; legacy path kept for old checkouts)
 msuka-ip-v7/uploads/
-msuka-ip-v7/public/uploads/
+msuka-ip-v7/frontend/uploads/
 
 # Test artifacts
 msuka-ip-v7/playwright-report/

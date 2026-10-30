@@ -22,14 +22,16 @@ const USER_PASS   = 'student123';
 
 test.describe('Smoke — system reachable & auth working', () => {
 
-  test('server responds at root', async ({ page }) => {
-    const resp = await page.goto(BASE_URL);
+  // "/" is the connection tutorial now (tests/landing.spec.js); the chat
+  // login lives at /index.html.
+  test('chat login page responds', async ({ page }) => {
+    const resp = await page.goto(`${BASE_URL}/index.html`);
     expect(resp.status()).toBe(200);
     await expect(page.locator('#login-email')).toBeVisible();
   });
 
   test('student can log in and chat dashboard renders', async ({ page }) => {
-    await page.goto(BASE_URL);
+    await page.goto(`${BASE_URL}/index.html`);
     await page.fill('#login-email', USER_EMAIL);
     await page.fill('#login-password', USER_PASS);
     await page.click('button.btn-login');
@@ -44,7 +46,9 @@ test.describe('Smoke — system reachable & auth working', () => {
     await page.fill('#login-email', ADMIN_EMAIL);
     await page.fill('#login-password', ADMIN_PASS);
     await page.click('button.btn-primary');
-    // Admin rail buttons
+    // Admin rail buttons: both parent groups start closed, so open them first.
+    await expect(page.locator('.rail-group-head').first()).toBeVisible({ timeout: 8000 });
+    for (const head of await page.locator('.rail-group-head').all()) await head.click();
     await expect(page.locator('.rail-tab', { hasText: 'Pending' })).toBeVisible({ timeout: 8000 });
     await expect(page.locator('.rail-tab', { hasText: 'Feedback' })).toBeVisible();
   });
@@ -54,7 +58,7 @@ test.describe('Smoke — system reachable & auth working', () => {
 test.describe('Smoke — notifications panel', () => {
 
   test('clicking Notifications rail tab swaps left panel to notifications view', async ({ page }) => {
-    await page.goto(BASE_URL);
+    await page.goto(`${BASE_URL}/index.html`);
     await page.fill('#login-email', USER_EMAIL);
     await page.fill('#login-password', USER_PASS);
     await page.click('button.btn-login');

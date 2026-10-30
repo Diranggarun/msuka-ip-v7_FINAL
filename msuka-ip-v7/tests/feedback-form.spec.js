@@ -41,7 +41,10 @@ test.describe('12. Feedback Form — rendering & validation', () => {
 
   test('12.2 date field defaults to today', async ({ page }) => {
     await page.goto(`${BASE_URL}/feedback.html`);
-    const today = new Date().toISOString().slice(0, 10);
+    // Local date, like the page. toISOString() is UTC, which in the Philippines
+    // (UTC+8) is still "yesterday" between midnight and 8 AM, so the test failed then.
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     await expect(page.locator('#resp-date')).toHaveValue(today);
     console.log('✅ Date pre-filled with today');
   });

@@ -9,7 +9,7 @@
        showing. theme-color paints the Android status bar maroon so the app
        does not sit under a white strip. -->
   <link rel="manifest" href="/manifest.webmanifest"/>
-  <meta name="theme-color" content="#6B0000"/>
+  <meta name="theme-color" content="#721922"/>
   <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png"/>
   <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -18,15 +18,24 @@
 <link href="/fonts/google-fonts.css" rel="stylesheet"/>
 <style>
 :root{
-  --maroon:#6B0000;--maroon-dark:#4a0000;--maroon-light:#8B1A1A;
-  --maroon-soft:#f9f0f0;--gold:#D4A017;--gold-bright:#FFD700;
-  --gold-dark:#B8860B;--gold-soft:#fffbea;
-  --white:#fff;--gray-100:#f5f0ec;--gray-200:#e8e0d8;
+  /* ── MSU Main Campus palette ─────────────────────────────────────────────
+     The seven brand colours. Everything else on this page points at these.
+     -rgb copies exist so translucent shades can be written as
+     rgba(var(--primary-rgb),.12) and still come from the palette. */
+  --primary:#721922; --primary-dark:#5A1219; --white:#FFFFFF;
+  --accent:#E8A030; --accent-dark:#C9861F;
+  --text:#2B2B2B; --bg-alt:#F8F4F4;
+  --primary-rgb:114,25,34; --primary-dark-rgb:90,18,25; --accent-rgb:232,160,48; --bg-alt-rgb:248,244,244;
+  /* Older token names, kept so existing rules need no edits. */
+  --maroon:var(--primary);--maroon-dark:var(--primary-dark);--maroon-light:var(--primary);
+  --maroon-soft:var(--bg-alt);--gold:var(--accent);--gold-bright:var(--accent);
+  --gold-dark:var(--accent-dark);--gold-soft:#FDF3E3;
+  --white:#fff;--gray-100:#F1ECEC;--gray-200:#E2DADA;
   /* --text-light darkened from #9a8a7a (3.35:1, below the WCAG AA 4.5:1 floor) */
-  --text-dark:#2a1a0a;--text-mid:#5a4a3a;--text-light:#7f6e5d;
-  --shadow-sm:0 2px 8px rgba(107,0,0,.12);
-  --shadow-md:0 4px 20px rgba(107,0,0,.18);
-  --shadow-lg:0 8px 40px rgba(107,0,0,.25);
+  --text-dark:var(--text);--text-mid:#4A4A4A;--text-light:#6B6B6B;
+  --shadow-sm:0 2px 8px rgba(var(--primary-rgb),.12);
+  --shadow-md:0 4px 20px rgba(var(--primary-rgb),.18);
+  --shadow-lg:0 8px 40px rgba(var(--primary-rgb),.25);
   /* Motion / spacing / radius tokens — shared design system, see DESIGN.md */
   --ease-out:cubic-bezier(.23,1,.32,1); --ease-drawer:cubic-bezier(.32,.72,0,1); --ease-overshoot:cubic-bezier(.34,1.56,.64,1);
   --dur-fast:.12s; --dur-base:.18s; --dur-slow:.32s;
@@ -38,17 +47,18 @@
      surface for content the respondent reads and fills in: dark --text-* stays
      on it. Keeping those pairings intact ports the language without inverting
      any text/background relationship. */
-  --chrome:rgba(46,10,10,.90); --chrome-deep:rgba(26,5,5,.92);
-  --chrome-edge:rgba(212,160,23,.22);
-  --ink:#F7EDDC; --ink-mut:#CDB89F;
-  --paper:#F8F0E1; --paper-line:rgba(107,0,0,.10); --paper-veil:rgba(253,248,240,.985);
-  --card-line:rgba(212,160,23,.12); --card-lift:0 1px 2px rgba(0,0,0,.22);
+  --chrome:rgba(var(--primary-dark-rgb),.90); --chrome-deep:rgba(var(--primary-dark-rgb),.92);
+  --chrome-edge:rgba(var(--accent-rgb),.22);
+  --ink:var(--white); --ink-mut:#F3DFE1;
+  --paper:var(--white); --paper-line:rgba(var(--primary-rgb),.10); --paper-veil:rgba(var(--bg-alt-rgb),.985);
+  --card-line:rgba(var(--accent-rgb),.12); --card-lift:0 1px 2px rgba(0,0,0,.22);
   /* Paper grain — same tile as index.html and admin.html. */
   --grain:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.42 0'/></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>");
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Nunito',sans-serif;min-height:100vh;background:url('/msu-gate.jpg') center center / cover no-repeat fixed,linear-gradient(135deg,#f5ede3 0%,#efe4d4 30%,#ead9c3 60%,#e1c8ad 100%);}
-body::before{content:'';position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(74,0,0,.28) 0%,rgba(74,0,0,.26) 50%,rgba(74,0,0,.28) 100%),radial-gradient(900px 600px at 8% 0%,rgba(212,160,23,.12),transparent 70%),radial-gradient(700px 500px at 95% 100%,rgba(107,0,0,.10),transparent 70%);z-index:0;}
+/* Plain --bg-alt, same as the chat and landing pages. The msu-gate.jpg photo
+   and its maroon veil were dropped: the form is read, not looked at. */
+body{font-family:'Nunito',sans-serif;min-height:100vh;background:var(--bg-alt);}
 body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.20;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");}
 .topbar,.hero,.container{position:relative;z-index:1;}
 
@@ -65,7 +75,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
   }
 }
 button,label{touch-action:manipulation;}
-/* The radio input itself is display:none — the <label> is the real hit area,
+/* The radio input itself is visually hidden — the <label> is the real hit area,
    so that is what has to meet the 44px minimum. The respondent-info fields sit
    at 40-42px by default, just under the threshold, so they are nudged too:
    this page is filled in on phones by 20-30 survey respondents. */
@@ -73,9 +83,9 @@ button,label{touch-action:manipulation;}
   button,.likert-option label{min-height:44px;justify-content:center;}
   .info-group input,.info-group select{min-height:44px;}
   /* "← Back to Chat" is bare text, so it tapped at only 36px tall. */
-  .topbar a[href="/"]{display:inline-flex;align-items:center;min-height:44px;padding:0 10px;}
+  .topbar a[href="/index.html"]{display:inline-flex;align-items:center;min-height:44px;padding:0 10px;}
 }
-.info-card,.section-card,.submit-section{background:linear-gradient(160deg,rgba(255,253,250,.78),rgba(252,246,236,.72))!important;backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border:1px solid rgba(255,255,255,.55)!important;box-shadow:0 8px 30px rgba(74,0,0,.10),inset 0 1px 0 rgba(255,255,255,.6)!important;border-radius:18px!important;}
+.info-card,.section-card,.submit-section{background:linear-gradient(160deg,rgba(255,255,255,.78),rgba(var(--bg-alt-rgb),.72))!important;backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border:1px solid rgba(255,255,255,.55)!important;box-shadow:0 8px 30px rgba(var(--primary-dark-rgb),.10),inset 0 1px 0 rgba(255,255,255,.6)!important;border-radius:18px!important;}
 
 /* ── Paper grain on the survey cards ─────────────────────────────────────────
    Under the content, never over it: this page is read and filled in by 20-30
@@ -86,19 +96,19 @@ button,label{touch-action:manipulation;}
    the survey reads on the same material. Dark --text-* stays on it. */
 .info-card,.section-card,.submit-section{
   /* !important is required: the `background:` shorthand in the rule above is
-     itself !important, which resets background-color to transparent. Without
-     this the MSU gate photo behind the page shows straight through the form. */
-  background-color:var(--paper)!important;
-  background-image:var(--grain),linear-gradient(160deg,rgba(255,252,246,.55),rgba(248,240,225,.35))!important;
+     itself !important, which resets background-color to transparent. The
+     cards must stay opaque white so the form reads on the --bg-alt page. */
+  background-color:var(--white)!important;
+  background-image:none!important;
   background-repeat:repeat,no-repeat!important;
   background-size:160px 160px,auto!important;
   background-blend-mode:soft-light,normal;
   border-color:var(--paper-line)!important;
 }
-.legend{background:linear-gradient(135deg,rgba(255,251,234,.85),rgba(255,247,220,.78))!important;backdrop-filter:blur(14px) saturate(150%);-webkit-backdrop-filter:blur(14px) saturate(150%);border:1px solid rgba(212,160,23,.4)!important;border-radius:16px!important;box-shadow:0 4px 14px rgba(212,160,23,.10),inset 0 1px 0 rgba(255,255,255,.5)!important;}
-.result-card{background:linear-gradient(160deg,rgba(255,253,250,.96),rgba(252,246,236,.92))!important;backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);border:1px solid rgba(255,255,255,.55)!important;box-shadow:0 20px 50px rgba(74,0,0,.25),inset 0 1px 0 rgba(255,255,255,.6)!important;}
-.result-overall{background:linear-gradient(135deg,rgba(74,0,0,.92),rgba(139,26,26,.85))!important;backdrop-filter:blur(8px);border-radius:16px!important;}
-#result-overlay{backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);background:rgba(74,0,0,.45)!important;}
+.legend{background:linear-gradient(135deg,var(--gold-soft),var(--gold-soft))!important;backdrop-filter:blur(14px) saturate(150%);-webkit-backdrop-filter:blur(14px) saturate(150%);border:1px solid rgba(var(--accent-rgb),.4)!important;border-radius:16px!important;box-shadow:0 4px 14px rgba(var(--accent-rgb),.10),inset 0 1px 0 rgba(255,255,255,.5)!important;}
+.result-card{background:linear-gradient(160deg,rgba(255,255,255,.96),rgba(var(--bg-alt-rgb),.92))!important;backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);border:1px solid rgba(255,255,255,.55)!important;box-shadow:0 20px 50px rgba(var(--primary-dark-rgb),.25),inset 0 1px 0 rgba(255,255,255,.6)!important;}
+.result-overall{background:linear-gradient(135deg,rgba(var(--primary-dark-rgb),.92),rgba(var(--primary-rgb),.85))!important;backdrop-filter:blur(8px);border-radius:16px!important;}
+#result-overlay{backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);background:rgba(var(--primary-dark-rgb),.45)!important;}
 /* Inline SVG sizing for feedback page */
 .fi{width:14px;height:14px;display:inline-block;vertical-align:-2px;margin-right:5px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 .fi-lg{width:18px;height:18px;display:inline-block;vertical-align:-3px;margin-right:7px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
@@ -108,6 +118,15 @@ button,label{touch-action:manipulation;}
 /* Chrome — navigation furniture, matching the chat rail and the admin top bar. */
 .topbar{background-color:transparent;background-image:var(--grain),linear-gradient(135deg,var(--chrome-deep),var(--chrome));background-repeat:repeat,no-repeat;background-size:160px 160px,auto;background-blend-mode:overlay,normal;backdrop-filter:blur(14px) saturate(130%);-webkit-backdrop-filter:blur(14px) saturate(130%);border-bottom:1px solid var(--chrome-edge);color:var(--ink);padding:.75rem 1.5rem;display:flex;align-items:center;gap:12px;position:relative;}
 .topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),var(--gold-bright),var(--gold),transparent);}
+/* Okir band, same as the admin top bar: the chat header's gold Maranao textile
+   (header-pattern.png) in the empty middle, masked out at both ends so the title
+   and the link sit on plain maroon. z-index:-1 = under the content, over the
+   background (.topbar is a stacking context: position:relative + z-index:1). */
+.topbar::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:url('/header-pattern.png') repeat-x center / auto 100%;
+  -webkit-mask-image:linear-gradient(90deg,transparent 30%,#000 42%,#000 58%,transparent 70%);
+          mask-image:linear-gradient(90deg,transparent 30%,#000 42%,#000 58%,transparent 70%);}
+@media (max-width:768px){ .topbar::before{display:none;} }
 .topbar img{width:40px;height:40px;border-radius:50%;object-fit:cover;object-position:center;filter:drop-shadow(0 2px 6px rgba(0,0,0,.4));background:#fff;}
 .topbar-title h1{font-family:'Cinzel',serif;font-size:.95rem;font-weight:700;color:var(--gold-bright);letter-spacing:.06em;}
 .topbar-title p{font-size:.62rem;color:rgba(255,255,255,.5);margin-top:1px;}
@@ -115,40 +134,41 @@ button,label{touch-action:manipulation;}
 .topbar a:hover{color:var(--gold-bright);}
 
 /* HERO */
-.hero{background:transparent;padding:2.5rem 1.5rem 3rem;text-align:center;color:#fff;position:relative;overflow:hidden;}
-.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(600px 400px at 50% 50%,rgba(74,0,0,.05),rgba(74,0,0,.25) 80%);pointer-events:none;}
-.hero::after{content:'';position:absolute;width:420px;height:420px;border-radius:50%;border:1px solid rgba(212,160,23,.18);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;}
-.hero img{width:96px;height:96px;border-radius:50%;object-fit:cover;object-position:center;filter:drop-shadow(0 4px 12px rgba(0,0,0,.4));margin-bottom:.75rem;position:relative;z-index:1;background:#fff;}
-.hero h2{font-family:'Cinzel',serif;font-size:1.4rem;color:var(--gold-bright);letter-spacing:.06em;margin-bottom:.45rem;position:relative;z-index:1;text-shadow:0 2px 10px rgba(0,0,0,.6),0 0 24px rgba(74,0,0,.5);}
-.hero p{font-size:.85rem;color:rgba(255,255,255,.88);max-width:540px;margin:0 auto;line-height:1.6;position:relative;z-index:1;text-shadow:0 1px 6px rgba(0,0,0,.55);}
-.hero-meta{display:flex;justify-content:center;gap:1.5rem;margin-top:1.1rem;flex-wrap:wrap;position:relative;z-index:1;}
-.hero-meta span{font-size:.75rem;color:rgba(255,255,255,.92);background:rgba(20,0,0,.35);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:.32rem .85rem;border-radius:20px;border:1px solid rgba(212,160,23,.35);text-shadow:0 1px 3px rgba(0,0,0,.5);}
+/* A solid maroon band. With no photo behind it, the text-shadows, the blurred
+   chips and the decorative ring had nothing left to separate the text from,
+   so they are gone. The gold h2 is large text, so gold on maroon is fine. */
+.hero{background:var(--primary-dark);padding:2.5rem 1.5rem 2.6rem;text-align:center;color:#fff;}
+.hero img{width:96px;height:96px;border-radius:50%;object-fit:cover;object-position:center;margin-bottom:.75rem;background:#fff;}
+.hero h2{font-family:'Cinzel',serif;font-size:1.4rem;color:var(--gold-bright);letter-spacing:.06em;margin-bottom:.45rem;}
+.hero p{font-size:.85rem;color:rgba(255,255,255,.88);max-width:540px;margin:0 auto;line-height:1.6;}
+.hero-meta{display:flex;justify-content:center;gap:.6rem 1rem;margin-top:1.1rem;flex-wrap:wrap;}
+.hero-meta span{font-size:.75rem;color:rgba(255,255,255,.92);background:rgba(255,255,255,.08);padding:.32rem .85rem;border-radius:20px;border:1px solid rgba(var(--accent-rgb),.35);}
 
 /* SCALE LEGEND */
 .legend{background:var(--gold-soft);border:1.5px solid var(--gold);border-radius:12px;padding:.9rem 1.2rem;margin-bottom:1.5rem;display:flex;flex-wrap:wrap;gap:.5rem .75rem;align-items:center;}
 .legend-title{font-size:.75rem;font-weight:800;color:var(--maroon);text-transform:uppercase;letter-spacing:.05em;width:100%;}
 .legend-item{display:flex;align-items:center;gap:5px;font-size:.76rem;color:var(--text-mid);}
-.legend-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.72rem;color:#fff;flex-shrink:0;}
+.legend-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.72rem;color:#fff;flex-shrink:0;background:var(--primary);}
 
 /* CONTAINER */
 .container{max-width:820px;margin:0 auto;padding:1.5rem;}
 
 /* RESPONDENT INFO */
 .info-card{background:var(--white);border-radius:18px;padding:1.3rem;border:0.5px solid var(--gray-200);box-shadow:var(--shadow-sm);margin-bottom:1.5rem;}
-.info-card h3{font-family:'Cinzel',serif;font-size:.88rem;color:var(--maroon-dark);margin-bottom:1rem;padding-bottom:.5rem;border-bottom:2px solid var(--gold-soft);}
+.info-card{overflow:hidden;}
+.info-card h3{font-family:'Cinzel',serif;font-size:.88rem;color:var(--white);background:var(--primary);margin:-1.3rem -1.3rem 1rem;padding:.8rem 1.3rem;}
 .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .info-group label{display:block;font-size:.72rem;font-weight:800;color:var(--maroon);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em;}
-.info-group input,.info-group select{width:100%;padding:.58rem .85rem;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.88rem;outline:none;font-family:'Nunito',sans-serif;color:var(--text-dark);transition:all .2s;}
-.info-group input:focus,.info-group select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,160,23,.12);}
-.info-full{grid-column:1/-1;}
+.info-group input,.info-group select{width:100%;padding:.58rem .85rem;background:var(--white);border:1.5px solid #CFC7C7;border-radius:8px;font-size:.88rem;outline:none;font-family:'Nunito',sans-serif;color:var(--text-dark);transition:all .2s;}
+.info-group input:focus,.info-group select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(var(--primary-rgb),.15);}
 
 /* SECTION CARD */
 .section-card{background:var(--white);border-radius:18px;padding:1.3rem;border:0.5px solid var(--gray-200);box-shadow:var(--shadow-sm);margin-bottom:1.2rem;position:relative;overflow:hidden;}
-.section-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--maroon),var(--gold-bright),var(--gold));}
-.section-header{display:flex;align-items:center;gap:10px;margin-bottom:1rem;padding-bottom:.6rem;border-bottom:1.5px solid var(--gold-soft);}
-.section-icon{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--maroon),var(--maroon-light));color:var(--gold-bright);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
-.section-header h3{font-family:'Cinzel',serif;font-size:.88rem;color:var(--maroon-dark);font-weight:700;}
-.section-header p{font-size:.72rem;color:var(--text-light);margin-top:1px;}
+/* The thin gradient bar is replaced by the maroon header strip below. */
+.section-header{display:flex;align-items:center;gap:10px;margin:-1.3rem -1.3rem 1rem;padding:.8rem 1.3rem;background:var(--primary);}
+.section-icon{width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,.12);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+.section-header h3{font-family:'Cinzel',serif;font-size:.88rem;color:var(--white);font-weight:700;}
+.section-header p{font-size:.72rem;color:rgba(255,255,255,.88);margin-top:1px;}
 
 /* QUESTION ROW */
 .question-row{padding:.65rem 0;border-bottom:1px solid var(--gray-100);}
@@ -158,23 +178,51 @@ button,label{touch-action:manipulation;}
 .field-error{color:var(--maroon);font-size:.72rem;font-weight:700;margin-top:.35rem;}
 .q-text{font-size:.85rem;color:var(--text-dark);font-weight:600;margin-bottom:.5rem;line-height:1.4;}
 .q-num{display:inline-block;width:20px;height:20px;border-radius:50%;background:var(--maroon-soft);color:var(--maroon);font-size:.65rem;font-weight:800;text-align:center;line-height:20px;margin-right:5px;flex-shrink:0;}
-.likert-scale{display:flex;gap:6px;flex-wrap:wrap;}
-.likert-option{flex:1;min-width:52px;max-width:90px;}
-.likert-option input[type=radio]{display:none;}
-.likert-option label{display:flex;flex-direction:column;align-items:center;gap:3px;padding:.55rem .3rem;border:1.5px solid var(--gray-200);border-radius:12px;cursor:pointer;transition:all .15s;font-size:.7rem;color:var(--text-light);font-weight:700;text-align:center;background:rgba(255,255,255,.4);}
+/* Five equal columns across the full card. minmax(0,1fr) instead of plain 1fr
+   lets a column shrink below its longest word, so 375px phones never overflow. */
+.likert-scale{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;}
+/* flex on the option makes the label stretch to the row height, so one-line
+   ("Agree") and two-line ("Strongly Agree") answers come out the same size. */
+.likert-option{position:relative;display:flex;}
+/* Visually hidden, not display:none: display:none took the radios out of the
+   Tab order, so keyboard users could not answer at all. */
+.likert-option input[type=radio]{position:absolute;opacity:0;width:1px;height:1px;margin:0;}
+.likert-option label{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:.55rem .3rem;border:1.5px solid var(--gray-200);border-radius:12px;cursor:pointer;transition:all .15s;font-size:.7rem;color:var(--text-light);font-weight:700;text-align:center;line-height:1.25;background:var(--white);}
 .likert-option label:hover{border-color:var(--maroon);background:var(--maroon-soft);color:var(--maroon);}
-.likert-option input:checked + label{border-color:var(--maroon);background:linear-gradient(135deg,var(--maroon),var(--maroon-light));color:var(--gold-bright);box-shadow:var(--shadow-sm);}
-.likert-option label .num{font-size:.9rem;font-weight:900;}
-.likert-labels{display:flex;justify-content:space-between;margin-top:3px;font-size:.63rem;color:var(--text-light);padding:0 2px;}
+.likert-option input:checked + label{border-color:var(--accent-dark);background:var(--accent);color:var(--primary);box-shadow:var(--shadow-sm);}
+.likert-option input:focus-visible + label{outline:2px solid var(--accent-dark);outline-offset:2px;}
+/* One palette colour for every number: a neutral scale should not paint any
+   answer red as if it were the "wrong" one. */
+.likert-option label .num{font-size:.9rem;font-weight:900;color:var(--primary);}
+@media (max-width:600px){
+  /* ~52px per column at 375px: tighter gap, padding and type keep "Disagree" whole. */
+  .container{padding:1rem;}
+  .likert-scale{gap:4px;}
+  .likert-option label{padding:.45rem .15rem;font-size:.62rem;}
+}
+/* Top-align the label contents (overrides the centring above and the phone rule
+   near the top): centred, the one-line labels pushed 2-4 below the two-line 1 and 5,
+   so the numbers in a row did not line up. */
+.likert-option label{justify-content:flex-start;}
+
+/* PROGRESS: sticks to the top while scrolling so the respondent always sees
+   how many of the 22 are left. pointer-events:none means that while it sits
+   over a question for a moment, taps still go straight through to the answers. */
+.survey-progress{position:sticky;top:0;z-index:5;pointer-events:none;background:var(--bg-alt);padding:.5rem 0 .6rem;margin:-.5rem 0 1rem;
+  box-shadow:0 8px 8px -8px rgba(var(--primary-rgb),.25);} /* soft lower edge: reads as a layer above the questions */
+.progress-text{font-size:.75rem;font-weight:800;color:var(--primary);margin-bottom:.3rem;}
+.progress-track{height:6px;border-radius:6px;background:var(--gray-200);overflow:hidden;}
+/* scaleX instead of width: transform animates without re-laying-out the page. */
+.progress-fill{height:100%;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform var(--dur-slow) var(--ease-out);}
 
 /* SUBMIT */
 .submit-section{background:var(--white);border-radius:18px;padding:1.6rem;border:0.5px solid var(--gray-200);box-shadow:var(--shadow-sm);margin-bottom:1.5rem;text-align:center;}
 .submit-section p{font-size:.82rem;color:var(--text-mid);margin-bottom:1rem;line-height:1.5;}
-.btn-submit{padding:.9rem 2.6rem;background:linear-gradient(135deg,var(--maroon-dark),var(--maroon-light));color:var(--gold-bright);border:none;border-radius:14px;font-size:1rem;font-weight:800;font-family:'Nunito',sans-serif;cursor:pointer;box-shadow:0 8px 24px rgba(107,0,0,.25);transition:all .2s;letter-spacing:.02em;}
-.btn-submit:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);}
+.btn-submit{padding:.9rem 2.6rem;background:var(--accent);color:var(--primary);border:none;border-radius:14px;font-size:1rem;font-weight:800;font-family:'Nunito',sans-serif;cursor:pointer;box-shadow:0 8px 24px rgba(var(--primary-rgb),.25);transition:all .2s;letter-spacing:.02em;}
+.btn-submit:hover{background:var(--accent-dark);color:var(--primary-dark);transform:translateY(-2px);box-shadow:var(--shadow-lg);}
 
 /* RESULT MODAL */
-#result-overlay{display:none;position:fixed;inset:0;background:rgba(74,0,0,.6);z-index:100;align-items:center;justify-content:center;}
+#result-overlay{display:none;position:fixed;inset:0;background:rgba(var(--primary-dark-rgb),.6);z-index:100;align-items:center;justify-content:center;}
 #result-overlay.open{display:flex;}
 .result-card{background:var(--white);border-radius:22px;padding:2rem;width:480px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);border-top:5px solid var(--gold);}
 .result-card h2{font-family:'Cinzel',serif;color:var(--maroon-dark);font-size:1.1rem;margin-bottom:.5rem;text-align:center;}
@@ -194,7 +242,7 @@ button,label{touch-action:manipulation;}
 .btn-close-result{padding:.6rem 1.4rem;background:linear-gradient(135deg,var(--maroon),var(--maroon-light));color:var(--gold-bright);border:none;border-radius:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;font-size:.88rem;}
 
 ::-webkit-scrollbar{width:4px;}
-::-webkit-scrollbar-thumb{background:rgba(107,0,0,.2);border-radius:4px;}
+::-webkit-scrollbar-thumb{background:rgba(var(--primary-rgb),.2);border-radius:4px;}
 
 /* ── Open comment ───────────────────────────────────────────────────────────
    The Likert means say how highly people rated MSUkaIP; this is where they say
@@ -202,11 +250,11 @@ button,label{touch-action:manipulation;}
    required would cost responses, and a forced comment is rarely a real one. */
 .note-wrap{/* padding comes from .section-card */}
 .note-label{display:block;font-size:.86rem;font-weight:700;color:var(--text-dark);margin-bottom:.5rem;}
-.note-input{width:100%;padding:.75rem .9rem;border:1.5px solid var(--gray-200);border-radius:12px;
+.note-input{width:100%;padding:.75rem .9rem;background:var(--white);border:1.5px solid #CFC7C7;border-radius:12px;
   font-family:'Nunito',sans-serif;font-size:.9rem;line-height:1.5;color:var(--text-dark);
   background:var(--white);resize:vertical;outline:none;
   transition:border-color .15s,box-shadow .15s;}
-.note-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,160,23,.16);}
+.note-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(var(--primary-rgb),.15);}
 .note-foot{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-top:.45rem;}
 .note-hint{font-size:.72rem;color:var(--text-light);line-height:1.45;}
 .note-count{font-size:.72rem;color:var(--text-light);font-variant-numeric:tabular-nums;white-space:nowrap;}
@@ -226,16 +274,15 @@ button,label{touch-action:manipulation;}
     <h1>MSUkaIP – Feedback</h1>
     <p>College of Information and Computing Sciences · Mindanao State University</p>
   </div>
-  <a href="/">← Back to Chat</a>
+  <a href="/index.html">← Back to Chat</a>
 </div>
 
 <div class="hero">
   <img src="/msukaip-logo.png" alt="MSU Logo"/>
   <h2>Share Your Feedback</h2>
-  <p>This feedback form is designed to evaluate the MSUkaIP LAN-based communication system. Your honest feedback will be used for Chapter 4 data analysis. All responses are confidential.</p>
+  <p>Please rate the MSUkaIP LAN-based communication system. Your honest answers are used in the Chapter 4 data analysis of our capstone study, and all responses are confidential.</p>
   <div class="hero-meta">
     <span><svg class="fi" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>5-Point Likert Scale</span>
-    <span><svg class="fi" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5"/><path d="M15 19c0-2 2-3.5 4-3.5"/></svg>Target: 20–30 Respondents</span>
     <span><svg class="fi" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Est. 5–10 minutes</span>
     <span><svg class="fi" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Anonymous & Confidential</span>
   </div>
@@ -243,14 +290,20 @@ button,label{touch-action:manipulation;}
 
 <div class="container">
 
+  <!-- Progress: filled in by updateProgress() below -->
+  <div class="survey-progress">
+    <div class="progress-text" id="progress-count" aria-live="polite">0 of 22 answered</div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+  </div>
+
   <!-- Scale Legend -->
   <div class="legend">
     <div class="legend-title" style="display:flex;align-items:center;gap:6px;"><svg class="fi" viewBox="0 0 24 24"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>Rating Scale Guide</div>
-    <div class="legend-item"><span class="legend-num" style="background:#dc2626">1</span> Strongly Disagree</div>
-    <div class="legend-item"><span class="legend-num" style="background:#ea580c">2</span> Disagree</div>
-    <div class="legend-item"><span class="legend-num" style="background:#ca8a04">3</span> Neutral</div>
-    <div class="legend-item"><span class="legend-num" style="background:#16a34a">4</span> Agree</div>
-    <div class="legend-item"><span class="legend-num" style="background:#15803d">5</span> Strongly Agree</div>
+    <div class="legend-item"><span class="legend-num">1</span> Strongly Disagree</div>
+    <div class="legend-item"><span class="legend-num">2</span> Disagree</div>
+    <div class="legend-item"><span class="legend-num">3</span> Neutral</div>
+    <div class="legend-item"><span class="legend-num">4</span> Agree</div>
+    <div class="legend-item"><span class="legend-num">5</span> Strongly Agree</div>
   </div>
 
   <!-- Respondent Info -->
@@ -361,9 +414,8 @@ button,label{touch-action:manipulation;}
 
   <!-- SUBMIT -->
   <div class="submit-section">
-    <p>Thank you for sharing your feedback on <strong>MSUkaIP</strong>.<br>Your responses will be compiled and analyzed for the Chapter 4 results of the capstone paper.</p>
+    <p>Thank you for rating <strong>MSUkaIP</strong>. Your answers go into the Chapter 4 results of the capstone study.</p>
     <button class="btn-submit" onclick="submitQuestionnaire()" style="display:inline-flex;align-items:center;gap:8px;"><svg style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Submit Feedback</button>
-    <p style="margin-top:.75rem;font-size:.72rem;color:var(--text-light);">Your response will be saved and can be printed for submission.</p>
   </div>
 
 </div>
@@ -439,7 +491,6 @@ const sections = {
 };
 
 const labels = ['Strongly\nDisagree','Disagree','Neutral','Agree','Strongly\nAgree'];
-const colors  = ['#dc2626','#ea580c','#ca8a04','#16a34a','#15803d'];
 
 // ── Render questions ────────────────────────────────────────────────────────
 let qNum = 0;
@@ -456,18 +507,34 @@ Object.entries(sections).forEach(([sec, data]) => {
             <div class="likert-option">
               <input type="radio" name="${name}" id="${name}_${v}" value="${v}"/>
               <label for="${name}_${v}">
-                <span class="num" style="color:${colors[v-1]}">${v}</span>
+                <span class="num">${v}</span>
                 <span>${labels[v-1].split('\n').join('<br>')}</span>
               </label>
             </div>`).join('')}
         </div>
-        <div class="likert-labels"><span>Strongly Disagree</span><span>Strongly Agree</span></div>
       </div>`;
   }).join('');
 });
 
-// Set today's date
-document.getElementById('resp-date').valueAsDate = new Date();
+// Set today's date as local YYYY-MM-DD. Not valueAsDate: it works in UTC (so it
+// showed yesterday before 8 AM in PH, UTC+8) and WebKit can throw on it, which
+// stopped the rest of this script (the result overlay's close handler below).
+const today = new Date();
+document.getElementById('resp-date').value =
+  `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+// ── Progress ────────────────────────────────────────────────────────────────
+// Answered = checked radios; total = rendered question rows (22). There is no
+// <form> element, so 'change' is listened for on .container: every radio's
+// change event bubbles up to it.
+function updateProgress() {
+  const answered = document.querySelectorAll('.likert-option input:checked').length;
+  const total    = document.querySelectorAll('.question-row').length;
+  document.getElementById('progress-count').textContent = `${answered} of ${total} answered`;
+  document.getElementById('progress-fill').style.transform = `scaleX(${total ? answered / total : 0})`;
+}
+document.querySelector('.container').addEventListener('change', updateProgress);
+updateProgress();
 
 // ── Submit ──────────────────────────────────────────────────────────────────
 function updateNoteCount(){

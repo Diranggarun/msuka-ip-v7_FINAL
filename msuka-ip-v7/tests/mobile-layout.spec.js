@@ -47,7 +47,7 @@ test.describe('14. Mobile layout regressions', () => {
   for (const size of [PHONE, NARROW]) {
     test(`14.1 login page has no clipped content at ${size.width}px`, async ({ page }) => {
       await page.setViewportSize(size);
-      await page.goto(BASE_URL);
+      await page.goto(`${BASE_URL}/index.html`);
       await page.waitForSelector('.auth-card');
       const bad = await overflowingElements(page);
       expect(bad, `elements clipped off-screen: ${bad.join(', ')}`).toEqual([]);
@@ -67,7 +67,7 @@ test.describe('14. Mobile layout regressions', () => {
   // content-minus-viewport (285px), so a swipe barely moved and stopped dead.
   test('14.2 auth screen scrolls its full content, not a clipped fraction', async ({ page }) => {
     await page.setViewportSize(PHONE);
-    await page.goto(BASE_URL);
+    await page.goto(`${BASE_URL}/index.html`);
     await page.waitForSelector('.auth-card');
 
     /* eslint-disable no-undef -- evaluated in the browser page context */
@@ -138,7 +138,7 @@ test.describe('14. Mobile layout regressions', () => {
   // the two. A screen reader announced "edit text, blank", and tapping the label
   // did not focus the field — a real loss on a phone, where the label is often
   // the bigger target. WCAG 2.1 SC 1.3.1 / 4.1.2.
-  for (const page_ of ['/', '/feedback.html', '/admin.html']) {
+  for (const page_ of ['/', '/index.html', '/feedback.html', '/admin.html']) {
     test(`14.6 every form control on ${page_} has an accessible name`, async ({ page }) => {
       await page.setViewportSize(PHONE);
       await page.goto(`${BASE_URL}${page_}`);

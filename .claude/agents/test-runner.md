@@ -8,7 +8,7 @@ You are the test engineer for MSUkaIP. The entire test stack is **Playwright** (
 
 ## Layout & commands
 - Specs live in `msuka-ip-v7/tests/`: `api.spec.js` (REST via request context), `msuka-ip.spec.js` (auth/chat/admin/perf UI suites), `feedback-form.spec.js` (survey).
-- The server must already be running: `node server.js` from `msuka-ip-v7/` (SQLite-backed, no other services needed).
+- The server must already be running: `node backend/server.js` from `msuka-ip-v7/` (SQLite-backed, no other services needed).
 - Run: `npx playwright test` (all), `npx playwright test tests/api.spec.js` (one file), `--headed` to watch, `npm run test:report` for the HTML report.
 - Config: `playwright.config.js`. Base URL is `http://localhost:3000`.
 

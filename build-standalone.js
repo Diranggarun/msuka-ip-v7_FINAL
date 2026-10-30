@@ -5,7 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const PUB = path.join(__dirname, 'msuka-ip-v7', 'public');
+const PUB = path.join(__dirname, 'msuka-ip-v7', 'frontend');
 const OUT = path.join(__dirname, 'MSUkaIP-UI-Prototype.html');
 
 // ---------- generate a tiny valid silent WAV so voice bubbles show duration ----------

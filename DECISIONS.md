@@ -52,7 +52,10 @@ These are decisions baked into the project specification. Don't revisit without 
 
 ### Authentication: JWT + Bcrypt (not session cookies)
 - **Reasoning:** Works seamlessly across REST and Socket.IO. Stateless, scales horizontally.
-- **Trade-off:** Token revocation isn't instant (we track in `sessions` table for forced logout).
+- **Revocation:** every token carries a `tv` claim that must equal `users.token_version` on every request and socket handshake (`tokenStillValid`). Logout, password change, admin password/role edits, reject and delete all bump it, so old tokens die at once and live sockets are disconnected. The user must also still be `approved`. Both pages call `POST /api/logout` on sign-out; a client-side discard alone would leave a copied token valid for 8h.
+- **Algorithm pinned:** `jwt.sign`/`jwt.verify` use `HS256` explicitly (`JWT_SIGN_OPTS`/`JWT_VERIFY_OPTS`), so a token cannot choose its own algorithm.
+- **Trade-off:** one small `SELECT` per request for the `tv` check. Logout signs the user out of **every** tab and device, not just the current one.
+- **Not done, on purpose:** refresh tokens (an 8h lifetime covers a class day; re-login is the fix), httpOnly cookies (would need CSRF protection on every route, and Socket.IO already takes the token in its handshake), and replacing `?token=` media URLs (`<img>`/`<audio>` can't send headers; the token stays on the LAN and dies at logout).
 
 ### Email gate: institutional emails only (@msumain.edu.ph)
 - **Reasoning:** Capstone Chapter 2.1.3.3 cites the National Cybersecurity Plan requirement for trusted institutional identities.
@@ -319,6 +322,51 @@ phone's browser and would be painful to undo if HTTPS ever failed to start.
 
 ---
 
+## Landing page at "/", and the MSU palette as variables
+
+"/" now opens a connection tutorial instead of the login. First-time users
+were arriving at a login form with no idea they needed the HTTPS address,
+the microphone permission or an approved account; the tutorial covers those
+before they hit them. The route change is one option on `express.static`
+(`index:'landing.html'`) rather than a new route handler, and the chat stays at
+`/index.html`, so every existing link and bookmark to that file keeps working.
+
+The palette is defined once per page as seven variables plus `-rgb` copies,
+so translucent shades are written `rgba(var(--primary-rgb),.12)` and still
+come from the palette. The old token names (`--maroon`, `--gold`, …) were
+kept as aliases pointing at the new ones, which is why most rules did not
+need editing.
+
+Two places the brief's colours were adjusted for contrast: the gold hover
+`#C9861F` with maroon text is 3.68:1, so hovered buttons use `--primary-dark`
+text (4.50:1); and gold text on white or a pale tint fails, so pending and
+faculty badges use a dark amber `#8A5300` (6.0:1) instead of gold.
+
+The conversation list became a white panel by re-pointing its chrome tokens
+on `.left-panel` alone. CSS variables inherit, so one block changes every
+child rule without editing them.
+
+---
+
+## Splitting the code into backend/ and frontend/
+
+The app folder mixed server code, browser pages, the database file and
+generated test output at one level, so it was hard to see where the backend
+ended and the frontend began. Code now sits in two folders: `backend/`
+(`server.js`, `db.js`, `db-audit.js`) and `frontend/` (the three HTML pages and
+their assets, formerly `public/`).
+
+Runtime data (`.env`, `certs/`, `uploads/`, `backups/`, `msukaip.db`) stayed in
+`msuka-ip-v7/` rather than moving with the code. That keeps every deployment
+instruction, backup path and `.gitignore` rule valid, and keeps the encrypted
+uploads outside `frontend/`, where `express.static` would otherwise serve them
+to anyone. `server.js` reaches them through one `ROOT = path.join(__dirname,
+'..')` constant instead of scattered `'..'` segments. There is still a single
+`package.json` and `node_modules/`; two separate npm projects would add setup
+steps for no benefit, since the frontend has no dependencies or build step.
+
+---
+
 ## Stack divergence from the original plan
 
 The original capstone plan called for **FastAPI + React + Vite + Pydantic + Alembic migrations**. The actual build is **Node.js + Express + Socket.IO + vanilla HTML/JS + ad-hoc schema-init via `CREATE TABLE IF NOT EXISTS`**.
@@ -329,3 +377,66 @@ This was a delivery-time pragmatism call:
 - `CREATE TABLE IF NOT EXISTS` + idempotent `ALTER TABLE` blocks substitute for a full migration runner and are sufficient at this scope.
 
 The capstone document's Chapter 3 still cites the original FastAPI/React stack; defenders should be ready to explain the divergence as a delivery-time refinement, not a scope change. Functional requirements remained identical.
+
+
+## Terms of Use is accepted once per account
+
+The agreement used to be remembered in `sessionStorage`, which logout clears, so it reappeared at every login. It is now stored on the account: `users.agreed_at` (added with the guarded `addCol` migration), returned as `agreed` by `POST /api/login`, and set by `POST /api/agree` (audited as `TERMS_ACCEPTED`). The client skips the gate when `agreed` is true.
+
+Trade-off: a database column rather than `localStorage`, so the choice follows the account across browsers and devices and cannot be cleared by the user, at the cost of one extra endpoint. Tests clear the flag for the demo student before the gate tests (`resetAgreement()` in `msuka-ip.spec.js`).The chat header pattern is an image, not CSS: `header-pattern.png` was made once
+from the supplied yellow textile band with a short Pillow script (yellow pixels
+dropped, red and black motifs both set to `--accent` at alpha 80/255, scaled to
+184px tall, twice the header height). A CSS tint over the original JPEG would
+have turned the yellow brown. The pattern is faded out behind the first 300px of
+the header, a fixed length rather than a percentage, so even on a phone the
+name never sits on top of it.
+
+
+
+
+## The server is reached by name: `msukaip.local` over mDNS
+
+Students had to type `https://<ip>:3443`, and the IP changes with DHCP. The LAN is offline, so there is no public DNS. Three options were weighed:
+
+| Option | Verdict |
+|---|---|
+| Hosts-file entry on every client | No server code, but needs admin rights on every device and phones cannot do it. Kept only as a documented fallback (`msukaip.lan`). |
+| Tiny local DNS server | Clients would have to be told to use it as their DNS; campus or hotspot DHCP will not do that. Rejected. |
+| **mDNS: the server announces `msukaip.local`** | Chosen. Windows 10/11, macOS and iOS resolve `.local` natively with zero client setup. |
+
+Implementation: `startMdns()` in `backend/server.js` uses the small pure-JS `multicast-dns` package (no native build, copied offline in `node_modules/`). It answers "A" queries for `msukaip.local` with the current LAN IPs. It is fail-soft like `setupHttps()`: if UDP 5353 is blocked, it logs a warning and the IP URL keeps working. A hand-written `dgram` responder was rejected as harder to explain in defense than one package with a 6-line handler.
+
+The certificate's SAN list gained `msukaip.local` (`msukaip.lan` stays for hosts-file setups). The existing `certs/.sans` comparison reissues the leaf automatically; the CA is untouched, so devices that already installed it keep trusting the server.
+
+Trade-offs: Android Chrome resolves `.local` unreliably (use the IP); the server needs a firewall rule for UDP 5353; the name only works on a network that lets clients see each other, so the CICS wifi client isolation still applies.
+
+### Follow-up: one `APP_HOST` setting, ports kept at 3000/3443
+
+The name was typed out in about ten places across `server.js` and `landing.html`. It now lives in one env var, `APP_HOST` (default `msukaip.local`), checked at boot: it must be `name.local`, because mDNS cannot resolve anything else and the value goes into the certificate. The pages have no build step and cannot read `.env`, so a public `GET /api/config` returns `{ host, httpsPort }`; it exposes nothing the landing page does not already print.
+
+Ports: serving on 80/443 would drop `:3443` from the URL, but was rejected. Every firewall rule, doc and test guide says 3443; 443 is often already taken on Windows (IIS, VMware, Skype); and a port-less HTTPS name collides with HSTS (below). The URL is documented as `https://msukaip.local:3443`.
+
+HSTS stays on. Trade-off: after one HTTPS visit the browser forces `http://msukaip.local:3000` onto HTTPS, so the name is HTTPS-only. That is the address the mic needs anyway; `http://localhost:3000` on the server PC and the IP URLs are unaffected (HSTS ignores IP addresses).
+
+Phone hotspot: the hotspot puts every device on one subnet without client isolation, so the mDNS multicast reaches them. `lanIPv4s()` now skips `169.254.*` (Windows' "DHCP failed" address) so it is never announced; virtual adapters (VirtualBox) still are — see DEBUGGING.md.
+
+
+## "Global Chat" is now "CICS Chat" (display text only)
+
+Only visible strings changed (rail, header, empty states, alerts, the server's `room:error` text, admin broadcast note, landing page). The room id `group_general`, the element ids (`rail-globalchat`, `section-globalchat`) and `openGlobalChat()` are unchanged, so existing messages, Socket.IO events and tests keep working. Trade-off: the code still says "globalchat" in identifiers while the UI says "CICS Chat"; renaming identifiers would touch every test for no user benefit. Older docs and the thesis chapters still say "Global Chat" and describe the build they were written against.
+
+
+## Private (1:1) chat removed; calls start from the online list
+
+The Private tab, direct-message list and every `private_<A>__<B>` code path were deleted from `index.html` and `server.js` (`buildPrivateKey`, the private branches of upload, history, send, delete and typing, and the private demo seed). Existing `private_*` rows stay in `messages`; no table was dropped. `canAccessConv()` now returns false for any key that is not `group_*`, so a stale or hand-made client asking for old private history gets an empty result and an `ACCESS_DENIED` audit row, and old rows cannot be read.
+
+Voice calls depended on the DM view: the header Call button only existed inside a private conversation. The `call:*` and `webrtc:*` server events never touched private rooms (they address a `targetSocketId`), so the server needed no change. The entry point moved to a **Call** button on each online user's row in the CICS Chat panel; `startCall(email)` replaces the old `startCall()` that read the open DM. Only online users have a row, so the old "User is offline" case now cannot be reached from the UI. The compose button (which only jumped to Private) and the header Call button were removed; the Messages tab keeps All / Groups / Unread, and the online strip there is display-only.
+
+Trade-off: students can no longer text each other one-to-one, only in CICS Chat or in groups; a two-person group is the workaround. This was the requested scope.
+
+
+## Rail buttons are drag-to-reorder, remembered per account
+
+"Navigation bar" was read as the left icon rail (the same element is the phone's bottom tab bar). The five middle buttons (Messages, CICS Chat, Notifications, Admin, Settings) carry `data-reorder`; Feedback and Sign Out stay pinned under the spacer because they have no other entry point and should not wander. The order is a JSON list of button ids in `localStorage` under `msuka_nav_order_<email>`; on load only ids that match a real reorderable button are applied, so an edited value cannot inject anything. Storage is wrapped in try/catch so a blocked store just means the order is not remembered.
+
+Input: native HTML5 drag events for the mouse; a 400 ms press-and-hold with `touchmove`/`elementFromPoint` for touch (HTML5 drag events do not fire from a finger on most phones); Alt+Arrow for keyboard users. All three call the same `moveNavBtn()`. Reduced motion: the drag state is a plain dim + dashed outline with its transition removed; the existing hover-nudge cancellation already applies. Trade-off: the touch path is the most code to explain, and it is the one not covered by an automated test (Playwright's touch emulation cannot hold-then-drag reliably); the mouse test runs in Chromium only because Playwright's HTML5 drag is unreliable in Firefox, while the keyboard test and the persistence check run in both.

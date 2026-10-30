@@ -42,7 +42,7 @@ tables and (outside production) seeds two demo accounts:
 > accounts for a supervised defense run with `SEED_DEMO=1`.
 
 To move the database elsewhere, set `SQLITE_PATH` in `.env`. To inspect schema
-and integrity at any time: `node db-audit.js`.
+and integrity at any time: `node backend/db-audit.js`.
 
 ---
 
@@ -102,8 +102,12 @@ Expected startup output:
 🔄  Reset:   admin@cics.msu.edu / admin123
 🔄  Reset:   student@cics.msu.edu / student123
 ✅  All users reset to offline
-🚀  MSUkaIP: http://localhost:3000
-🛡️   Admin:   http://localhost:3000/admin.html
+📡  mDNS: this server answers to msukaip.local
+🚀  MSUkaIP: https://msukaip.local:3443
+🛡️   Admin:   https://msukaip.local:3443/admin.html
+    ...or by IP — use the address on your wifi adapter:
+      https://192.168.x.x:3443   (Wi-Fi)
+    (on this PC only: http://localhost:3000)
 ```
 
 The two `🔄 Reset` lines are the demo accounts being re-seeded — they disappear
@@ -146,10 +150,28 @@ The server now handles this itself: alongside HTTP on port 3000 it serves
 **HTTPS on port 3443** (configurable via `HTTPS_PORT`) with a self-signed
 certificate auto-generated into `certs/` on first run.
 
-**Demo-day setup:** client laptops open `https://<server-lan-ip>:3443` and
-accept the browser's certificate warning once (Advanced → Proceed). That's it —
-mic access, calls, group calls and push-to-talk all work. The startup log
-prints the exact URL to share.
+**Demo-day setup:** client laptops open **`https://msukaip.local:3443`** (or
+`https://<server-lan-ip>:3443`, which always works) and accept the browser's
+certificate warning once (Advanced → Proceed). That's it — mic access, calls,
+group calls and push-to-talk all work. The startup log prints both URLs.
+
+**How the name works:** the LAN has no DNS server, so the server announces
+`msukaip.local` itself over mDNS (UDP 5353, the `multicast-dns` package).
+Windows 10/11, macOS and iOS resolve `.local` natively; no client setup.
+- **Changing the name:** set `APP_HOST=othername.local` in `.env`. That is
+  the only place the name lives: the certificate, the mDNS answer, the startup
+  banner and the landing page all read it (pages via `GET /api/config`). The
+  certificate is reissued on the next start; the CA stays the same.
+- **Use the name over HTTPS only** (`https://msukaip.local:3443`). After one
+  HTTPS visit, HSTS makes the browser refuse `http://msukaip.local:3000`.
+- **Server firewall (Admin PowerShell, once):**
+  `New-NetFirewallRule -DisplayName "MSUkaIP mDNS" -Direction Inbound -Protocol UDP -LocalPort 5353 -Action Allow`
+- **Android / any device that can't resolve it:** use the IP URL, or on a
+  laptop add `<server-ip>  msukaip.lan` to the hosts file
+  (`C:\Windows\System32\drivers\etc\hosts`, as Administrator) and open
+  `https://msukaip.lan:3443`. The certificate covers `.local`, `.lan` and the IPs.
+- Like the IP, the name only works on a network that lets devices see each
+  other (not the CICS wifi — see client isolation; use a phone hotspot).
 
 Fallbacks if HTTPS is somehow unavailable:
 

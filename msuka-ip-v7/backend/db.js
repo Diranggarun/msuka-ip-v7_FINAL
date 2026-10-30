@@ -1,4 +1,4 @@
-// ═══════════════════════════════════════════════════════════════════
+ // ═══════════════════════════════════════════════════════════════════
 //  MSUkaIP — SQLite database adapter (replaces mysql2/XAMPP)
 //
 //  Uses Node's built-in `node:sqlite` (Node 22.5+) — no native deps.
@@ -20,7 +20,7 @@
 const { DatabaseSync } = require('node:sqlite');
 const path = require('path');
 
-const DB_PATH = process.env.SQLITE_PATH || path.join(__dirname, 'msukaip.db');
+const DB_PATH = process.env.SQLITE_PATH || path.join(__dirname, '..', 'msukaip.db');
 
 const raw = new DatabaseSync(DB_PATH);
 raw.exec('PRAGMA journal_mode = WAL');
@@ -165,6 +165,7 @@ function ensureSchema() {
   // existed (SQLite has no ADD COLUMN IF NOT EXISTS).
   const addCol = (table, ddl) => { try { raw.exec(`ALTER TABLE ${table} ADD COLUMN ${ddl}`); } catch { /* already exists */ } };
   addCol('users',      'token_version INTEGER NOT NULL DEFAULT 0'); // session revocation (RA 10173 Tier 2)
+  addCol('users',      'agreed_at TEXT');                           // Terms of Use accepted once per account
   addCol('audit_logs', 'ip TEXT');                                  // accountability (§21)
   addCol('audit_logs', 'user_agent TEXT');
   // Free-text comment on the evaluation form. The Likert means say how highly

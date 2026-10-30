@@ -43,7 +43,7 @@ const TABLES = {
 };
 
 (async () => {
-  const db = require('../db');
+  const db = require('../backend/db');
   db.ensureSchema();
   console.log(`\n🗄️   Target SQLite: ${db.DB_PATH}`);
 

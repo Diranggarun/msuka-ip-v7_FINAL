@@ -40,8 +40,6 @@ async function signIn(browser, email) {
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   await page.goto(`${BASE_URL}/index.html`);
-  // The terms gate is covered by 1.9; skip it here so this test stays about voice.
-  await page.evaluate(() => sessionStorage.setItem('msuka_agreed', '1'));
   await page.fill('#login-email', email);
   await page.fill('#login-password', PASS);
   await page.click('.btn-login');
@@ -49,6 +47,10 @@ async function signIn(browser, email) {
   // eslint-disable-next-line no-undef -- evaluated in the browser page context
   await page.waitForFunction(() => typeof socket !== 'undefined' && socket && socket.connected,
     null, { timeout: 12000 });
+  // The terms gate is covered by 1.9; close it here so it cannot cover the
+  // buttons this test clicks.
+  // eslint-disable-next-line no-undef -- evaluated in the browser page context
+  await page.evaluate(() => document.getElementById('agree-overlay')?.classList.remove('show'));
   return { page, errors };
 }
 
@@ -104,14 +106,14 @@ test.describe('14. Voice Call (WebRTC)', () => {
         e => typeof onlineUsers !== 'undefined' && onlineUsers.some(u => u.email === e),
         calleeEmail, { timeout: 10000 });
 
-      await caller.page.evaluate(async (email) => {
-        /* eslint-disable no-undef -- evaluated in the browser page context */
-        const u = onlineUsers.find(x => x.email === email);
-        openPrivateFromGlobal(u.email, u.name, u.role);
-        await new Promise(r => setTimeout(r, 800));
-        await startCall();
-        /* eslint-enable no-undef */
-      }, calleeEmail);
+      // Private chat is gone, so a call starts from the Call button on the
+      // callee's row in the CICS Chat online list - click that, as a student would.
+      const calleeName = await caller.page.evaluate(
+        // eslint-disable-next-line no-undef -- evaluated in the browser page context
+        e => onlineUsers.find(u => u.email === e).name, calleeEmail);
+      // eslint-disable-next-line no-undef -- evaluated in the browser page context
+      await caller.page.evaluate(() => openGlobalChat());
+      await caller.page.click(`#globalchat-online-list button[aria-label="Call ${calleeName}"]`);
 
       // The callee must be offered the call before it can be accepted.
       await callee.page.waitForFunction(

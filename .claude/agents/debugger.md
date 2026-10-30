@@ -8,8 +8,8 @@ You are the debugger for MSUkaIP (Node.js + Express + Socket.IO + SQLite + vanil
 
 ## Method
 1. **Read DEBUGGING.md first** — it catalogs known errors and their fixes; the answer may already be there.
-2. Reproduce before theorizing: start the server (`node server.js` in `msuka-ip-v7/`), hit the failing endpoint with curl, or run the specific failing Playwright spec. Check `server-t1.log` and `test-results/` artifacts.
-3. Read the actual code path — `server.js` (all routes + socket handlers), `db.js` (SQLite adapter), the relevant `public/*.html` script block.
+2. Reproduce before theorizing: start the server (`node backend/server.js` in `msuka-ip-v7/`), hit the failing endpoint with curl, or run the specific failing Playwright spec. Check `server-t1.log` and `test-results/` artifacts.
+3. Read the actual code path — `server.js` (all routes + socket handlers), `db.js` (SQLite adapter), the relevant `frontend/*.html` script block.
 4. Form ONE hypothesis, verify it with evidence (log line, query result, reproduced error), then stop. No shotgun theories.
 
 ## Project-specific failure knowledge

@@ -63,9 +63,9 @@ const warn  = msg => console.log(`  ${C.warn} ${msg}`);
 
   // ── Uploads dir ────────────────────────────────────────────────────────
   console.log('\n📁  Uploads directory');
-  const uploadsDir = path.join(__dirname, '..', 'public', 'uploads');
+  const uploadsDir = path.join(__dirname, '..', 'uploads');
   if (!fs.existsSync(uploadsDir)) {
-    warn('public/uploads/ missing — server creates it on boot, but creating now');
+    warn('uploads/ missing — server creates it on boot, but creating now');
     fs.mkdirSync(uploadsDir, { recursive: true });
   }
   try {
@@ -78,7 +78,7 @@ const warn  = msg => console.log(`  ${C.warn} ${msg}`);
   // ── Database (SQLite) ──────────────────────────────────────────────────
   console.log('\n🗄️   Database');
   try {
-    const db = require('../db');
+    const db = require('../backend/db');
     ok(`SQLite file: ${db.DB_PATH}`);
 
     const wal = db.raw.prepare('PRAGMA journal_mode').get().journal_mode;
@@ -119,19 +119,24 @@ const warn  = msg => console.log(`  ${C.warn} ${msg}`);
   // ── Network ────────────────────────────────────────────────────────────
   console.log('\n🌐  Network');
   const port = Number(process.env.PORT || 3000);
+  const httpsPort = Number(process.env.HTTPS_PORT || 3443);
+  const host = (process.env.APP_HOST || 'msukaip.local').trim().toLowerCase();
+  if (!/^[a-z0-9-]+\.local$/.test(host)) issue(`APP_HOST must look like "name.local" (got "${host}") — the server will refuse to start`);
   const ips = Object.values(os.networkInterfaces())
     .flat()
-    .filter(i => i && i.family === 'IPv4' && !i.internal)
+    .filter(i => i && i.family === 'IPv4' && !i.internal && !i.address.startsWith('169.254.'))
     .map(i => i.address);
   if (!ips.length) warn('No external IPv4 address — clients on the LAN will not be able to reach this host');
   else {
-    console.log(`  ${C.ok} Server will listen on port ${port}.`);
-    console.log(`  ${C.dim}Other devices on the LAN can reach you at:${C.reset}`);
-    for (const ip of ips) console.log(`     http://${ip}:${port}/`);
+    console.log(`  ${C.ok} Server will listen on ports ${port} (HTTP) and ${httpsPort} (HTTPS).`);
+    console.log(`  ${C.dim}Other devices on the LAN can reach you at (HTTPS — needed for the mic):${C.reset}`);
+    console.log(`     https://${host}:${httpsPort}/   (by name, via mDNS)`);
+    for (const ip of ips) console.log(`     https://${ip}:${httpsPort}/`);
   }
 
-  console.log(`\n  ${C.dim}Firewall rule (Admin PowerShell, run once):${C.reset}`);
-  console.log(`     New-NetFirewallRule -DisplayName "MSUkaIP ${port}" -Direction Inbound -Protocol TCP -LocalPort ${port} -Action Allow`);
+  console.log(`\n  ${C.dim}Firewall rules (Admin PowerShell, run once):${C.reset}`);
+  console.log(`     New-NetFirewallRule -DisplayName "MSUkaIP ${port}" -Direction Inbound -Protocol TCP -LocalPort ${port},${httpsPort} -Action Allow`);
+  console.log(`     New-NetFirewallRule -DisplayName "MSUkaIP mDNS" -Direction Inbound -Protocol UDP -LocalPort 5353 -Action Allow`);
 
   // ── Summary ────────────────────────────────────────────────────────────
   console.log('\n══════════════════════════════════════════════════════════');

@@ -12,7 +12,7 @@
        showing. theme-color paints the Android status bar maroon so the app
        does not sit under a white strip. -->
   <link rel="manifest" href="/manifest.webmanifest"/>
-  <meta name="theme-color" content="#6B0000"/>
+  <meta name="theme-color" content="#721922"/>
   <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png"/>
   <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -21,21 +21,30 @@
 <link href="/fonts/google-fonts.css" rel="stylesheet"/>
 <style>
 :root {
-  --maroon:#6B0000; --maroon-dark:#4a0000; --maroon-light:#8B1A1A;
-  --maroon-soft:#f9f0f0; --gold:#D4A017; --gold-bright:#FFD700;
-  --gold-dark:#B8860B; --gold-soft:#fffbea;
+  /* ── MSU Main Campus palette ─────────────────────────────────────────────
+     The seven brand colours. Everything else on this page points at these.
+     -rgb copies exist so translucent shades can be written as
+     rgba(var(--primary-rgb),.12) and still come from the palette. */
+  --primary:#721922; --primary-dark:#5A1219; --white:#FFFFFF;
+  --accent:#E8A030; --accent-dark:#C9861F;
+  --text:#2B2B2B; --bg-alt:#F8F4F4;
+  --primary-rgb:114,25,34; --primary-dark-rgb:90,18,25; --accent-rgb:232,160,48; --bg-alt-rgb:248,244,244;
+  /* Older token names, kept so existing rules need no edits. */
+  --maroon:var(--primary); --maroon-dark:var(--primary-dark); --maroon-light:var(--primary);
+  --maroon-soft:var(--bg-alt); --gold:var(--accent); --gold-bright:var(--accent);
+  --gold-dark:var(--accent-dark); --gold-soft:#FDF3E3;
   /* Warm ivory used by the Create Group card — a shade warmer than --off-white,
      which is tuned for the chat paper surface. */
-  --cream:#FDF6EA;
-  --white:#ffffff; --off-white:#fdf8f0;
-  --gray-100:#f5f0ec; --gray-200:#e8e0d8; --gray-400:#b0a090;
+  --cream:var(--bg-alt);
+  --white:#ffffff; --off-white:var(--bg-alt);
+  --gray-100:#F1ECEC; --gray-200:#E2DADA; --gray-400:#A39A9A;
   /* --text-light darkened from #9a8a7a to meet WCAG AA. The old value measured
      3.35:1 against the panel background — below the 4.5:1 minimum for body text,
      and it is used for real content (message previews, timestamps). Now 4.9:1. */
-  --text-dark:#2a1a0a; --text-mid:#5a4a3a; --text-light:#7f6e5d;
-  --shadow-sm:0 2px 8px rgba(107,0,0,.12);
-  --shadow-md:0 4px 20px rgba(107,0,0,.18);
-  --shadow-lg:0 8px 40px rgba(107,0,0,.25);
+  --text-dark:var(--text); --text-mid:#4A4A4A; --text-light:#6B6B6B;
+  --shadow-sm:0 2px 8px rgba(var(--primary-rgb),.12);
+  --shadow-md:0 4px 20px rgba(var(--primary-rgb),.18);
+  --shadow-lg:0 8px 40px rgba(var(--primary-rgb),.25);
   /* ── Motion (Emil Kowalski curves) — see DESIGN.md ────────────────────────
      --ease-out    entrances/hovers: strong, responsive
      --ease-drawer on-screen movement, sheets (iOS-like)
@@ -54,12 +63,12 @@
   --grain:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.42 0'/></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>");
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Nunito',sans-serif;height:100vh;overflow:hidden;background:linear-gradient(135deg,#f5ede3 0%,#efe4d4 30%,#ead9c3 60%,#e1c8ad 100%) fixed;}
-body::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(900px 600px at 8% 0%,rgba(212,160,23,.18),transparent 65%),radial-gradient(700px 500px at 95% 100%,rgba(107,0,0,.12),transparent 65%),radial-gradient(500px 400px at 50% 45%,rgba(255,250,235,.25),transparent 70%);z-index:0;}
+body{font-family:'Nunito',sans-serif;height:100vh;overflow:hidden;background:linear-gradient(135deg,var(--bg-alt) 0%,var(--bg-alt) 30%,var(--bg-alt) 60%,var(--bg-alt) 100%) fixed;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(900px 600px at 8% 0%,rgba(var(--accent-rgb),.18),transparent 65%),radial-gradient(700px 500px at 95% 100%,rgba(var(--primary-rgb),.12),transparent 65%),radial-gradient(500px 400px at 50% 45%,rgba(255,255,255,.25),transparent 70%);z-index:0;}
 body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.32;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");}
 
 /* NOTE: an older white-glass override layer used to live here. It painted
-   .left-panel / .right-panel / .contacts-panel as rgba(255,253,250,.7x) with
+   .left-panel / .right-panel / .contacts-panel as rgba(255,255,255,.7x) with
    !important, which beat the dark --chrome tokens defined further down and made
    the chat render as translucent white over the dark gate photo (a flat
    grey-tan). It was deleted rather than patched: the component rules in the
@@ -98,11 +107,19 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    scroll range was only content-minus-its-own-height — 100px — so a swipe moved
    barely at all and then stopped dead. Pinning it to the viewport gives it the
    full range. dvh first for mobile, where the URL bar makes vh overshoot. */
-#auth-screen{display:flex;align-items:center;justify-content:center;height:100vh;height:100dvh;padding:clamp(20px,4vw,48px);background:url('/login-bg.jpg') center center / cover no-repeat fixed;position:relative;overflow-x:hidden;overflow-y:auto;}
+#auth-screen{display:flex;align-items:center;justify-content:center;height:100vh;height:100dvh;padding:clamp(20px,4vw,48px);background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400' fill='none' stroke='white' stroke-opacity='.13' stroke-width='2'%3E%3Ccircle cx='400' cy='0' r='60'/%3E%3Ccircle cx='400' cy='0' r='100'/%3E%3Ccircle cx='400' cy='0' r='140'/%3E%3Ccircle cx='400' cy='0' r='180'/%3E%3Ccircle cx='400' cy='0' r='220'/%3E%3Ccircle cx='400' cy='0' r='260'/%3E%3Ccircle cx='400' cy='0' r='300'/%3E%3Ccircle cx='400' cy='0' r='340'/%3E%3Ccircle cx='400' cy='0' r='380'/%3E%3C/svg%3E") right top / min(520px,60vw) no-repeat,url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400' fill='none' stroke='white' stroke-opacity='.13' stroke-width='2'%3E%3Ccircle cx='0' cy='400' r='60'/%3E%3Ccircle cx='0' cy='400' r='100'/%3E%3Ccircle cx='0' cy='400' r='140'/%3E%3Ccircle cx='0' cy='400' r='180'/%3E%3Ccircle cx='0' cy='400' r='220'/%3E%3Ccircle cx='0' cy='400' r='260'/%3E%3Ccircle cx='0' cy='400' r='300'/%3E%3Ccircle cx='0' cy='400' r='340'/%3E%3Ccircle cx='0' cy='400' r='380'/%3E%3C/svg%3E") left bottom / min(520px,60vw) no-repeat,var(--primary);position:relative;overflow-x:hidden;overflow-y:auto;}
 /* Overlay darkened so the white hero text clears WCAG AA over the photo, and so
    the network animation reads as glowing lines rather than washing out. */
-#auth-screen::before{content:'';position:absolute;inset:0;z-index:0;background:linear-gradient(120deg,rgba(18,7,3,.80),rgba(74,0,0,.62) 60%,rgba(30,10,4,.72));pointer-events:none;}
-#auth-screen::after{content:'';position:absolute;width:900px;height:900px;border-radius:50%;border:1px solid rgba(212,160,23,.08);top:50%;left:50%;transform:translate(-50%,-50%);z-index:1;pointer-events:none;}
+#auth-screen::before{content:'';position:absolute;inset:0;z-index:0;background:radial-gradient(1100px 700px at 30% 40%,transparent,rgba(var(--primary-dark-rgb),.55));pointer-events:none;}
+/* Login screen uses the landing page's deeper maroon (#3C0008) so the two read as
+   one surface; the chat app keeps #721922. Tokens built from var(--primary) at
+   :root are resolved there, so the --maroon-* and shadow aliases are restated here.
+   --maroon-light is lifted above the background so the Sign In button still reads
+   as raised (gold on #5C0A16 is 6.3:1, on #2A0005 8.6:1). */
+#auth-screen{--primary:#3C0008;--primary-dark:#2A0005;--primary-rgb:60,0,8;--primary-dark-rgb:42,0,5;
+  --maroon:var(--primary);--maroon-dark:var(--primary-dark);--maroon-light:#5C0A16;
+  --shadow-sm:0 2px 8px rgba(0,0,0,.25);--shadow-md:0 4px 20px rgba(0,0,0,.32);}
+#auth-screen::after{content:'';position:absolute;width:900px;height:900px;border-radius:50%;border:1px solid rgba(var(--accent-rgb),.08);top:50%;left:50%;transform:translate(-50%,-50%);z-index:1;pointer-events:none;}
 
 /* ── Landing hero (the network animation lives on #net-canvas behind this) ── */
 #net-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;}
@@ -111,10 +128,23 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 .lh-eyebrow{font-size:.72rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-bright);margin:0 0 16px;}
 .lh-title{font-family:'Cinzel',serif;font-size:clamp(2.3rem,5vw,3.9rem);line-height:1.05;font-weight:700;letter-spacing:-.005em;margin:0 0 18px;text-shadow:0 4px 26px rgba(0,0,0,.55);text-wrap:balance;}
 .lh-accent{color:var(--gold-bright);}
+/* Poster-style label: white block, maroon caps — echoes the reference image. */
+.lh-badge{display:inline-block;background:#fff;color:var(--primary);font-weight:800;font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;padding:11px 20px;margin:0 0 20px;box-shadow:var(--shadow-md);animation:lhUp .7s .22s both var(--ease-out);}
+/* Maranao textile column down the left edge (login-okir.png: the white motifs
+   cut from a woven banner photo, crimson made transparent). Width follows the
+   empty space left of the content (50vw - 540px), capped 56-84px; height comes
+   from the image's 136:1106 shape. Opacity .55 keeps it a watermark, so it does
+   not compete with the white headline; the mask fades the zigzag foot into the
+   maroon instead of ending on a hard edge. Hidden where that space runs out. */
+.lh-orn{--w:clamp(56px,calc(50vw - 600px),84px);position:absolute;left:calc((50vw - 540px - var(--w)) / 2);top:50%;transform:translateY(-50%);
+  width:var(--w);aspect-ratio:136 / 1106;max-height:88%;z-index:2;pointer-events:none;opacity:.55;
+  background:url('/login-okir.png') no-repeat center / contain;
+  -webkit-mask-image:linear-gradient(to bottom,#000 82%,transparent);mask-image:linear-gradient(to bottom,#000 82%,transparent);}
+@media (max-width:1240px){.lh-orn{display:none;}}
 .lh-sub{font-size:1.02rem;line-height:1.6;color:rgba(255,255,255,.85);margin:0 0 26px;max-width:46ch;}
 .lh-feats{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:13px;}
 .lh-feats li{display:flex;align-items:center;gap:13px;font-size:.94rem;font-weight:600;color:rgba(255,255,255,.92);}
-.lh-ico{width:38px;height:38px;flex-shrink:0;border-radius:11px;display:flex;align-items:center;justify-content:center;background:rgba(212,160,23,.15);border:1px solid rgba(212,160,23,.32);color:var(--gold-bright);}
+.lh-ico{width:38px;height:38px;flex-shrink:0;border-radius:11px;display:flex;align-items:center;justify-content:center;background:rgba(var(--accent-rgb),.15);border:1px solid rgba(var(--accent-rgb),.32);color:var(--gold-bright);}
 .lh-ico svg{width:19px;height:19px;}
 .landing-wrap .auth-card{justify-self:center;margin:0;}
 
@@ -137,16 +167,10 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
   .lh-title{font-size:clamp(2rem,9vw,2.9rem);}
 }
 @media (prefers-reduced-motion:reduce){
-  .lh-eyebrow,.lh-title,.lh-sub,.lh-feats{animation:none!important;}
+  .lh-eyebrow,.lh-title,.lh-badge,.lh-sub,.lh-feats{animation:none!important;}
 }
-.auth-watermarks{position:absolute;top:24px;right:28px;display:flex;align-items:center;gap:18px;z-index:2;pointer-events:none;}
-.auth-watermarks img{width:110px;height:110px;object-fit:contain;opacity:.45;filter:drop-shadow(0 2px 8px rgba(0,0,0,.4));}
-/* Per-logo visual balance: scale each artwork so the *logo content* (not the image canvas) looks the same weight. */
-.auth-watermarks img:nth-child(1){transform:scale(1.05);}  /* MSU seal — fills its canvas, slight bump */
-.auth-watermarks img:nth-child(2){transform:scale(1.22);}  /* CICS logo — has more whitespace, scale up to match */
-@media (max-width:600px){.auth-watermarks{top:14px;right:14px;gap:10px;}.auth-watermarks img{width:64px;height:64px;}}
 .auth-deco{position:absolute;width:100%;height:100%;pointer-events:none;}
-.auth-deco span{position:absolute;border-radius:50%;background:rgba(212,160,23,.08);}
+.auth-deco span{position:absolute;border-radius:50%;background:rgba(var(--accent-rgb),.08);}
 .auth-deco span:nth-child(1){width:350px;height:350px;top:-120px;right:-100px;}
 .auth-deco span:nth-child(2){width:220px;height:220px;bottom:-80px;left:-70px;}
 .auth-deco span:nth-child(3){width:120px;height:120px;top:25%;right:6%;}
@@ -162,7 +186,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 /* width:min(400px,100%) not width:400px — a fixed 400px card overflowed every
    phone narrower than 440px, and because #auth-screen clips overflow-x the cut
    off part could not even be scrolled to (seen on a 360px Android). */
-.auth-card{background:rgba(255,255,255,.08);backdrop-filter:blur(10px) saturate(130%);-webkit-backdrop-filter:blur(10px) saturate(130%);border-radius:22px;width:min(400px,100%);max-height:92vh;box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 0 0 1px rgba(212,160,23,.14),0 26px 60px -14px rgba(0,0,0,.52),0 10px 28px -10px rgba(74,0,0,.34);overflow-y:auto;overflow-x:hidden;position:relative;z-index:1;animation:cardIn .6s .52s both var(--ease-overshoot);border:1px solid rgba(255,255,255,.2);}
+.auth-card{background:rgba(255,255,255,.08);backdrop-filter:blur(10px) saturate(130%);-webkit-backdrop-filter:blur(10px) saturate(130%);border-radius:22px;width:min(400px,100%);max-height:92vh;box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 0 0 1px rgba(var(--accent-rgb),.14),0 26px 60px -14px rgba(0,0,0,.52),0 10px 28px -10px rgba(var(--primary-dark-rgb),.34);overflow-y:auto;overflow-x:hidden;position:relative;z-index:1;animation:cardIn .6s .52s both var(--ease-overshoot);border:1px solid rgba(255,255,255,.2);}
 @keyframes cardIn{from{opacity:0;transform:translateY(28px) scale(.96)}to{opacity:1;transform:none}}
 /* Visible gold scrollbar on the card, so it is obvious the Create Account form
    scrolls. Same slim treatment already used by .icon-rail and .list-scroll, only
@@ -221,7 +245,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 
    .is-scrolled changes paint only, never layout, so unlike the condense it cannot
    change scrollHeight and therefore cannot rattle. That is why it needs no gate. */
-.auth-sticky.is-scrolled{background:rgb(58,10,10);box-shadow:0 12px 26px -14px rgba(0,0,0,.7);}
+.auth-sticky.is-scrolled{background:var(--primary-dark);box-shadow:0 12px 26px -14px rgba(0,0,0,.7);}
 /* Measurement helper for the condense gate. With every transition in the header
    switched off, the script can add .is-condensed, read the height, and remove it
    again inside a single frame — so it learns how much space condensing reclaims
@@ -241,7 +265,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 /* flex-shrink:0 so the seal keeps its 40px square regardless of the wordmark's
    width — a flex item with a set width can still be compressed below it. */
 .auth-sticky.is-condensed .auth-seal-frame{width:40px;height:40px;margin:0;flex-shrink:0;box-shadow:0 0 0 2px var(--gold),0 3px 10px rgba(0,0,0,.45);}
-.auth-logo-bar::before{content:'';position:absolute;top:-30px;left:50%;transform:translateX(-50%);width:200px;height:200px;border-radius:50%;background:rgba(212,160,23,.06);}
+.auth-logo-bar::before{content:'';position:absolute;top:-30px;left:50%;transform:translateX(-50%);width:200px;height:200px;border-radius:50%;background:rgba(var(--accent-rgb),.06);}
 .auth-logo-bar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),var(--gold-bright),var(--gold),transparent);}
 .auth-logo-bar img{width:88px;height:88px;object-fit:contain;filter:drop-shadow(0 4px 16px rgba(0,0,0,.5));display:block;margin:0 auto .7rem;position:relative;z-index:1;}
 /* Brand label inside the login card. It used to be the page's <h1>; the landing
@@ -251,8 +275,8 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 .auth-logo-bar p{color:rgba(255,255,255,.6);font-size:.7rem;margin-top:4px;letter-spacing:.05em;position:relative;z-index:1;}
 /* width/height/margin are transitioned so the shrink into the condensed header
    reads as one movement rather than a jump. */
-.auth-seal-frame{width:130px;height:130px;border-radius:50%;background:#fff;padding:0;display:flex;align-items:center;justify-content:center;position:relative;margin:0 auto .9rem;box-shadow:0 0 0 2px var(--gold),0 0 0 5px rgba(212,160,23,.25),0 10px 28px rgba(0,0,0,.5);overflow:hidden;z-index:1;transition:width var(--dur-slow) var(--ease-out),height var(--dur-slow) var(--ease-out),margin var(--dur-slow) var(--ease-out),box-shadow var(--dur-slow) var(--ease-out);}
-.auth-seal-frame::before{content:'';position:absolute;inset:-12px;border-radius:50%;border:1px dashed rgba(212,160,23,.4);pointer-events:none;}
+.auth-seal-frame{width:130px;height:130px;border-radius:50%;background:#fff;padding:0;display:flex;align-items:center;justify-content:center;position:relative;margin:0 auto .9rem;box-shadow:0 0 0 2px var(--gold),0 0 0 5px rgba(var(--accent-rgb),.25),0 10px 28px rgba(0,0,0,.5);overflow:hidden;z-index:1;transition:width var(--dur-slow) var(--ease-out),height var(--dur-slow) var(--ease-out),margin var(--dur-slow) var(--ease-out),box-shadow var(--dur-slow) var(--ease-out);}
+.auth-seal-frame::before{content:'';position:absolute;inset:-12px;border-radius:50%;border:1px dashed rgba(var(--accent-rgb),.4);pointer-events:none;}
 .auth-seal-frame img{width:118%;height:118%;object-fit:cover;object-position:center;margin:0;padding:0;filter:drop-shadow(0 1px 2px rgba(0,0,0,.2));position:relative;z-index:1;}
 .auth-sub{font-family:'Cinzel',serif;color:rgba(255,255,255,.78);font-size:.7rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin-top:6px;position:relative;z-index:1;}
 .auth-sub2{font-family:'Cinzel',serif;color:var(--gold-bright);font-size:.66rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin-top:2px;position:relative;z-index:1;}
@@ -270,7 +294,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 .form-group label{display:block;font-size:.72rem;font-weight:800;color:var(--gold-bright);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;text-shadow:0 1px 2px rgba(0,0,0,.4);}
 .form-group input,.form-group select{width:100%;padding:.62rem .9rem;border:1.5px solid rgba(255,255,255,.25);border-radius:8px;font-size:.9rem;outline:none;font-family:'Nunito',sans-serif;color:#fff;background:rgba(255,255,255,.12);backdrop-filter:blur(6px);transition:border .2s,box-shadow .2s,background .2s;}
 .form-group input::placeholder,.form-group select::placeholder{color:rgba(255,255,255,.55);}
-.form-group input:focus,.form-group select:focus{border-color:var(--gold);background:rgba(255,255,255,.2);box-shadow:0 0 0 3px rgba(212,160,23,.2);}
+.form-group input:focus,.form-group select:focus{border-color:var(--gold);background:rgba(255,255,255,.2);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.2);}
 .form-group select option{background:var(--maroon-dark);color:#fff;}
 .pw-wrap{position:relative;}
 .pw-wrap input{padding-right:2.6rem;}
@@ -297,10 +321,10 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 .btn-login,.btn-register{display:flex;align-items:center;justify-content:center;gap:11px;}
 .btn-arrow{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:transform .32s var(--ease-out),background .32s;}
 .btn-arrow svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
-.btn-login .btn-arrow{background:rgba(212,160,23,.20);}
-.btn-register .btn-arrow{background:rgba(74,0,0,.14);}
-.btn-login:hover .btn-arrow{transform:translateX(4px);background:rgba(212,160,23,.34);}
-.btn-register:hover .btn-arrow{transform:translateX(4px);background:rgba(74,0,0,.22);}
+.btn-login .btn-arrow{background:rgba(var(--accent-rgb),.20);}
+.btn-register .btn-arrow{background:rgba(var(--primary-dark-rgb),.14);}
+.btn-login:hover .btn-arrow{transform:translateX(4px);background:rgba(var(--accent-rgb),.34);}
+.btn-register:hover .btn-arrow{transform:translateX(4px);background:rgba(var(--primary-dark-rgb),.22);}
 @media (prefers-reduced-motion:reduce){.btn-arrow{transition:none;}.btn-login:hover .btn-arrow,.btn-register:hover .btn-arrow{transform:none;}}
 .amsg{padding:.6rem .9rem;border-radius:8px;font-size:.8rem;margin-top:.7rem;text-align:center;display:none;font-weight:700;}
 .amsg.error{background:#fde8e8;color:#c0392b;border:1px solid #f5c6c6;}
@@ -308,6 +332,9 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 .adivider{text-align:center;color:var(--text-light);font-size:.76rem;margin:.5rem 0;}
 .adivider a{color:var(--maroon);font-weight:800;text-decoration:none;}
 .adivider a:hover{color:var(--gold-dark);}
+.auth-card .adivider a{color:var(--gold-bright);}  /* the card now sits on solid maroon, not the photo */
+/* Grey #6B6B6B on the maroon card was 3.3:1 (fails AA); a white tint is ~9:1. */
+.auth-card .adivider{color:rgba(255,255,255,.72);}
 
 /* APP */
 /* ── Chat-app palette layer (scoped to #app) ─────────────────────────────────
@@ -316,10 +343,14 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    palette. Every value derives from the :root maroon/gold identity; the
    component rules below reference these tokens, never raw hex.
 
+   NOTE (2026-10-27): the figures below were measured on the old maroon/cream
+   palette. Since the MSU palette restyle the conversation list is white and the
+   rail/header are --primary; current pairs: --ink on --primary 11.18:1,
+   --text on white 14.16:1, #6B6B6B on white 5.33:1, --accent on --primary 5.06:1.
    How the contrast figures were derived — worst (lightest) case only, because
    a lighter backing is what breaks light-on-dark text:
      1. brightest pixel msu-gate.jpg can contain = white,
-     2. under the lightest stop of --gate-overlay, rgba(46,8,8,.40) -> rgb(171,156,156),
+     2. under the lightest stop of --gate-overlay, rgba(var(--primary-dark-rgb),.40) -> rgb(171,156,156),
      3. under --chrome at 90% alpha                                 -> rgb(59,25,25).
    Real pixels are darker than that, so every number below is a floor.
      on --chrome        --ink 13.58  --ink-mut 8.22  --gold 6.63  --gold-bright 11.23
@@ -332,7 +363,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
      on --danger-fill (over a card)  --danger-ink 7.77
      on --paper         --text-dark 16.24  --text-mid 8.14  --text-light 4.73
                         --maroon (sender name) 12.50
-       ^ re-measured after --paper was warmed to #F8F0E1 and the grain + light
+       ^ re-measured after --paper was warmed to var(--white) and the grain + light
          layers were added. These are NOT computed from the token: the surface
          is uneven now, so they are scored against the LIGHTEST pixel the paper
          actually renders, [254,251,243], sampled from a real screenshot. That
@@ -346,16 +377,16 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    never enter a contrast calculation.
    AA needs 4.5:1 for body text and 3:1 for large text / UI shapes, so all pass. */
 #app{
-  --chrome:rgba(46,10,10,.90);         /* maroon glass — chrome card body */
-  --chrome-deep:rgba(26,5,5,.92);      /* darker stop for the chrome gradient */
-  --chrome-edge:rgba(212,160,23,.22);  /* gold hairline on card borders */
+  --chrome:rgba(var(--primary-rgb),.95);              /* MSU maroon — chrome card body */
+  --chrome-deep:rgba(var(--primary-dark-rgb),.97);    /* darker stop for the chrome gradient */
+  --chrome-edge:rgba(var(--accent-rgb),.22);  /* gold hairline on card borders */
   --chrome-well:rgba(0,0,0,.28);       /* sunken field on chrome (search pill) */
-  --chrome-hover:rgba(212,160,23,.10); /* row hover on chrome */
-  --chrome-hi:rgba(212,160,23,.18);    /* gold-tinted fill — active rail pill */
-  --chrome-sel:rgba(139,26,26,.45);    /* lighter maroon — selected conversation */
-  --ink:#F7EDDC;                       /* primary text on chrome */
-  --ink-mut:#CDB89F;                   /* secondary text on chrome */
-  --online:#4ADE80;                    /* presence green, readable on chrome */
+  --chrome-hover:rgba(var(--accent-rgb),.10); /* row hover on chrome */
+  --chrome-hi:rgba(var(--accent-rgb),.18);    /* gold-tinted fill — active rail pill */
+  --chrome-sel:rgba(var(--primary-rgb),.45);    /* lighter maroon — selected conversation */
+  --ink:var(--white);                       /* primary text on chrome */
+  --ink-mut:#F3DFE1;                   /* secondary text on chrome */
+  --online:var(--accent);              /* presence: MSU gold (6.19:1 on --primary-dark) */
   /* ── Conversation-card layer ──────────────────────────────────────────────
      Every row in the list (conversation, online user, broadcast) is one card
      sitting ON the already-glass panel, so its fill is a *lift* — a few percent
@@ -363,16 +394,16 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
      each layer over the panel's worst (lightest) case rgb(59,25,25) and scoring
      the result; the numbers are in the contrast block above.
        rest  -> rgb(69,37,36)   hover -> rgb(88,53,34) */
-  --card-fill:rgba(255,247,230,.055);
-  --card-fill-hover:rgba(212,160,23,.13);
-  --card-line:rgba(212,160,23,.12);    /* hairline at rest — quieter than --chrome-edge */
+  --card-fill:rgba(255,255,255,.055);
+  --card-fill-hover:rgba(var(--accent-rgb),.13);
+  --card-line:rgba(var(--accent-rgb),.12);    /* hairline at rest — quieter than --chrome-edge */
   --card-shade:rgba(0,0,0,.35);        /* the one shadow colour the cards use */
   --card-lift:0 1px 2px rgba(0,0,0,.22);
   --card-lift-hover:0 10px 22px -6px rgba(0,0,0,.5);
   /* Solid stand-in for the card fill. The presence dot needs an opaque ring to
      read as a badge, and a translucent one would show the avatar through it.
      --online against this ring measures 8.53:1 (non-text needs 3:1). */
-  --card-ring:#3D1F1E;
+  --card-ring:var(--primary-dark);
   --avatar-lg:46px;                    /* ONE avatar size for every row type */
   /* Role text on the card. The old inline #e67e22/#1D9E75 were light-theme
      values: on the card the student green measured 4.02:1, under the 4.5:1
@@ -389,15 +420,15 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
      and the admin pages — only the chat surface is meant to read as aged
      paper. Every ratio on this surface was re-measured after the change; see
      the palette comment above. */
-  --paper:#F8F0E1;                     /* aged cream reading surface (chat) */
-  --paper-line:rgba(107,0,0,.10);      /* hairline divider/border on paper */
+  --paper:var(--white);                     /* aged cream reading surface (chat) */
+  --paper-line:rgba(var(--primary-rgb),.10);      /* hairline divider/border on paper */
   /* Backing shown by an image bubble before/instead of its picture. Paper
      warmed a little further towards maroon so it reads as an empty frame, not
      as a coloured tile — deliberately low-chroma. Alt text of a broken upload
      is drawn on it in --text-dark: 12.87:1. The tile itself is only 1.23:1
      against --paper, which is intended — it is a surface, not a control, so the
      3:1 non-text minimum does not apply; the filename carries the meaning. */
-  --img-placeholder:#EAE0D2;
+  --img-placeholder:#EFE8E8;
   /* Floor width for a plain text bubble. Nothing to do with the timestamp any
      more — that sits outside the bubble now — but a two-character message still
      reads better as a small card than as a blob. 7rem = 112px. */
@@ -405,18 +436,12 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
   /* --off-white painted OVER the seal watermark. The alpha is tuned against how
      much the seal shifts the paper's luminance, not against a pass-through
      percentage — the full reasoning sits on #messages-area below. */
-  --paper-veil:rgba(253,248,240,.985);
-  /* Gate-photo scrim. At 160deg the first stop paints the TOP of the viewport —
-     where the sunset sky is — so it is kept light (.40) and the photo reads
-     clearly between and around the floating cards. The second stop paints the
-     BOTTOM and stays near-opaque (.88) so the cards keep a settled, weighted
-     base rather than floating on a busy patch of photo. */
-  --gate-overlay:linear-gradient(160deg,rgba(46,8,8,.40),rgba(12,4,4,.88));
+  --paper-veil:rgba(255,255,255,.80);   /* lets 20% of the seal's line drawing through */
   --card-gap:var(--sp-3);
-  /* One shared card shadow: a deep neutral drop (the cards float over a dark
-     photo, where a maroon-tinted shadow would vanish) plus a 1px gold hairline
-     ring tracing each card's edge. */
-  --card-shadow:0 18px 44px rgba(0,0,0,.45),0 0 0 1px var(--chrome-edge);
+  /* One shared card shadow: a soft maroon-tinted drop (the cards sit on the
+     light --bg-alt now, not the old dark photo) plus a 1px hairline ring
+     tracing each card's edge. */
+  --card-shadow:0 10px 30px rgba(var(--primary-dark-rgb),.14),0 0 0 1px var(--chrome-edge);
   /* ── One glass recipe ──────────────────────────────────────────────────
      The rail was blur(26px)/165% and the conversation list blur(14px)/130%,
      picked separately, so two panels sitting side by side were different
@@ -425,46 +450,45 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
      purpose — a scrim is not the same material as a panel. */
   --glass-blur:20px; --glass-sat:150%;
   --r-panel:24px;
-  --focus-ring:0 0 0 3px rgba(212,160,23,.35);
+  --focus-ring:0 0 0 3px rgba(var(--accent-rgb),.35);
   /* ── Composer, built as three nested tones rather than one flat pill ──────
      The bar is the warm tray; the field inside it is the lightest surface, so
      the caret sits on the brightest thing in the row; the discs are warmer
      than the bar so attach/mic read as raised controls on it. Ratios are
      recorded on the rules that use them. */
-  --composer-bar:#FBF5EA;              /* outer tray, just above the paper */
-  --composer-field:#FFFCF6;            /* inner pill holding the textarea */
-  --composer-btn:#F1E4CE;              /* attach / photo / mic discs */
+  --composer-bar:var(--bg-alt);              /* outer tray, just above the paper */
+  --composer-field:var(--white);            /* inner pill holding the textarea */
+  --composer-btn:var(--bg-alt);              /* attach / photo / mic discs */
   /* ── Rail glass — the left navigation sidebar only ────────────────────────
      The rail is deliberately MORE transparent than the conversation list
      (.left-panel stays at --chrome/.90) so the gate photo reads through it as
      frost. That costs contrast, so every pairing on the glass was re-measured
      from the rendered pixels; the per-element results are on .icon-rail below,
      and the tightest is 7.94:1. */
-  --glass-top:rgba(58,14,14,.74);      /* frosted maroon, lit top stop */
-  --glass-bot:rgba(18,4,4,.86);        /* denser at the foot, so it sits down */
-  --glass-edge:rgba(212,160,23,.38);   /* the golden border itself */
-  --glass-sheen:rgba(255,247,230,.14); /* 1px inner highlight = light on glass */
+  /* Solid now: with the photo gone, see-through glass showed the light page
+     through it and the rail looked washed out. --ink on --primary is 11.18:1. */
+  --glass-top:var(--primary);
+  --glass-bot:var(--primary-dark);
+  --glass-edge:rgba(var(--accent-rgb),.38);   /* the golden border itself */
+  --glass-sheen:rgba(255,255,255,.14); /* 1px inner highlight = light on glass */
   /* Border ring + outward gold bloom + deep drop + the sheen above. One shadow
      so the rail's whole "floating pane of lit glass" look has a single source. */
-  --glass-glow:0 0 0 1px var(--glass-edge),0 0 30px rgba(212,160,23,.14),
+  --glass-glow:0 0 0 1px var(--glass-edge),0 0 30px rgba(var(--accent-rgb),.14),
                0 24px 54px rgba(0,0,0,.55),inset 0 1px 0 var(--glass-sheen);
-  --rail-hover:rgba(212,160,23,.12);   /* nav row hover fill */
-  --rail-hover-glow:0 0 16px rgba(212,160,23,.16);
+  --rail-hover:rgba(var(--accent-rgb),.12);   /* nav row hover fill */
+  --rail-hover-glow:0 0 16px rgba(var(--accent-rgb),.16);
   /* Active row: a left-to-right gold wash, brightest at the indicator edge, so
      the eye is pulled to the marker rather than to a flat slab. */
-  --rail-active:linear-gradient(90deg,rgba(212,160,23,.28),rgba(212,160,23,.06));
-  --rail-active-ring:inset 0 0 0 1px rgba(212,160,23,.24),0 0 18px rgba(212,160,23,.12);
+  --rail-active:linear-gradient(90deg,rgba(var(--accent-rgb),.28),rgba(var(--accent-rgb),.06));
+  --rail-active-ring:inset 0 0 0 1px rgba(var(--accent-rgb),.24),0 0 18px rgba(var(--accent-rgb),.12);
 }
-/* The campus gate photo sits behind everything; the maroon→black overlay
-   darkens it so the floating cards and their text read against it. fixed
-   attachment keeps the photo still while panels scroll internally. */
+/* Plain light background behind the floating cards. The campus gate photo
+   that used to sit here was removed on request (2026-10-27). */
 #app{display:none;height:100vh;flex-direction:row;padding:var(--card-gap);gap:var(--card-gap);
   /* reserve the tagline strip so the panels never sit under it */
   padding-bottom:calc(var(--card-gap) + 26px);
   position:relative;z-index:1;
-  background:var(--gate-overlay),url('/msu-gate.jpg');
-  background-position:center;background-size:cover;
-  background-repeat:no-repeat;background-attachment:fixed;}
+  background:var(--bg-alt);}
 /* The tagline sits on the gate photo below the cards. Absolutely positioned
    rather than a flex child so the three panels keep their existing row layout
    and the phone block below keeps working unchanged — #app is reused there as
@@ -475,11 +499,11 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
   display:flex;align-items:center;justify-content:center;pointer-events:none;
   font-family:'Cinzel',serif;font-size:.66rem;font-weight:700;
   letter-spacing:.42em;text-indent:.42em;text-transform:uppercase;
-  color:rgba(212,160,23,.62);text-shadow:0 1px 3px rgba(0,0,0,.6);}
+  color:var(--primary);}
 
 /* Shared card geometry. No !important: the phone layout at the end of this
    stylesheet overrides these by source order alone. */
-.left-panel,.right-panel,.contacts-panel,.icon-rail{
+.left-panel,.right-panel,.icon-rail{
   border-radius:var(--r-panel);overflow:hidden;box-shadow:var(--card-shadow);
   position:relative;z-index:1;}
 
@@ -490,7 +514,21 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    90% glass, which stops individual bricks showing through as noise.
    The rail used to share this rule; it now has its own, lighter glass in the
    ICON RAIL section below, so the two are no longer coupled. */
+/* MSU restyle: the conversation list is a white panel. Instead of editing every
+   rule inside it, the panel re-points the chrome tokens for its own subtree:
+   CSS variables inherit, so each child rule picks up the light values.
+   --ink on white 14.16:1, --ink-mut on white 5.33:1. */
 .left-panel{
+  --chrome:var(--white); --chrome-deep:var(--white);
+  --chrome-edge:#E6DEDE; --chrome-well:var(--bg-alt);
+  --chrome-hover:rgba(var(--primary-rgb),.05); --chrome-hi:rgba(var(--accent-rgb),.18);
+  --chrome-sel:rgba(var(--primary-rgb),.08);
+  --ink:var(--text); --ink-mut:#6B6B6B;
+  --card-fill:var(--white); --card-fill-hover:var(--bg-alt);
+  --card-line:#EEE6E6; --card-shade:rgba(0,0,0,.08); --card-ring:var(--white);
+  --card-lift:0 1px 2px rgba(0,0,0,.06); --card-lift-hover:0 6px 16px -6px rgba(0,0,0,.18);
+  --role-faculty:#8A5300; --role-student:#14713F;
+  --danger-fill:#FDECEC; --danger-line:#F3B9B9; --danger-ink:#B42318;
   background-color:transparent;
   background-image:var(--grain),linear-gradient(180deg,var(--chrome),var(--chrome-deep));
   background-repeat:repeat,no-repeat;
@@ -564,18 +602,16 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    thing in the app was its own badge. A warm off-white at 82% lets the glass
    read through, keeps the wordmark legible, and lets the rail's contents win
    the eye instead. */
-.rail-logo-frame{width:104px;height:104px;border-radius:50%;background:rgba(253,248,240,.82);padding:0;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;box-shadow:0 0 0 2px rgba(212,160,23,.75),0 0 0 6px rgba(212,160,23,.16),0 0 22px rgba(212,160,23,.20),0 10px 30px rgba(0,0,0,.45);overflow:hidden;flex-shrink:0;}
-.rail-logo-frame::before{content:'';position:absolute;inset:-11px;border-radius:50%;border:1px dashed rgba(212,160,23,.35);pointer-events:none;}
+.rail-logo-frame{width:104px;height:104px;border-radius:50%;background:rgba(var(--bg-alt-rgb),.82);padding:0;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;box-shadow:0 0 0 2px rgba(var(--accent-rgb),.75),0 0 0 6px rgba(var(--accent-rgb),.16),0 0 22px rgba(var(--accent-rgb),.20),0 10px 30px rgba(0,0,0,.45);overflow:hidden;flex-shrink:0;}
+.rail-logo-frame::before{content:'';position:absolute;inset:-11px;border-radius:50%;border:1px dashed rgba(var(--accent-rgb),.35);pointer-events:none;}
 .rail-logo-frame img{width:118%;height:118%;object-fit:cover;object-position:center;display:block;opacity:.9;filter:drop-shadow(0 1px 2px rgba(0,0,0,.15));}
 .rail-logo-text{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:2px;}
 /* Wordmark typography: Cinzel at a larger size with wider tracking reads as an
    engraved institutional mark rather than a heading. The subtitles step DOWN in
    size but UP in tracking, which is the classic way to make small caps hold
    their own under a large title without competing with it. */
-.rail-logo-text .rl-title{font-family:'Cinzel',serif;font-size:1.3rem;font-weight:700;color:var(--gold-bright);letter-spacing:.15em;line-height:1.1;text-shadow:0 2px 10px rgba(0,0,0,.5),0 0 18px rgba(212,160,23,.25);}
+.rail-logo-text .rl-title{font-family:'Cinzel',serif;font-size:1.3rem;font-weight:700;color:var(--gold-bright);letter-spacing:.15em;line-height:1.1;text-shadow:0 2px 10px rgba(0,0,0,.5),0 0 18px rgba(var(--accent-rgb),.25);}
 .rail-logo-text .rl-sub{font-family:'Cinzel',serif;font-size:.6rem;color:var(--ink-mut);font-weight:700;letter-spacing:.17em;text-transform:uppercase;}
-.rail-logo-text .rl-sub2{font-family:'Cinzel',serif;font-size:.6rem;color:var(--gold-bright);font-weight:700;letter-spacing:.15em;text-transform:uppercase;margin-top:2px;line-height:1.35;}
-.rail-logo-text .rl-sub3{font-family:'Cinzel',serif;font-size:.53rem;color:var(--ink-mut);font-weight:600;letter-spacing:.24em;text-transform:uppercase;margin-top:1px;}
 
 /* Nav rows: full-width pills, icon left / label right / count far right.
    Named transition properties rather than `all` so only colour and fill move;
@@ -601,13 +637,13 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 /* Hover: fill, a soft outward gold glow, and a 2px nudge toward the content —
    the row "leans in" rather than lighting up flatly. */
 .rail-btn:hover{background:var(--rail-hover);color:var(--ink);box-shadow:var(--rail-hover-glow);transform:translateX(2px);}
-.rail-btn:hover .ricon{background:rgba(212,160,23,.14);}
+.rail-btn:hover .ricon{background:rgba(var(--accent-rgb),.14);}
 .rail-btn:active{transform:translateX(2px) scale(.985);transition-duration:.06s;}
 /* Active = a gold wash that is brightest at the indicator edge and fades out
    across the row, plus a hairline ring. Not a solid gold slab, which fought the
    seal and the unread badges for attention. */
 .rail-btn.active{background:var(--rail-active);color:var(--gold-bright);box-shadow:var(--rail-active-ring);}
-.rail-btn.active .ricon{background:rgba(212,160,23,.18);box-shadow:inset 0 0 0 1px rgba(212,160,23,.3);}
+.rail-btn.active .ricon{background:rgba(var(--accent-rgb),.18);box-shadow:inset 0 0 0 1px rgba(var(--accent-rgb),.3);}
 .rail-btn.active:hover{transform:none;}
 /* The animated indicator. switchNav() adds .active, which mounts this
    pseudo-element and replays the keyframe, so the bar wipes open vertically
@@ -615,8 +651,15 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    the marker travelling to the new row. transform-origin:center is what makes
    it grow from the middle out rather than dropping from the top. */
 @keyframes railIndicator{from{transform:translateY(-50%) scaleY(0);opacity:0;}to{transform:translateY(-50%) scaleY(1);opacity:1;}}
-.rail-btn.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);transform-origin:center;width:3px;height:58%;border-radius:0 3px 3px 0;background:var(--gold-bright);box-shadow:0 0 10px rgba(255,215,0,.65);
+.rail-btn.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);transform-origin:center;width:3px;height:58%;border-radius:0 3px 3px 0;background:var(--gold-bright);box-shadow:0 0 10px rgba(var(--accent-rgb),.65);
   animation:railIndicator var(--dur-slow) var(--ease-out);}
+/* Drag-to-reorder: the row being moved is dimmed with a dashed gold outline. Text
+   selection and the long-press callout are off so a touch hold starts a drag
+   instead. The dimming is a plain state change; under reduced motion even its
+   fade is dropped. */
+.rail-btn[data-reorder]{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+.rail-btn.dragging{opacity:.5;outline:2px dashed var(--accent);outline-offset:-2px;cursor:grabbing;}
+@media (prefers-reduced-motion:reduce){.rail-btn.dragging{transition:none;}}
 /* The global reduced-motion block near-zeros every DURATION, which is enough for
    the indicator (it just appears). It is not enough for the hover/press nudge:
    a near-instant translate still displaces the row, and displacement is the part
@@ -638,7 +681,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 /* User card: a slightly recessed well on the glass, so the account reads as a
    fixed fitting of the sidebar rather than another nav row. */
 .rail-avatar{display:flex;align-items:center;gap:10px;padding:9px;border-radius:var(--r-md);background:var(--chrome-well);border:1px solid var(--glass-edge);box-shadow:inset 0 1px 0 var(--glass-sheen);margin:4px 0 12px;}
-.rail-avatar .ra-dot{width:38px;height:38px;border-radius:50%;background:var(--gold);color:var(--maroon-dark);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.85rem;flex-shrink:0;box-shadow:0 0 0 2px var(--gold-bright),0 0 0 4px var(--chrome-hi),0 0 14px rgba(212,160,23,.3);}
+.rail-avatar .ra-dot{width:38px;height:38px;border-radius:50%;background:var(--gold);color:var(--maroon-dark);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.85rem;flex-shrink:0;box-shadow:0 0 0 2px var(--gold-bright),0 0 0 4px var(--chrome-hi),0 0 14px rgba(var(--accent-rgb),.3);}
 .rail-avatar .ra-meta{min-width:0;display:flex;flex-direction:column;gap:1px;}
 .rail-avatar .ra-name{color:var(--ink);font-size:.82rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.01em;}
 .rail-avatar .ra-online{display:flex;align-items:center;gap:5px;color:var(--online);font-size:.68rem;font-weight:700;}
@@ -650,21 +693,6 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    centred icon sideways in a 68px column just looks like a misalignment. */
 @media (max-width:1100px){.icon-rail{width:68px;padding:14px 8px;align-items:center;}.rail-logo-text,.rail-btn .rlabel,.rail-btn .rbadge,.rail-avatar .ra-meta{display:none;}.rail-logo-frame{width:48px;height:48px;padding:0;border-radius:50%;}.rail-logo::after{display:none;}.rail-btn{justify-content:center;padding:10px;}.rail-btn:hover,.rail-btn:active{transform:none;}.rail-avatar{background:transparent;border:none;box-shadow:none;padding:0;}}
 
-/* RIGHT CONTACTS PANEL */
-.contacts-panel{width:280px;background:var(--white);border-left:1px solid var(--gray-200);display:flex;flex-direction:column;flex-shrink:0;box-shadow:-2px 0 12px rgba(107,0,0,.05);}
-.contacts-header{padding:.95rem 1.1rem .55rem;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--gold-soft);}
-.contacts-header h3{font-size:.98rem;font-weight:800;color:var(--maroon-dark);font-family:'Cinzel',serif;letter-spacing:.04em;}
-.contacts-count-pill{background:var(--gold-soft);color:var(--gold-dark);font-size:.68rem;font-weight:800;padding:2px 9px;border-radius:10px;border:1px solid rgba(212,160,23,.3);}
-.contacts-sub{padding:.6rem 1.1rem .35rem;font-size:.66rem;color:var(--gold-dark);text-transform:uppercase;letter-spacing:.08em;font-weight:900;background:var(--gold-soft);}
-.contacts-list{flex:1;overflow-y:auto;padding:.3rem .4rem .6rem;}
-.contact-item{display:flex;align-items:center;gap:10px;padding:.55rem .7rem;border-radius:10px;cursor:pointer;transition:background .12s;}
-.contact-item:hover{background:var(--maroon-soft);}
-.contact-info{flex:1;min-width:0;}
-.contact-name{font-size:.86rem;font-weight:700;color:var(--maroon-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.contact-status{font-size:.7rem;color:#16a34a;margin-top:1px;font-weight:600;}
-.contacts-empty{padding:1rem 1.1rem;color:var(--text-light);font-size:.82rem;text-align:center;}
-
-@media (max-width:1180px){.contacts-panel{display:none;}}
 @media (max-width:880px){.icon-rail{width:60px;}.left-panel{width:280px;}}
 
 /* Phone layout (≤768px) lives at the very end of this stylesheet — see the
@@ -695,21 +723,38 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 /* The lists scroll under the button, so each reserves its height (52) plus its
    offset (86) plus breathing room — otherwise the last conversation row sits
    permanently beneath it and cannot be tapped. These two values move together:
-   raising the button raises how much the lists must reserve. */
-#all-list,#groups-list,#private-list{padding-bottom:154px;}
+   raising the button raises how much the lists must reserve. Only #groups-list:
+   the button no longer shows over the All list. */
+#groups-list{padding-bottom:154px;}
 /* min-height matches .chat-header so the "MESSAGES" title and the open
    conversation's title sit on the same baseline across the two cards. */
-.left-header{padding:0 1.1rem;min-height:62px;display:flex;align-items:center;border-bottom:1px solid var(--chrome-edge);}
+/* List header: maroon with a faint gold rambayong band (list-header-pattern.png,
+   made like the chat header's pattern: black, purple and green dropped, the
+   bright motifs set to --accent at ~31%). The panel is only 320px wide, so the
+   pattern is dimmed behind the title rather than hidden: white on maroon with
+   the gold over it is still about 6.7:1 at the worst spot. */
+.left-header{padding:0 1.1rem;min-height:62px;display:flex;align-items:center;
+  background-color:var(--primary);
+  background-image:linear-gradient(90deg,rgba(var(--primary-rgb),.9) 45%,rgba(var(--primary-rgb),0) 75%),
+                   url('/list-header-pattern.png');
+  background-repeat:no-repeat,repeat-x;
+  background-size:auto,auto 100%;
+  background-position:center,left center;
+  border-bottom:1px solid rgba(var(--accent-rgb),.45);}
 .left-header-top{display:flex;align-items:center;gap:8px;flex:1;min-width:0;}
-.left-header-logo{width:38px;height:38px;object-fit:contain;flex-shrink:0;}
 .left-header-titles{flex:1;min-width:0;}
 /* Cinzel + uppercase + wide tracking is this project's small-caps treatment —
    the self-hosted Cinzel has no true small-caps (SC) cut to call on. */
-.left-header-titles h2{font-family:'Cinzel',serif;font-size:.95rem;font-weight:700;color:var(--gold);letter-spacing:.18em;text-transform:uppercase;line-height:1.2;}
+.left-header-titles h2{font-family:'Cinzel',serif;font-size:.95rem;font-weight:700;color:var(--white);letter-spacing:.18em;text-transform:uppercase;line-height:1.2;}
 .left-header-titles span{font-size:.68rem;color:var(--ink-mut);letter-spacing:.03em;}
 .header-actions{display:flex;gap:6px;flex-shrink:0;}
 .icon-btn{width:32px;height:32px;border-radius:9px;border:1px solid var(--chrome-edge);background:var(--chrome-hi);cursor:pointer;font-size:.85rem;display:flex;align-items:center;justify-content:center;color:var(--gold-bright);transition:background var(--dur-fast) var(--ease-out),border-color var(--dur-fast) var(--ease-out);}
 .icon-btn:hover{background:var(--gold);border-color:var(--gold);color:var(--maroon-dark);}
+.left-panel .icon-btn{color:var(--primary);}
+/* ...except in the maroon list header: white with a maroon glyph, like the call
+   button, so it stays visible over the gold pattern. */
+.left-panel .left-header .icon-btn{color:var(--primary);background:var(--white);border-color:var(--white);}
+.left-panel .left-header .icon-btn:hover{color:var(--primary-dark);background:var(--bg-alt);border-color:var(--bg-alt);}
 .icon-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 .user-badge{display:flex;align-items:center;gap:6px;background:var(--chrome-well);border-radius:20px;padding:.22rem .65rem .22rem .25rem;flex-shrink:0;}
 .user-badge-avatar{width:20px;height:20px;border-radius:50%;background:var(--gold);color:var(--maroon-dark);font-size:.6rem;font-weight:900;display:flex;align-items:center;justify-content:center;}
@@ -737,11 +782,10 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
   transition:background var(--dur-base) var(--ease-out);}
 .search-wrap:focus-within::before{background:var(--gold-bright);}
 
-/* Broadcast-channel banner shown while Global Chat is open. Only display stays
+/* Broadcast-channel banner shown while CICS Chat is open. Only display stays
    inline (the JS toggle at switchNav writes style.display); the old light
    gold-soft band is retuned to the chrome tokens so it belongs to the dark
    list. gold-bright on --chrome-hi measures 9.24:1 (see palette comment). */
-#globalchat-top-label{padding:.6rem 1.1rem;text-align:center;color:var(--gold-bright);font-size:.76rem;font-weight:700;letter-spacing:.04em;background:var(--chrome-hi);border-bottom:1px solid var(--chrome-edge);}
 
 /* Segmented filter pills under the search box. The #nav-* buttons predate the
    redesign: switchNav() already keeps their .active state in sync with the rail
@@ -768,13 +812,13 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    62px min-height is gone — .left-header now does the alignment with the chat
    header, so this can be a normal-sized heading. */
 .section-label{padding:var(--sp-4) var(--sp-3) var(--sp-2);font-size:.66rem;font-weight:700;color:var(--ink-mut);font-family:'Cinzel',serif;text-transform:uppercase;letter-spacing:.16em;display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);background:transparent;}
-.section-label button{font-size:.66rem;background:var(--chrome-hi);border:1px solid var(--chrome-edge);color:var(--gold-bright);cursor:pointer;font-weight:800;padding:.2rem .6rem;border-radius:var(--r-sm);font-family:'Nunito',sans-serif;flex-shrink:0;transition:background var(--dur-fast) var(--ease-out),color var(--dur-fast) var(--ease-out);}
+.section-label button{font-size:.66rem;background:var(--chrome-hi);border:1px solid var(--chrome-edge);color:var(--primary);cursor:pointer;font-weight:800;padding:.2rem .6rem;border-radius:var(--r-sm);font-family:'Nunito',sans-serif;flex-shrink:0;transition:background var(--dur-fast) var(--ease-out),color var(--dur-fast) var(--ease-out);}
 .section-label button:hover{background:var(--gold);color:var(--maroon-dark);}
 
 /* ══ CONVERSATION CARD — one shared component layer ══════════════════════════
-   .conv-item (groups + private lists), .user-card (online-user rows) and
-   .global-chat-item (broadcast row) used to be three rows with three separate
-   paddings, margins, radii and hover rules. They are now ONE card: geometry,
+   .conv-item (groups + private lists) and .user-card (online-user rows) used
+   to be separate rows with separate paddings, margins, radii and hover rules.
+   They are now ONE card: geometry,
    glass fill, hairline, shadow and hover-lift are declared exactly once, right
    here, and each type below adds only what genuinely differs. With no bundler
    that is what "reusable component" means — a single shared class layer, not a
@@ -785,11 +829,8 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    through; the card just reads as raised off it.
    Measured on the panel's worst (lightest) case rgb(59,25,25):
      rest  rgb(69,37,36)  --ink 11.73:1  --ink-mut 7.09:1
-     hover rgb(88,53,34)  --ink  9.31:1  --ink-mut 5.63:1
-   Note: .global-chat-item has no markup at the moment — updateGlobalPreview()
-   still guards for its ids — but it keeps its seat in this layer so the row
-   inherits the card if it is put back. */
-.conv-item,.user-card,.global-chat-item{
+     hover rgb(88,53,34)  --ink  9.31:1  --ink-mut 5.63:1 */
+.conv-item,.user-card{
   display:flex;align-items:center;gap:var(--sp-3);
   padding:var(--sp-2) var(--sp-3);margin:0 var(--sp-3) var(--sp-2);
   border-radius:var(--r-md);border:1px solid var(--card-line);
@@ -799,34 +840,27 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
   transition:background var(--dur-base) var(--ease-out),border-color var(--dur-base) var(--ease-out),box-shadow var(--dur-base) var(--ease-out),transform var(--dur-base) var(--ease-out);}
 /* Hover: the card rises 2px and its drop shadow deepens, so the row lifts off
    the panel instead of merely tinting. */
-.conv-item:hover,.user-card:hover,.global-chat-item:hover{
+.conv-item:hover,.user-card:hover{
   background:var(--card-fill-hover);border-color:var(--chrome-edge);
   box-shadow:var(--card-lift-hover),inset 0 1px 0 var(--glass-sheen);
   transform:translateY(-2px);}
 /* Press settles the card back down — the lift is "reachable", the press is
    "reached". Placed after :hover so it wins while the pointer is down. */
-.conv-item:active,.user-card:active,.global-chat-item:active{
+.conv-item:active,.user-card:active{
   transform:translateY(0);transition-duration:var(--dur-fast);}
 /* Selected conversation: the lighter maroon fill, plus a gold left edge drawn
    as a pseudo-element (not an inset shadow) so it can be inset from the rounded
    corners. --ink measures 11.04:1 on this fill, --ink-mut 6.68:1. */
-.conv-item.active,.global-chat-item.active{background:var(--chrome-sel);border-color:var(--chrome-edge);}
-.conv-item.active::before,.global-chat-item.active::before{content:'';position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--gold-bright);}
+.conv-item.active{background:var(--chrome-sel);border-color:var(--chrome-edge);}
+.conv-item.active::before{content:'';position:absolute;left:0;top:9px;bottom:9px;width:4px;border-radius:0 3px 3px 0;background:var(--primary);}
 /* The global reduced-motion block only near-zeros DURATIONS. A near-instant 2px
    lift still displaces the card, and displacement is the part that affects
    motion-sensitive users — so the transform is cancelled outright, the same way
    .btn-arrow and .rail-btn are handled. */
 @media (prefers-reduced-motion:reduce){
-  .conv-item:hover,.user-card:hover,.global-chat-item:hover,
-  .conv-item:active,.user-card:active,.global-chat-item:active{transform:none;}
+  .conv-item:hover,.user-card:hover,
+  .conv-item:active,.user-card:active{transform:none;}
 }
-
-/* Broadcast row — only the parts that differ from the shared card. */
-.global-chat-item .gc-avatar{border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--maroon-dark),var(--maroon));color:var(--gold-bright);font-size:1.2rem;flex-shrink:0;position:relative;box-shadow:0 2px 6px var(--card-shade);}
-.global-chat-item .gc-avatar::after{content:'';position:absolute;bottom:-2px;right:-2px;width:12px;height:12px;border-radius:50%;background:var(--online);border:2px solid var(--card-ring);}
-.global-chat-item .gc-name{font-size:.92rem;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:6px;letter-spacing:-.005em;}
-.global-chat-item .gc-name::after{content:'OFFICIAL';font-size:.52rem;font-weight:900;color:var(--gold-bright);background:var(--chrome-hi);padding:1px 5px;border-radius:4px;border:1px solid var(--chrome-edge);letter-spacing:.06em;}
-.global-chat-item .gc-preview{font-size:.73rem;color:var(--ink-mut);margin-top:2px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px;}
 
 /* Online-user rows (the ONLINE NOW section) — only the parts that differ. */
 .user-card .uc-avatar{position:relative;flex-shrink:0;}
@@ -866,7 +900,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    it from here. The inline sizes are gone and the size now comes from
    --avatar-lg in one place. Scoped to .left-panel so the chat header's small
    #chat-avatar is untouched. */
-.left-panel .conv-avatar .avatar-circle,.left-panel .uc-avatar .avatar-circle,.global-chat-item .gc-avatar{width:var(--avatar-lg);height:var(--avatar-lg);}
+.left-panel .conv-avatar .avatar-circle,.left-panel .uc-avatar .avatar-circle{width:var(--avatar-lg);height:var(--avatar-lg);}
 .left-panel .conv-avatar .avatar-circle,.left-panel .uc-avatar .avatar-circle{font-size:.95rem;border:1px solid var(--chrome-edge);box-shadow:0 2px 6px var(--card-shade);}
 /* Group glyph sizing, lifted out of an inline style on the <svg> in the
    renderer for the same reason as the avatar box above. */
@@ -875,18 +909,18 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 .conv-avatar{position:relative;flex-shrink:0;}
 .avatar-circle{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.95rem;font-weight:800;color:#fff;flex-shrink:0;border:none;box-shadow:0 2px 5px rgba(0,0,0,.08);}
 .avatar-circle.blue{background:linear-gradient(135deg,#2563eb,#3b82f6);}
-.avatar-circle.green{background:linear-gradient(135deg,#0e9f6e,#22c55e);}
-.avatar-circle.orange{background:linear-gradient(135deg,#d97706,#f59e0b);}
+.avatar-circle.green{background:linear-gradient(135deg,#065F46,#047857);}
+.avatar-circle.orange{background:linear-gradient(135deg,#92400E,#B45309);}
 .avatar-circle.purple{background:linear-gradient(135deg,#7c3aed,#a855f7);}
 .avatar-circle.red{background:linear-gradient(135deg,var(--maroon),#dc2626);}
-.avatar-circle.group{background:linear-gradient(135deg,var(--maroon),var(--gold-dark));}
+.avatar-circle.group{background:linear-gradient(135deg,var(--primary),var(--primary-dark));}
 .online-badge{position:absolute;bottom:0;right:0;width:11px;height:11px;background:#22c55e;border-radius:50%;border:2px solid #fff;}
 .conv-info{flex:1;min-width:0;padding-top:1px;}
 .conv-name{font-size:.88rem;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.005em;}
 .conv-preview{font-size:.76rem;color:var(--ink-mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;font-weight:500;}
 .conv-meta{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;}
 .conv-time{font-size:.66rem;color:var(--ink-mut);font-weight:600;}
-.conv-item.unread .conv-time{color:var(--gold-bright);font-weight:700;}
+.conv-item.unread .conv-time{color:var(--primary);font-weight:800;}
 /* Circular gold pill. min-width == height keeps single digits a true circle and
    lets two- or three-digit counts grow into a stadium instead of clipping. */
 .unread-badge{background:var(--gold);color:var(--maroon-dark);border-radius:999px;font-size:.62rem;font-weight:800;padding:0 6px;min-width:19px;height:19px;text-align:center;display:inline-flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 1px 4px var(--card-shade);}
@@ -911,7 +945,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    --ink on the panel measures 13.58:1, --gold 6.63:1 (palette comment). */
 .list-empty .le-icon{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;
   background:var(--chrome-well);border:1px solid var(--chrome-edge);margin-bottom:var(--sp-2);}
-.list-empty .le-icon svg{width:21px;height:21px;stroke:var(--gold);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+.list-empty .le-icon svg{width:21px;height:21px;stroke:var(--primary);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
 .list-empty .le-title{font-size:.85rem;font-weight:700;color:var(--ink);}
 .list-empty .le-hint{font-size:.75rem;line-height:1.45;max-width:24ch;}
 
@@ -929,14 +963,9 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    The hover lift matches the conversation cards' so the panel moves as one. */
 .online-strip{display:flex;gap:var(--sp-2);padding:0 var(--sp-3) var(--sp-2);overflow-x:auto;scrollbar-width:none;}
 .online-strip::-webkit-scrollbar{display:none;}
-.os-item{position:relative;flex-shrink:0;border:none;background:transparent;padding:0;cursor:pointer;line-height:0;border-radius:50%;
-  transition:transform var(--dur-base) var(--ease-out);}
-.os-item:hover{transform:translateY(-2px);}
+.os-item{position:relative;flex-shrink:0;line-height:0;border-radius:50%;}
 .os-item .avatar-circle{width:42px;height:42px;font-size:.85rem;box-shadow:0 0 0 2px var(--card-ring),0 3px 8px var(--card-shade);}
 .os-item .online-badge{bottom:1px;right:1px;width:11px;height:11px;}
-/* Same reasoning as the conversation cards: a near-instant displacement is
-   still a displacement, so the lift is cancelled outright rather than shortened. */
-@media (prefers-reduced-motion:reduce){.os-item:hover{transform:none;}}
 
 /* Scroll containers of the conversation panel. scroll-behavior keeps
    programmatic jumps smooth (the global reduced-motion block already forces it
@@ -960,7 +989,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    "titled" the same way the rail and the list are, and the cream message area
    below reads as the page inside a bound cover. */
 /* Chrome, not the bright brand maroon. This was the one dark surface still
-   painted with --maroon-dark -> --maroon (#4a0000 -> #6B0000) while the rail
+   painted with --maroon-dark -> --maroon (var(--primary-dark) -> var(--primary)) while the rail
    and the conversation list use --chrome -> --chrome-deep, so it read as a
    saturated red slab beside them rather than the same material.
    Opaque values rather than the rgba tokens: this sits on the cream paper
@@ -968,7 +997,21 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    colour. No backdrop-filter either — the surface behind it is opaque paper,
    so there is nothing to blur, and glass-inside-glass is a documented problem
    in this file. The grain tile is shared with every other chrome surface. */
-.chat-header{background-color:#26090A;background-image:var(--grain),linear-gradient(135deg,#2E0A0A,#1A0505);background-repeat:repeat,no-repeat;background-size:160px 160px,auto;background-blend-mode:overlay,normal;color:var(--ink);padding:.85rem 1.1rem;min-height:92px;border-bottom:1px solid var(--chrome-edge);display:flex;align-items:center;gap:14px;flex-shrink:0;position:relative;}
+/* Chat header: maroon with a faint gold Maranao textile band (header-pattern.png:
+   the motifs recoloured to --accent at ~31% on a transparent background).
+   Three layers, topmost first:
+     1. a solid-maroon fade over the first 300px, clear by 460px, so the
+        avatar, name and status always sit on plain maroon (px, not %, so a
+        narrow phone header does not run the pattern behind the name);
+     2. the pattern, repeated sideways and scaled to the header's height;
+     3. the maroon gradient underneath. */
+.chat-header{background-color:var(--primary);
+  background-image:linear-gradient(90deg,var(--primary) 300px,rgba(var(--primary-rgb),0) 460px),
+                   url('/header-pattern.png'),
+                   linear-gradient(135deg,var(--primary),var(--primary-dark));
+  background-repeat:no-repeat,repeat-x,no-repeat;
+  background-size:auto,auto 100%,auto;
+  background-position:center,left center,center;color:var(--ink);padding:.85rem 1.1rem;min-height:92px;border-bottom:1px solid var(--chrome-edge);display:flex;align-items:center;gap:14px;flex-shrink:0;position:relative;}
 /* Soft gold hairline where the maroon band meets the cream paper — it fades out
    at both ends so the join reads as an engraved rule rather than a hard border.
    Drawn over the existing 1px border, which stays as the fallback edge. */
@@ -978,7 +1021,8 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    so this plain id selector wins on its own. 56px to match the design's larger
    ceremonial avatar. */
 .chat-header #chat-avatar{width:56px;height:56px;font-size:1.05rem;position:relative;}
-.chat-header .avatar-circle{border:2px solid var(--chrome-edge);}
+/* Gold ring so a maroon group avatar still stands out on the maroon header. */
+.chat-header .avatar-circle{border:2px solid var(--accent);}
 /* Presence dot on the header avatar, overlapping its lower-right edge like the
    conversation rows. It is driven by :has() off the SAME .status-dot.online the
    subtitle already carries, so one piece of JS state lights both and no new
@@ -1011,12 +1055,14 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    group). The design's search / video / overflow buttons were deliberately NOT
    built — see the note in the handover; a control that does nothing is worse
    than a missing one when a panelist clicks it. */
-.header-action-btn{width:48px;height:48px;border-radius:14px;border:1px solid var(--chrome-edge);background:transparent;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;color:var(--ink);transition:background var(--dur-fast) var(--ease-out),border-color var(--dur-fast) var(--ease-out),color var(--dur-fast) var(--ease-out);}
+/* White with a maroon glyph (11.18:1): an outline button vanished over the gold
+   header pattern. Gold is kept for Send, the one main action. */
+.header-action-btn{width:48px;height:48px;border-radius:14px;border:1px solid var(--white);background:var(--white);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;color:var(--primary);transition:background var(--dur-fast) var(--ease-out),border-color var(--dur-fast) var(--ease-out),color var(--dur-fast) var(--ease-out);}
 .header-action-btn svg{width:21px;height:21px;}
 .header-action-btn svg,.attach-btn svg,.send-btn svg,#ptt-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
 .send-btn svg{width:18px;height:18px;}
 @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
-.header-action-btn:hover{background:var(--chrome-hi);border-color:var(--gold);color:var(--gold-bright);}
+.header-action-btn:hover{background:var(--bg-alt);border-color:var(--bg-alt);color:var(--primary-dark);}
 
 /* Message surface. Two background layers, top to bottom:
      1. --paper-veil, a near-opaque cream wash,
@@ -1061,16 +1107,23 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    to full strength. All four are background layers, which paint below the
    element's content, so message text is never textured — that is why this is
    done here rather than with an overlay pseudo-element on top. */
+/* Plain white (--paper) with the MSU seal as a line drawing behind the
+   messages (msu-seal-lines.png: the seal's colour boundaries traced as thin
+   --primary lines on transparency). The white veil over it sets how faint it
+   is, one number in --paper-veil, so it reads as a watermark and never
+   competes with the bubbles. The seal is turned 340deg clockwise, i.e.
+   tilted 20deg left of upright (msu-seal-lines-340.png: rotation baked into the image,
+   since CSS cannot rotate a background) and drawn large from the bottom, so it reads as texture
+   rather than a logo. The top layer is a white fade over the upper part, so the
+   seal rises out of the bottom and the newest messages sit on clean white. */
 #messages-area{flex:1;min-height:0;overflow-y:auto;padding:1.3rem 1.3rem .5rem;display:flex;flex-direction:column;gap:10px;
   background-color:var(--paper);
-  background-image:var(--grain),
-                   radial-gradient(115% 85% at 50% 0%,rgba(255,252,246,.55),rgba(255,252,246,0) 52%,rgba(120,78,32,.13) 100%),
+  background-image:linear-gradient(to bottom,var(--paper) 8%,rgba(255,255,255,0) 62%),
                    linear-gradient(var(--paper-veil),var(--paper-veil)),
-                   url('/msu-seal-watermark.png');
-  background-repeat:repeat,no-repeat,no-repeat,no-repeat;
-  background-position:0 0,center,center,center;
-  background-size:160px 160px,auto,auto,min(48%,320px);
-  background-blend-mode:soft-light,normal,normal,normal;}
+                   url('/msu-seal-lines-340.png');
+  background-repeat:no-repeat,no-repeat,no-repeat;
+  background-position:center,center,center bottom -60px;   /* centred, and 60px past the bottom so the banner slides behind the message box */
+  background-size:auto,auto,min(110%,820px);}
 /* margin-bottom is 0: the ~10px rhythm between bubbles comes from the flex gap
    on #messages-area, so there is ONE place that controls spacing rather than a
    gap and a margin adding up. .msg-row.grouped still tightens consecutive
@@ -1108,11 +1161,11 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 /* One squared corner on the side the message came from — the bubble "points"
    back at its sender, which is why the tail corner flips per side below. */
 .bubble{padding:14px 18px;border-radius:18px;font-size:.92rem;line-height:1.45;word-break:break-word;max-width:100%;}
-.msg-row.mine .bubble{background:var(--maroon);color:var(--paper);border-bottom-right-radius:5px;box-shadow:0 2px 8px rgba(74,0,0,.22);}
+.msg-row.mine .bubble{background:var(--primary);color:var(--white);border-bottom-right-radius:5px;box-shadow:0 2px 8px rgba(var(--primary-dark-rgb),.22);}
 .msg-row.mine .bubble strong,.msg-row.mine .bubble a{color:var(--gold-bright);}
-.msg-row.theirs .bubble{background:var(--white);color:var(--text-dark);border-bottom-left-radius:5px;box-shadow:0 2px 8px rgba(74,0,0,.08);border:1px solid var(--paper-line);}
-.msg-row.system .bubble{background:var(--white);color:var(--text-mid);font-size:.72rem;font-weight:700;padding:.3rem .9rem;box-shadow:0 1px 3px rgba(74,0,0,.06);border-radius:14px;border:1px solid var(--paper-line);letter-spacing:.02em;}
-.msg-row.announcement .bubble{background:var(--gold-soft);color:var(--maroon-dark);font-weight:700;border:1px solid rgba(212,160,23,.4);border-radius:12px;padding:.65rem 1.1rem;text-align:center;}
+.msg-row.theirs .bubble{background:var(--bg-alt);color:var(--text);border-bottom-left-radius:5px;box-shadow:0 2px 8px rgba(var(--primary-dark-rgb),.08);border:1px solid var(--paper-line);}
+.msg-row.system .bubble{background:var(--white);color:var(--text-mid);font-size:.72rem;font-weight:700;padding:.3rem .9rem;box-shadow:0 1px 3px rgba(var(--primary-dark-rgb),.06);border-radius:14px;border:1px solid var(--paper-line);letter-spacing:.02em;}
+.msg-row.announcement .bubble{background:var(--gold-soft);color:var(--maroon-dark);font-weight:700;border:1px solid rgba(var(--accent-rgb),.4);border-radius:12px;padding:.65rem 1.1rem;text-align:center;}
 /* ── Timestamp, a sibling BELOW the bubble ───────────────────────────────────
    appendMessage() appends .msg-time to .msg-content, after .bubble-row, so it
    is ONE element in ONE place for all four message types. The previous pass put
@@ -1164,40 +1217,40 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
   background:var(--img-placeholder);color:var(--text-dark);
   border-radius:13px;display:block;cursor:pointer;transition:transform var(--dur-slow) var(--ease-out);}
 .img-bubble img:hover{transform:scale(1.01);}
-.img-caption{font-size:.72rem;padding:.35rem .55rem;margin-top:5px;font-weight:600;border-radius:8px;background:rgba(74,0,0,.78);color:var(--gold-bright);display:flex;align-items:center;gap:6px;max-width:100%;letter-spacing:.01em;}
+.img-caption{font-size:.72rem;padding:.35rem .55rem;margin-top:5px;font-weight:600;border-radius:8px;background:rgba(var(--primary-dark-rgb),.78);color:var(--white);display:flex;align-items:center;gap:6px;max-width:100%;letter-spacing:.01em;}
 .img-caption-text{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
-.msg-row.mine .img-caption{background:rgba(74,0,0,.85);color:var(--gold-bright);}
-.msg-row.theirs .img-caption{background:rgba(74,0,0,.08);color:var(--maroon-dark);border:1px solid rgba(107,0,0,.12);}
+.msg-row.mine .img-caption{background:rgba(var(--primary-dark-rgb),.85);color:var(--white);}
+.msg-row.theirs .img-caption{background:rgba(var(--primary-dark-rgb),.08);color:var(--maroon-dark);border:1px solid rgba(var(--primary-rgb),.12);}
 .img-caption::selection{background:var(--gold);color:var(--maroon-dark);}
-.img-dl{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.15);color:var(--gold-bright);border-radius:6px;text-decoration:none;flex-shrink:0;border:1px solid rgba(255,215,0,.3);transition:background .15s,color .15s,transform .12s;}
+.img-dl{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.15);color:var(--gold-bright);border-radius:6px;text-decoration:none;flex-shrink:0;border:1px solid rgba(var(--accent-rgb),.3);transition:background .15s,color .15s,transform .12s;}
 .img-dl:hover{background:rgba(255,255,255,.28);transform:scale(1.08);}
 .img-dl svg{width:13px;height:13px;display:block;}
-.msg-row.theirs .img-dl{background:rgba(212,160,23,.18);color:var(--maroon-dark);border-color:rgba(212,160,23,.4);}
+.msg-row.theirs .img-dl{background:rgba(var(--accent-rgb),.18);color:var(--maroon-dark);border-color:rgba(var(--accent-rgb),.4);}
 .msg-row.theirs .img-dl:hover{background:var(--gold);color:var(--maroon-dark);}
 
 .file-bubble{display:flex;align-items:center;gap:12px;padding:.7rem .85rem;min-width:230px;border-radius:14px!important;}
-.file-icon{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--gold-soft),#fff5d0);color:var(--maroon);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;border:1px solid rgba(212,160,23,.3);}
-.msg-row.mine .file-icon{background:rgba(255,255,255,.18);color:var(--gold-bright);border-color:rgba(255,215,0,.3);}
+.file-icon{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--gold-soft),var(--gold-soft));color:var(--maroon);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;border:1px solid rgba(var(--accent-rgb),.3);}
+.msg-row.mine .file-icon{background:rgba(255,255,255,.18);color:var(--gold-bright);border-color:rgba(var(--accent-rgb),.3);}
 .file-info{flex:1;overflow:hidden;min-width:0;}
 .file-info .fname{font-size:.84rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .file-info .fsize{font-size:.7rem;opacity:.7;margin-top:1px;font-weight:600;}
-.file-dl{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;padding:0;background:var(--gold-soft);border-radius:8px;color:var(--maroon-dark);text-decoration:none;flex-shrink:0;border:1px solid rgba(212,160,23,.35);transition:background .15s,color .15s,transform .12s;}
+.file-dl{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;padding:0;background:var(--gold-soft);border-radius:8px;color:var(--maroon-dark);text-decoration:none;flex-shrink:0;border:1px solid rgba(var(--accent-rgb),.35);transition:background .15s,color .15s,transform .12s;}
 .file-dl:hover{background:var(--gold);color:var(--maroon-dark);transform:translateY(-1px);}
 .file-dl svg{width:16px;height:16px;display:block;}
-.msg-row.mine .file-dl{background:rgba(255,255,255,.18);color:var(--gold-bright);border-color:rgba(255,215,0,.3);}
+.msg-row.mine .file-dl{background:rgba(255,255,255,.18);color:var(--gold-bright);border-color:rgba(var(--accent-rgb),.3);}
 .msg-row.mine .file-dl:hover{background:rgba(255,255,255,.3);color:var(--gold-bright);}
 
 .voice-bubble{display:flex;align-items:center;gap:10px;padding:.55rem .75rem!important;min-width:230px;}
-.voice-icon{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold-soft),#fff5d0);color:var(--maroon);display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid rgba(212,160,23,.35);}
+.voice-icon{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold-soft),var(--gold-soft));color:var(--maroon);display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid rgba(var(--accent-rgb),.35);}
 .voice-icon svg{width:18px;height:18px;display:block;}
-.msg-row.mine .voice-icon{background:rgba(255,255,255,.18);color:var(--gold-bright);border-color:rgba(255,215,0,.3);}
+.msg-row.mine .voice-icon{background:rgba(255,255,255,.18);color:var(--gold-bright);border-color:rgba(var(--accent-rgb),.3);}
 .voice-body{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0;}
 .voice-body audio{height:32px;width:100%;max-width:220px;}
 .voice-size{font-size:.7rem;opacity:.7;font-weight:600;}
 
 #typing-row{min-height:32px;padding:.25rem 1.2rem;display:flex;align-items:center;background:transparent;}
 #typing-row:empty{min-height:0;padding:0;}
-.typing-bubble{display:inline-flex;align-items:center;gap:8px;padding:.45rem .9rem;background:#fff;border:1.5px solid var(--gold);border-radius:18px;box-shadow:0 3px 12px rgba(107,0,0,.12);z-index:5;position:relative;}
+.typing-bubble{display:inline-flex;align-items:center;gap:8px;padding:.45rem .9rem;background:#fff;border:1.5px solid var(--gold);border-radius:18px;box-shadow:0 3px 12px rgba(var(--primary-rgb),.12);z-index:5;position:relative;}
 .typing-dots{display:flex;gap:4px;align-items:center;}
 .typing-dots span{width:6px;height:6px;border-radius:50%;background:var(--maroon);animation:bounce 1.1s infinite;opacity:.7;}
 .typing-dots span:nth-child(2){animation-delay:.18s;}
@@ -1212,7 +1265,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 /* OUTER BAR — the warm tray the whole composer sits in. align-items:flex-end so
    that when the textarea grows to several lines the circular buttons stay on
    the bottom edge beside the last line instead of being stretched into ovals. */
-.input-row{background:var(--composer-bar);margin:var(--sp-2) var(--sp-3) var(--sp-3);padding:10px 12px;min-height:72px;border:1px solid var(--paper-line);border-radius:32px;box-shadow:0 3px 14px rgba(74,0,0,.09);display:flex;align-items:flex-end;gap:10px;flex-shrink:0;position:relative;}
+.input-row{background:var(--composer-bar);margin:var(--sp-2) var(--sp-3) var(--sp-3);padding:10px 12px;min-height:72px;border:1px solid var(--paper-line);border-radius:32px;box-shadow:0 3px 14px rgba(var(--primary-dark-rgb),.09);display:flex;align-items:flex-end;gap:10px;flex-shrink:0;position:relative;}
 /* ATTACH / PHOTO / MIC — circular discs, warmer than the bar so they read as
    raised controls on it. --maroon on --composer-btn measures 10.29:1. */
 .attach-btn{width:52px;height:52px;border-radius:50%;border:none;background:var(--composer-btn);cursor:pointer;font-size:1rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background var(--dur-fast) var(--ease-out),color var(--dur-fast) var(--ease-out);color:var(--maroon);}
@@ -1221,12 +1274,12 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 /* INNER PILL — the lightest surface in the row, holding the textarea and the
    emoji button. flex:1 lets it take the free space; align-items:flex-end keeps
    the emoji glyph on the last line as the field grows. */
-.input-field{flex:1;min-width:0;display:flex;align-items:flex-end;gap:4px;background:var(--composer-field);border:1px solid var(--paper-line);border-radius:24px;padding:4px 6px 4px 4px;
+.input-field{flex:1;min-width:0;display:flex;align-items:flex-end;gap:4px;background:var(--composer-field);border:1px solid #CFC7C7;border-radius:24px;padding:4px 6px 4px 4px;
   transition:border-color var(--dur-base) var(--ease-out),box-shadow var(--dur-base) var(--ease-out);}
 /* The focus ring now lives on the INNER pill, so it appears around the caret
    rather than around the whole tray. The old .input-row:focus-within rule is
    deleted rather than overridden — two rings would have fought each other. */
-.input-field:focus-within{border-color:var(--gold);box-shadow:var(--focus-ring);}
+.input-field:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px rgba(var(--primary-rgb),.15);}
 /* field-sizing:content makes the textarea grow with what is typed, so the inner
    pill and the tray grow with it — with no JS, which is why it is used here.
    max-height caps it at ~4 lines and then it scrolls. Browsers without support
@@ -1242,14 +1295,15 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    against the pill it actually sits on: --text-light on --composer-field is
    4.78:1, above the 4.5:1 body minimum. */
 #msg-input::placeholder{color:var(--text-light);}
-/* Send is deliberately the heaviest thing in the row: largest, the only filled
-   maroon disc, and the only gold glyph. --gold-bright on --maroon is 9.21:1. */
-.send-btn{width:56px;height:56px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--maroon),var(--maroon-light));color:var(--gold-bright);cursor:pointer;font-size:.95rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:transform var(--dur-base) var(--ease-out),box-shadow var(--dur-base) var(--ease-out);box-shadow:0 3px 12px rgba(107,0,0,.3);}
+/* Send is deliberately the heaviest thing in the row: largest, and the only
+   filled gold disc. --primary on --accent is 5.06:1; on hover the disc darkens
+   to --accent-dark and the glyph to --primary-dark (4.50:1). */
+.send-btn{width:56px;height:56px;border-radius:50%;border:none;background:var(--accent);color:var(--primary);cursor:pointer;font-size:.95rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:transform var(--dur-base) var(--ease-out),box-shadow var(--dur-base) var(--ease-out);box-shadow:0 3px 12px rgba(var(--primary-rgb),.3);}
 /* The paper-plane is tilted slightly so it reads as in flight rather than as a
    static icon. The rotation is on the glyph, not the button, so the disc stays
    a true circle and the hover lift below is unaffected. */
 .send-btn svg{width:23px;height:23px;transform:rotate(-8deg);}
-.send-btn:hover{transform:translateY(-1px) scale(1.04);box-shadow:0 5px 14px rgba(107,0,0,.35);}
+.send-btn:hover{background:var(--accent-dark);color:var(--primary-dark);transform:translateY(-1px) scale(1.04);box-shadow:0 5px 14px rgba(var(--primary-rgb),.35);}
 .send-btn:active{transform:scale(.9);transition-duration:.06s;}
 /* Emoji is the one inline affordance in the row — no disc, muted, so it sits
    with the text rather than competing with the media buttons. The id beats
@@ -1270,34 +1324,34 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 
 /* ── EMOJI PICKER (glassmorphism, brand-balanced) ── */
 .emoji-picker{position:absolute;bottom:calc(100% + 10px);right:60px;width:328px;height:380px;
-  background:linear-gradient(160deg,rgba(255,251,234,.78),rgba(255,255,255,.62) 45%,rgba(249,240,240,.68));
+  background:rgba(255,255,255,.96);
   backdrop-filter:blur(22px) saturate(180%);-webkit-backdrop-filter:blur(22px) saturate(180%);
   border-radius:18px;
-  box-shadow:0 20px 50px rgba(74,0,0,.25),0 4px 14px rgba(107,0,0,.12),inset 0 1px 0 rgba(255,255,255,.6);
+  box-shadow:0 20px 50px rgba(var(--primary-dark-rgb),.25),0 4px 14px rgba(var(--primary-rgb),.12),inset 0 1px 0 rgba(255,255,255,.6);
   border:1px solid rgba(255,255,255,.55);
   display:none;flex-direction:column;overflow:hidden;z-index:50;font-family:'Nunito',sans-serif;}
 .emoji-picker.show{display:flex;animation:emojiIn .22s var(--ease-overshoot);}
-.emoji-picker::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(400px 200px at 100% 0%,rgba(212,160,23,.18),transparent 60%),radial-gradient(300px 200px at 0% 100%,rgba(107,0,0,.10),transparent 60%);border-radius:inherit;}
+.emoji-picker::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(400px 200px at 100% 0%,rgba(var(--accent-rgb),.18),transparent 60%),radial-gradient(300px 200px at 0% 100%,rgba(var(--primary-rgb),.10),transparent 60%);border-radius:inherit;}
 @keyframes emojiIn{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
-.emoji-search{padding:11px 12px 9px;border-bottom:1px solid rgba(212,160,23,.22);position:relative;background:rgba(255,255,255,.25);}
-.emoji-search input{width:100%;padding:.52rem .9rem .52rem 2rem;background:rgba(255,255,255,.55);border:1.5px solid rgba(212,160,23,.25);border-radius:18px;color:var(--maroon-dark);font-size:.84rem;font-weight:600;outline:none;font-family:'Nunito',sans-serif;backdrop-filter:blur(8px);transition:border-color .15s,background .15s,box-shadow .15s;}
-.emoji-search input:focus{border-color:var(--gold);background:#fff;box-shadow:0 0 0 3px rgba(212,160,23,.18);}
+.emoji-search{padding:11px 12px 9px;border-bottom:1px solid rgba(var(--accent-rgb),.22);position:relative;background:rgba(255,255,255,.25);}
+.emoji-search input{width:100%;padding:.52rem .9rem .52rem 2rem;background:rgba(255,255,255,.55);border:1.5px solid rgba(var(--accent-rgb),.25);border-radius:18px;color:var(--maroon-dark);font-size:.84rem;font-weight:600;outline:none;font-family:'Nunito',sans-serif;backdrop-filter:blur(8px);transition:border-color .15s,background .15s,box-shadow .15s;}
+.emoji-search input:focus{border-color:var(--gold);background:#fff;box-shadow:0 0 0 3px rgba(var(--accent-rgb),.18);}
 .emoji-search input::placeholder{color:var(--text-light);font-weight:500;}
 .emoji-search::before{content:'';position:absolute;left:22px;top:50%;width:13px;height:13px;transform:translateY(-50%);opacity:.7;pointer-events:none;background-repeat:no-repeat;background-position:center;background-size:contain;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B0000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='7'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>");}
 .emoji-grid{flex:1;overflow-y:auto;padding:6px 10px 10px;display:grid;grid-template-columns:repeat(8,1fr);gap:2px;position:relative;z-index:1;}
 .emoji-grid button{background:transparent;border:none;color:var(--text-dark);font-size:1.4rem;padding:6px 0;cursor:pointer;border-radius:9px;line-height:1;transition:background .12s,transform .12s;}
-.emoji-grid button:hover{background:rgba(212,160,23,.22);transform:scale(1.18);}
-.emoji-grid .emoji-cat-row{grid-column:1/-1;padding:8px 4px 4px;font-size:.7rem;font-weight:800;color:var(--gold-dark);letter-spacing:.06em;text-transform:uppercase;}
+.emoji-grid button:hover{background:rgba(var(--accent-rgb),.22);transform:scale(1.18);}
+.emoji-grid .emoji-cat-row{grid-column:1/-1;padding:8px 4px 4px;font-size:.7rem;font-weight:800;color:var(--primary);letter-spacing:.06em;text-transform:uppercase;}
 .emoji-empty{grid-column:1/-1;text-align:center;color:var(--text-light);padding:1.5rem;font-size:.82rem;font-weight:600;}
-.emoji-tabs{display:flex;border-top:1px solid rgba(212,160,23,.22);background:rgba(255,255,255,.35);padding:5px 6px;position:relative;z-index:1;}
+.emoji-tabs{display:flex;border-top:1px solid rgba(var(--accent-rgb),.22);background:rgba(255,255,255,.35);padding:5px 6px;position:relative;z-index:1;}
 .emoji-tabs button{flex:1;background:transparent;border:none;color:var(--text-mid);font-size:1.05rem;padding:7px 0;cursor:pointer;border-radius:9px;transition:background .12s,color .12s,transform .12s;}
-.emoji-tabs button:hover{color:var(--maroon-dark);background:rgba(212,160,23,.18);}
-.emoji-tabs button.active{color:var(--maroon-dark);background:linear-gradient(135deg,rgba(212,160,23,.35),rgba(212,160,23,.18));box-shadow:inset 0 0 0 1px rgba(212,160,23,.4);transform:translateY(-1px);}
+.emoji-tabs button:hover{color:var(--maroon-dark);background:rgba(var(--accent-rgb),.18);}
+.emoji-tabs button.active{color:var(--maroon-dark);background:linear-gradient(135deg,rgba(var(--accent-rgb),.35),rgba(var(--accent-rgb),.18));box-shadow:inset 0 0 0 1px rgba(var(--accent-rgb),.4);transform:translateY(-1px);}
 .emoji-picker ::-webkit-scrollbar{width:6px;}
 .emoji-picker ::-webkit-scrollbar-track{background:transparent;}
-.emoji-picker ::-webkit-scrollbar-thumb{background:rgba(107,0,0,.2);border-radius:4px;}
-.emoji-picker ::-webkit-scrollbar-thumb:hover{background:rgba(107,0,0,.35);}
-#emoji-btn.active{background:linear-gradient(135deg,var(--gold-soft),rgba(212,160,23,.25));color:var(--maroon-dark);box-shadow:inset 0 0 0 1px rgba(212,160,23,.4);}
+.emoji-picker ::-webkit-scrollbar-thumb{background:rgba(var(--primary-rgb),.2);border-radius:4px;}
+.emoji-picker ::-webkit-scrollbar-thumb:hover{background:rgba(var(--primary-rgb),.35);}
+#emoji-btn.active{background:linear-gradient(135deg,var(--gold-soft),rgba(var(--accent-rgb),.25));color:var(--maroon-dark);box-shadow:inset 0 0 0 1px rgba(var(--accent-rgb),.4);}
 
 /* ── TOAST NOTIFICATIONS ── */
 #toast-container{position:fixed;top:20px;right:20px;z-index:500;display:flex;flex-direction:column;gap:10px;pointer-events:none;}
@@ -1322,29 +1376,19 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 
 /* ── NOTIFICATION BELL ── */
 .notif-btn{position:relative;}
-.notif-dot{position:absolute;top:2px;right:2px;width:8px;height:8px;background:#e74c3c;border-radius:50%;border:1.5px solid var(--maroon);display:none;}
-.notif-dot.show{display:block;}
-/* Messenger-style numeric badge — overrides the dot when count > 0 */
+/* Messenger-style numeric badge, shown only when count > 0 */
 .notif-count{position:absolute;top:-2px;right:-2px;min-width:20px;height:20px;padding:0 6px;background:#e74c3c;color:#fff;font-size:.68rem;font-weight:800;border-radius:10px;border:2px solid var(--maroon);display:none;align-items:center;justify-content:center;line-height:1;box-shadow:0 2px 6px rgba(231,76,60,.45);font-family:'Nunito',sans-serif;}
 .notif-count.show{display:flex;}
 
-/* Notifications dropdown panel */
-.notif-panel{position:fixed;top:80px;left:230px;width:390px;max-height:540px;background:linear-gradient(160deg,rgba(255,253,250,.92),rgba(252,246,236,.88));backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);border-radius:20px;box-shadow:0 20px 50px rgba(74,0,0,.22),0 4px 14px rgba(107,0,0,.10),inset 0 1px 0 rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.55);z-index:600;display:none;flex-direction:column;overflow:hidden;}
-.notif-panel.show{display:flex;}
-.notif-panel-header{display:flex;align-items:center;justify-content:space-between;padding:.95rem 1.1rem;background:linear-gradient(135deg,rgba(74,0,0,.95),rgba(107,0,0,.92));color:var(--gold-bright);border-bottom:1px solid rgba(212,160,23,.35);position:relative;}
-.notif-panel-header::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1.5px;background:linear-gradient(90deg,transparent,var(--gold) 30%,var(--gold-bright) 50%,var(--gold) 70%,transparent);opacity:.6;}
-.notif-panel-header h4{font-family:'Cinzel',serif;font-size:.88rem;letter-spacing:.06em;display:flex;align-items:center;gap:8px;}
-.notif-panel-header button{background:rgba(255,255,255,.12);color:var(--gold-bright);border:1px solid rgba(212,160,23,.3);padding:.3rem .65rem;border-radius:8px;font-size:.7rem;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;transition:background .15s;}
-.notif-panel-header button:hover{background:rgba(212,160,23,.28);}
-.notif-list{flex:1;overflow-y:auto;padding:14px 14px 18px;display:flex;flex-direction:column;gap:8px;}
+/* Notification rows */
 .notif-item{display:flex;align-items:center;gap:13px;padding:.8rem 1rem;border-radius:14px;cursor:pointer;transition:background .15s,box-shadow .15s,opacity .15s;background:transparent;border:1px solid transparent;opacity:.62;}
-.notif-item:hover{background:rgba(255,255,255,.75);border-color:rgba(212,160,23,.22);box-shadow:0 2px 8px rgba(107,0,0,.06);opacity:1;}
-.notif-item.unread{opacity:1;background:linear-gradient(135deg,rgba(107,0,0,.10),rgba(212,160,23,.18));border-color:rgba(107,0,0,.25);box-shadow:inset 4px 0 0 var(--maroon),0 2px 8px rgba(107,0,0,.08);}
-.notif-item.unread:hover{background:linear-gradient(135deg,rgba(107,0,0,.14),rgba(212,160,23,.22));}
+.notif-item:hover{background:rgba(255,255,255,.75);border-color:rgba(var(--accent-rgb),.22);box-shadow:0 2px 8px rgba(var(--primary-rgb),.06);opacity:1;}
+.notif-item.unread{opacity:1;background:linear-gradient(135deg,rgba(var(--primary-rgb),.10),rgba(var(--accent-rgb),.18));border-color:rgba(var(--primary-rgb),.25);box-shadow:inset 4px 0 0 var(--maroon),0 2px 8px rgba(var(--primary-rgb),.08);}
+.notif-item.unread:hover{background:linear-gradient(135deg,rgba(var(--primary-rgb),.14),rgba(var(--accent-rgb),.22));}
 .notif-item.unread .ni-title{color:var(--maroon-dark);font-weight:800;}
 .notif-item.unread .ni-msg{color:var(--text-dark);font-weight:600;}
-.notif-item.unread::after{content:'';width:8px;height:8px;border-radius:50%;background:var(--maroon);box-shadow:0 0 0 2px rgba(107,0,0,.15);flex-shrink:0;margin-left:6px;}
-.notif-item .ni-icon{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--maroon-dark),var(--maroon));color:var(--gold-bright);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;box-shadow:0 2px 6px rgba(107,0,0,.2);}
+.notif-item.unread::after{content:'';width:8px;height:8px;border-radius:50%;background:var(--maroon);box-shadow:0 0 0 2px rgba(var(--primary-rgb),.15);flex-shrink:0;margin-left:6px;}
+.notif-item .ni-icon{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--maroon-dark),var(--maroon));color:var(--gold-bright);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;box-shadow:0 2px 6px rgba(var(--primary-rgb),.2);}
 .notif-item:not(.unread) .ni-icon{filter:grayscale(.35);}
 .notif-item .ni-icon svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
 .notif-item .ni-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;}
@@ -1353,9 +1397,8 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 .notif-item .ni-time{font-size:.7rem;color:var(--text-light);font-weight:600;margin-top:2px;line-height:1.2;}
 .notif-empty{padding:2rem 1rem;text-align:center;color:var(--text-light);font-size:.85rem;}
 .notif-empty .nei{font-size:2rem;display:block;margin-bottom:.4rem;opacity:.5;}
-/* renderNotifList() writes the SAME markup into two places: the light floating
-   .notif-panel above, and the Notifications section inside the now-dark
-   .left-panel. These rules re-colour only the second copy. opacity goes back to
+/* The rows above were styled for a light background; renderNotifList() puts
+   them inside the dark .left-panel, so these rules re-colour them. opacity goes back to
    1 there because dimming --ink-mut to 62% over the chrome drops it under the
    4.5:1 minimum — read vs unread is carried by colour and weight instead. */
 .left-panel .notif-item{opacity:1;}
@@ -1366,7 +1409,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 .left-panel .notif-item.unread::after{background:var(--gold-bright);box-shadow:none;}
 .left-panel .notif-empty{color:var(--ink-mut);}
 
-#incoming-call{display:none;position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,var(--maroon-dark),var(--maroon));color:#fff;border-radius:16px;padding:1.2rem 1.5rem;z-index:200;min-width:260px;box-shadow:var(--shadow-lg);border:1px solid rgba(212,160,23,.3);}
+#incoming-call{display:none;position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,var(--maroon-dark),var(--maroon));color:#fff;border-radius:16px;padding:1.2rem 1.5rem;z-index:200;min-width:260px;box-shadow:var(--shadow-lg);border:1px solid rgba(var(--accent-rgb),.3);}
 #incoming-call.show{display:block;animation:slideUp .3s ease;}
 @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
 #incoming-call h4{margin-bottom:.25rem;color:var(--gold-bright);font-family:'Cinzel',serif;display:flex;align-items:center;gap:8px;}
@@ -1379,7 +1422,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 .call-btns{display:flex;gap:10px;}
 .btn-accept{flex:1;padding:.6rem;background:#22c55e;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;}
 .btn-reject{flex:1;padding:.6rem;background:#e74c3c;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;}
-#call-panel{display:none;position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,var(--maroon-dark),var(--maroon));color:#fff;border-radius:16px;padding:1.2rem 1.5rem;z-index:200;min-width:280px;box-shadow:var(--shadow-lg);border:1px solid rgba(212,160,23,.3);}
+#call-panel{display:none;position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,var(--maroon-dark),var(--maroon));color:#fff;border-radius:16px;padding:1.2rem 1.5rem;z-index:200;min-width:280px;box-shadow:var(--shadow-lg);border:1px solid rgba(var(--accent-rgb),.3);}
 #call-panel.show{display:block;}
 #call-panel h4{font-size:1rem;margin-bottom:.25rem;color:var(--gold-bright);font-family:'Cinzel',serif;display:flex;align-items:center;gap:8px;}
 #call-panel p{font-size:.82rem;opacity:.7;margin-bottom:.5rem;}
@@ -1387,38 +1430,38 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 .call-controls{display:flex;gap:10px;justify-content:center;margin-top:.75rem;}
 .ctrl-btn{width:48px;height:48px;border-radius:50%;border:none;cursor:pointer;font-size:1.1rem;}
 .ctrl-btn.mute{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.2);}
-.ctrl-btn.mute.active{background:#f39c12;border-color:transparent;}
+.ctrl-btn.mute.active{background:var(--accent);border-color:transparent;}
 .ctrl-btn.hangup{background:#e74c3c;color:#fff;}
 
-#group-call-panel{display:none;position:fixed;inset:0;background:rgba(74,0,0,.97);z-index:300;flex-direction:column;align-items:center;justify-content:center;color:#fff;}
+#group-call-panel{display:none;position:fixed;inset:0;background:rgba(var(--primary-dark-rgb),.97);z-index:300;flex-direction:column;align-items:center;justify-content:center;color:#fff;}
 #group-call-panel.show{display:flex;}
 #group-call-panel h3{margin-bottom:1.5rem;font-family:'Cinzel',serif;color:var(--gold-bright);display:flex;align-items:center;gap:10px;}
 #peers-grid{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;max-width:700px;}
-.peer-card{background:rgba(212,160,23,.1);border-radius:12px;padding:1rem 1.5rem;text-align:center;min-width:130px;border:1px solid rgba(212,160,23,.2);}
+.peer-card{background:rgba(var(--accent-rgb),.1);border-radius:12px;padding:1rem 1.5rem;text-align:center;min-width:130px;border:1px solid rgba(var(--accent-rgb),.2);}
 .peer-card .pa{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--maroon),var(--gold-dark));margin:0 auto .5rem;display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;border:2px solid var(--gold);}
 .peer-card p{font-size:.83rem;opacity:.8;}
 #group-controls{display:flex;gap:12px;margin-top:2rem;}
 .g-btn{padding:.65rem 1.4rem;border:none;border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:700;font-family:'Nunito',sans-serif;display:inline-flex;align-items:center;gap:7px;}
-.g-btn.mute-g{background:rgba(212,160,23,.2);color:var(--gold-bright);border:1px solid rgba(212,160,23,.3);}
+.g-btn.mute-g{background:rgba(var(--accent-rgb),.2);color:var(--gold-bright);border:1px solid rgba(var(--accent-rgb),.3);}
 .g-btn.leave-g{background:#e74c3c;color:#fff;}
 
 /* ── Create Group modal ──────────────────────────────────────────────────── */
 /* The blur drops the maroon page behind into soft focus so the cream card is the
    only thing that reads sharply. */
-#modal-overlay{display:none;position:fixed;inset:0;background:rgba(74,0,0,.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:400;align-items:center;justify-content:center;padding:20px;}
+#modal-overlay{display:none;position:fixed;inset:0;background:rgba(var(--primary-dark-rgb),.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:400;align-items:center;justify-content:center;padding:20px;}
 #modal-overlay.open{display:flex;}
 /* overflow stays visible so the badge can hang over the top edge — the members
    list further down owns the scrolling instead of the card. The 48px top padding
    is what keeps the title clear of that overhanging badge. */
-.modal{position:relative;overflow:visible;background:var(--cream);border:1px solid var(--gold);border-radius:24px;
+.modal{position:relative;overflow:visible;background:var(--white);border:1px solid var(--accent);border-radius:24px;
   padding:48px 26px 22px;width:clamp(320px,92vw,440px);max-height:82vh;display:flex;flex-direction:column;
-  box-shadow:0 26px 60px -18px rgba(74,0,0,.45),0 8px 24px -12px rgba(74,0,0,.3);
+  box-shadow:0 26px 60px -18px rgba(var(--primary-dark-rgb),.45),0 8px 24px -12px rgba(var(--primary-dark-rgb),.3);
   animation:modalIn .26s var(--ease-out);}
 @keyframes modalIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
 /* -38px is exactly half the badge's 76px height, so it sits half on, half off. */
 .modal-badge{position:absolute;top:-38px;left:50%;transform:translateX(-50%);width:76px;height:76px;border-radius:50%;
   background:var(--white);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;
-  box-shadow:0 6px 18px rgba(74,0,0,.18);}
+  box-shadow:0 6px 18px rgba(var(--primary-dark-rgb),.18);}
 .modal-badge svg{width:34px;height:34px;stroke:var(--gold);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
 .modal-close{position:absolute;top:16px;right:16px;width:38px;height:38px;border-radius:50%;background:var(--cream);
   border:1px solid var(--gray-200);color:var(--maroon-dark);cursor:pointer;display:flex;align-items:center;justify-content:center;
@@ -1439,7 +1482,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
   stroke:var(--gold-dark);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;pointer-events:none;}
 .modal input{width:100%;padding:.72rem .9rem .72rem 40px;border:1.5px solid var(--gray-200);border-radius:12px;
   font-size:.88rem;outline:none;font-family:'Nunito',sans-serif;color:var(--text-dark);background:var(--white);}
-.modal input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,160,23,.12);}
+.modal input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.12);}
 /* Chips wrap onto more lines rather than scrolling sideways — a selection you
    cannot see is worse than a taller row. :empty keeps the gap out when none. */
 .chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
@@ -1464,17 +1507,17 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 .modal-actions{display:flex;gap:10px;justify-content:flex-end;}
 .btn-cancel{padding:.68rem 1.3rem;border:1.5px solid var(--gray-200);background:var(--cream);border-radius:12px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;color:var(--text-mid);}
 .btn-cancel:hover{background:var(--maroon-soft);}
-.btn-confirm{display:inline-flex;align-items:center;gap:9px;padding:.68rem 1.3rem;background:linear-gradient(135deg,var(--maroon),var(--maroon-dark));color:var(--gold-bright);border:none;border-radius:12px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;box-shadow:var(--shadow-sm);transition:transform var(--dur-fast) var(--ease-out),box-shadow var(--dur-base) var(--ease-out);}
+.btn-confirm{display:inline-flex;align-items:center;gap:9px;padding:.68rem 1.3rem;background:var(--accent);color:var(--primary);border:none;border-radius:12px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;box-shadow:var(--shadow-sm);transition:transform var(--dur-fast) var(--ease-out),box-shadow var(--dur-base) var(--ease-out);}
 .btn-confirm svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
-.btn-confirm:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);}
+.btn-confirm:hover{background:var(--accent-dark);color:var(--primary-dark);transform:translateY(-1px);box-shadow:var(--shadow-md);}
 
 ::-webkit-scrollbar{width:4px;}
 ::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:rgba(107,0,0,.2);border-radius:4px;}
-::-webkit-scrollbar-thumb:hover{background:rgba(107,0,0,.4);}
+::-webkit-scrollbar-thumb{background:rgba(var(--primary-rgb),.2);border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:rgba(var(--primary-rgb),.4);}
 
 /* ── User agreement modal (once per login) ───────────────────────────────── */
-#agree-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(74,0,0,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:20px;}
+#agree-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(var(--primary-dark-rgb),.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:20px;}
 #agree-overlay.show{display:flex;animation:agreeFade .2s ease;}
 @keyframes agreeFade{from{opacity:0}to{opacity:1}}
 /* Parchment card rather than white, and wider than the old 460px so the five
@@ -1482,12 +1525,12 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    the scroll on .agree-body is kept from the old card — the clauses do not fit a
    short laptop screen, and the buttons must stay reachable without scrolling the
    whole dialog away. */
-.agree-card{background:var(--off-white);border-radius:20px;max-width:720px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 70px rgba(0,0,0,.45),0 0 0 1px rgba(212,160,23,.25);overflow:hidden;animation:agreeIn .28s var(--ease-overshoot);}
+.agree-card{background:var(--off-white);border-radius:20px;max-width:720px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 70px rgba(0,0,0,.45),0 0 0 1px rgba(var(--accent-rgb),.25);overflow:hidden;animation:agreeIn .28s var(--ease-overshoot);}
 @keyframes agreeIn{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
 /* The header now sits ON the parchment instead of a maroon band: seal in a gold
    ring, a vertical hairline, then the title in Cinzel maroon. */
 .agree-head{display:flex;align-items:center;gap:22px;padding:26px 30px 0;flex-shrink:0;}
-.agree-seal{width:104px;height:104px;border-radius:50%;background:var(--white);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 14px rgba(107,0,0,.14);}
+.agree-seal{width:104px;height:104px;border-radius:50%;background:var(--white);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 14px rgba(var(--primary-rgb),.14);}
 .agree-seal img{width:76%;height:76%;object-fit:contain;}
 .agree-head-rule{width:1px;align-self:stretch;margin:10px 0;background:linear-gradient(180deg,transparent,var(--gray-200) 20%,var(--gray-200) 80%,transparent);}
 .agree-head h3{font-family:'Cinzel',serif;font-size:clamp(1.25rem,3.2vw,1.7rem);font-weight:700;color:var(--maroon-dark);letter-spacing:.01em;margin:0;line-height:1.15;}
@@ -1573,12 +1616,12 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 .set-hint{font-size:.7rem;color:var(--ink-mut);line-height:1.45;margin-top:2px;}
 .set-msg{font-size:.74rem;font-weight:700;min-height:1.1em;margin-top:2px;}
 .set-msg.ok{color:var(--role-student);}
-.set-msg.bad{color:#F0928A;}
+.set-msg.bad{color:#B42318;}
 .set-btn{margin-top:8px;padding:.6rem 1rem;border:1px solid var(--gold-dark);border-radius:11px;cursor:pointer;
-  font-family:'Nunito',sans-serif;font-size:.82rem;font-weight:800;color:#2a1500;
-  background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+  font-family:'Nunito',sans-serif;font-size:.82rem;font-weight:800;color:var(--primary);
+  background:var(--accent);
   transition:transform var(--dur-fast) var(--ease-out),filter var(--dur-fast) var(--ease-out);}
-.set-btn:hover{filter:brightness(1.06);}
+.set-btn:hover{background:var(--accent-dark);color:var(--primary-dark);}
 .set-btn:active{transform:scale(.97);transition-duration:.06s;}
 
 /* ── Rail footer: the university crest ──────────────────────────────────────
@@ -1610,12 +1653,12 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    sit directly on brickwork. */
 @media (prefers-reduced-transparency:reduce){
   .icon-rail,.left-panel{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
-  .left-panel{background-color:#2a0a0a;}
-  .icon-rail{background-color:#3a0f0f;}
+  .left-panel{background-color:var(--primary-dark);}
+  .icon-rail{background-color:var(--primary-dark);}
 }
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
-  .left-panel{background-color:#2a0a0a;}
-  .icon-rail{background-color:#3a0f0f;}
+  .left-panel{background-color:var(--primary-dark);}
+  .icon-rail{background-color:var(--primary-dark);}
 }
 
 /* ══ PHONE LAYOUT (≤768px) — single pane ══════════════════════════════════════
@@ -1648,7 +1691,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
     /* clears the iPhone home indicator */
     padding-bottom:calc(4px + env(safe-area-inset-bottom));
     border-radius:0;flex-shrink:0;border-right:none;
-    box-shadow:0 -4px 16px rgba(74,0,0,.18);}
+    box-shadow:0 -4px 16px rgba(var(--primary-dark-rgb),.18);}
   .icon-rail .rail-logo,.icon-rail .rail-avatar,.icon-rail .rail-seal{display:none;}
   /* The active-row indicator bar is a left edge; in a horizontal tab bar it
      belongs under the tab instead. animation:none is required, not cosmetic:
@@ -1661,7 +1704,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
   .icon-rail .rail-btn:hover,.icon-rail .rail-btn:active{transform:none;}
   /* The phone-only rule that hid "New Group" here is gone with the button: the
      rail no longer carries it on any screen size, so there is nothing to hide.
-     The bar is now five tabs for a student (Messages, Global Chat, Notifications,
+     The bar is now five tabs for a student (Messages, CICS Chat, Notifications,
      Feedback, Sign Out) and six for an admin. Feedback and Sign Out stay because
      they have no other entry point in the UI — hiding them would strand the user.
      flex-basis 44px + shrink:0 still holds every tab at the 44px touch minimum.
@@ -1729,19 +1772,17 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 
 <!-- AUTH SCREEN -->
 <div id="auth-screen">
-  <div class="auth-watermarks" aria-hidden="true">
-    <img src="/msu-seal-watermark.png" alt=""/>
-    <img src="/cics-logo.webp" alt=""/>
-  </div>
   <div class="auth-deco"><span></span><span></span><span></span></div>
   <!-- Landing: an ambient network animation (Canvas) behind a hero + the login
        card. The network is the subject made visible — students as nodes,
        messages travelling the links between them, over the campus LAN. -->
   <canvas id="net-canvas" aria-hidden="true"></canvas>
+  <div class="lh-orn" aria-hidden="true"></div>
   <div class="landing-wrap">
     <div class="landing-hero">
-      <p class="lh-eyebrow">Mindanao State University · CICS</p>
+      <p class="lh-eyebrow">CICS LAN Messenger</p>
       <h1 class="lh-title">Stay connected.<br><span class="lh-accent">Even offline.</span></h1>
+      <p class="lh-badge">Mindanao State University · Main Campus</p>
       <p class="lh-sub">MSUkaIP keeps the college talking — messages, files, and live voice — over the campus network. No internet required, encrypted end to end at rest.</p>
       <ul class="lh-feats">
         <li><span class="lh-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>Encrypted at rest</li>
@@ -1837,8 +1878,6 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
       <div class="rail-logo-text">
         <span class="rl-title">MSUkaIP</span>
         <span class="rl-sub">CICS LAN Messenger</span>
-        <span class="rl-sub2">Mindanao State University</span>
-        <span class="rl-sub3">Main Campus</span>
       </div>
     </div>
     <div class="rail-avatar">
@@ -1848,14 +1887,14 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
         <span class="ra-online">Online</span>
       </div>
     </div>
-    <button class="rail-btn active" id="rail-global" onclick="switchNav('global',document.getElementById('nav-global'))" title="Messages">
+    <button class="rail-btn active" id="rail-global" draggable="true" data-reorder onclick="switchNav('global',document.getElementById('nav-global'))" title="Messages">
       <span class="ricon"><svg viewBox="0 0 24 24"><path d="M3 7l9 6 9-6"/><rect x="3" y="5" width="18" height="14" rx="2"/></svg></span>
       <span class="rlabel">Messages</span>
       <span class="rbadge" id="rail-msg-count" style="display:none;">0</span>
     </button>
-    <button class="rail-btn" id="rail-globalchat" onclick="openGlobalChat()" title="Global Chat">
+    <button class="rail-btn" id="rail-globalchat" draggable="true" data-reorder onclick="openGlobalChat()" title="CICS Chat">
       <span class="ricon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span>
-      <span class="rlabel">Global Chat</span>
+      <span class="rlabel">CICS Chat</span>
       <span class="rbadge" id="rail-global-unread" style="display:none;">0</span>
     </button>
     <!-- Groups, Private and New Group used to sit here and were removed as exact
@@ -1865,21 +1904,20 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
          conversation list. The phone CSS had already hidden the New Group row for
          precisely this reason; this applies the same judgement on every screen.
          What is left are the three destinations that have no pill equivalent —
-         switchNav() hides the pill track for Global Chat and Notifications — plus
+         switchNav() hides the pill track for CICS Chat and Notifications — plus
          Admin, Feedback and Sign Out, which have no other entry point at all.
          switchNav() needed no change: its rail lookup is already null-guarded
          (`const rb = ...; if (rb) ...`), so a missing #rail-groups is a no-op. -->
-    <button class="rail-btn notif-btn" id="rail-notif" onclick="switchNav('notif', null)" title="Notifications">
+    <button class="rail-btn notif-btn" id="rail-notif" draggable="true" data-reorder onclick="switchNav('notif', null)" title="Notifications">
       <span class="ricon"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>
       <span class="rlabel">Notifications</span>
-      <span class="notif-dot" id="notif-dot"></span>
       <span class="notif-count" id="notif-count">0</span>
     </button>
-    <button class="rail-btn" id="rail-admin" onclick="window.open('/admin.html','_blank')" title="Admin" style="display:none;">
+    <button class="rail-btn" id="rail-admin" draggable="true" data-reorder onclick="window.open('/admin.html','_blank')" title="Admin" style="display:none;">
       <span class="ricon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.36.36.58.86.6 1.36"/></svg></span>
       <span class="rlabel">Admin</span>
     </button>
-    <button class="rail-btn" id="rail-settings" onclick="switchNav('settings', null)" title="Settings">
+    <button class="rail-btn" id="rail-settings" draggable="true" data-reorder onclick="switchNav('settings', null)" title="Settings">
       <span class="ricon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.36.36.58.86.6 1.36"/></svg></span>
       <span class="rlabel">Settings</span>
     </button>
@@ -1910,20 +1948,12 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
         <div class="left-header-titles">
           <h2>Messages</h2>
         </div>
-        <div class="header-actions">
-          <!-- Compose = jump to the Private tab, where every person you can
-               message is listed. Same switchNav call the rail buttons make. -->
-          <button class="icon-btn" id="compose-btn" title="New message" aria-label="New message" onclick="switchNav('private',document.getElementById('nav-private'))"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
-        </div>
       </div>
       <div class="user-badge" id="user-badge-bar" style="display:none;">
         <div class="user-badge-avatar" id="user-badge-av">?</div>
         <span class="user-badge-name" id="user-badge-name">Loading…</span>
         <span class="user-badge-role" id="user-badge-role"></span>
       </div>
-    </div>
-    <div id="globalchat-top-label" style="display:none;">
-      CICS broadcast channel for everyone
     </div>
     <div class="search-box">
       <div class="search-wrap">
@@ -1933,7 +1963,6 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
     <div class="nav-btns">
       <button class="nav-btn active" id="nav-global" onclick="switchNav('global',this)">All</button>
       <button class="nav-btn" id="nav-groups" onclick="switchNav('groups',this)">Groups</button>
-      <button class="nav-btn" id="nav-private" onclick="switchNav('private',this)">Private</button>
       <button class="nav-btn" id="nav-unread" onclick="switchNav('unread',this)">Unread</button>
     </div>
 
@@ -1965,15 +1994,6 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
            duplication the rail cleanup removed. -->
       <div class="section-label">My Groups</div>
       <div id="groups-list"></div>
-    </div>
-
-    <div id="section-private" class="list-scroll" style="display:none;flex:1;overflow-y:auto;flex-direction:column;">
-      <!-- "Online Users" was accurate when this list was built purely from
-           presence. It now lists conversations (history first, online people
-           merged in), and the TODAY / YESTERDAY / EARLIER dividers label the
-           rows themselves, so the heading names the section instead. -->
-      <div class="section-label">Direct Messages</div>
-      <div id="private-list"></div>
     </div>
 
     <div id="section-settings" class="list-scroll" style="display:none;flex:1;overflow-y:auto;flex-direction:column;">
@@ -2014,7 +2034,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
     <!-- Icon-only, so the accessible name comes from aria-label; title gives the
          same text to mouse users as a tooltip. Reuses openNewGroupModal() — the
          one the rail button and the in-section button both already called. -->
-    <button class="fab-new-group" onclick="openNewGroupModal()" title="New group" aria-label="New group">
+    <button class="fab-new-group" onclick="openNewGroupModal()" title="New group" aria-label="New group" style="display:none;">
       <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
     </button>
   </div>
@@ -2039,7 +2059,6 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
           <span id="chat-subtitle">—</span>
         </div>
         <div class="chat-header-actions">
-          <button class="header-action-btn" id="call-btn"       onclick="startCall()"      title="Voice Call"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.34 1.9.65 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.31 1.85.53 2.81.65A2 2 0 0 1 22 16.92z"/></svg></button>
           <button class="header-action-btn" id="group-call-btn" onclick="startGroupCall()" title="Group Call" style="display:none;"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5"/><path d="M15 19c0-2 2-3.5 4-3.5"/></svg></button>
         </div>
       </div>
@@ -2051,10 +2070,8 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
           <div class="emoji-grid" id="emoji-grid"></div>
           <div class="emoji-tabs" id="emoji-tabs"></div>
         </div>
-        <input type="file" id="file-input" aria-label="Attach a document" accept="image/*,.pdf,.doc,.docx" style="display:none" onchange="uploadFile()"/>
-        <input type="file" id="image-input" aria-label="Attach an image" accept="image/*" style="display:none" onchange="uploadFile()"/>
-        <button class="attach-btn" id="attach-btn" onclick="document.getElementById('file-input').click()" title="Attach file"><svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></button>
-        <button class="attach-btn" id="image-btn" onclick="document.getElementById('image-input').click()" title="Send photo"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></button>
+        <input type="file" id="file-input" aria-label="Attach a file or photo" accept="image/*,.pdf,.doc,.docx" style="display:none" onchange="uploadFile()"/>
+        <button class="attach-btn" id="attach-btn" onclick="document.getElementById('file-input').click()" title="Attach file or photo"><svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></button>
         <!-- The ONLY markup added in this pass: one wrapper so the textarea and
              the emoji button share a single inner pill, which is what makes the
              composer a nested composition rather than a flat row. The emoji
@@ -2221,16 +2238,6 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 <!-- Toast notification container -->
 <div id="toast-container"></div>
 
-<!-- Notifications dropdown panel -->
-<div id="notif-panel" class="notif-panel">
-  <div class="notif-panel-header">
-    <h4><svg class="icn" viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg> Notifications</h4>
-    <button onclick="markAllReadNotifs()">Mark all read</button>
-  </div>
-  <div id="notif-list" class="notif-list">
-    <div class="notif-empty"><span class="nei"><svg viewBox="0 0 24 24" style="width:2rem;height:2rem;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;opacity:.55;"><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0 1 18 8"/><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.33-5"/><line x1="1" y1="1" x2="23" y2="23"/></svg></span>No notifications yet</div>
-  </div>
-</div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 // ══════════════════════════════════════════
@@ -2360,13 +2367,122 @@ async function login() {
     const data = await res.json();
     if (!res.ok) return showAuthMsg('login-msg','error',data.error);
     // Save and launch app — NO PAGE REDIRECT
-    currentUser = { token:data.token, name:data.name, role:data.role, email };
+    currentUser = { token:data.token, name:data.name, role:data.role, email, agreed:data.agreed };
     try{ sessionStorage.setItem('msuka_user', JSON.stringify(currentUser)); }catch{}
     launchApp(currentUser);
   } catch { showAuthMsg('login-msg','error','Cannot connect to server. Is XAMPP running?'); }
 }
 
+// ══════════════════════════════════════════
+//  REORDERABLE RAIL
+// ══════════════════════════════════════════
+// The five middle rail buttons (marked data-reorder) can be dragged into any
+// order; Feedback and Sign Out stay pinned under the spacer. The order is kept
+// per account in localStorage as a list of button ids.
+const navOrderKey = () => 'msuka_nav_order_' + currentUser.email;
+const reorderBtns = () => [...document.querySelectorAll('.rail-btn[data-reorder]')];
+
+function saveNavOrder() {
+  try { localStorage.setItem(navOrderKey(), JSON.stringify(reorderBtns().map(b => b.id))); }
+  catch { /* storage blocked: the order just isn't remembered */ }
+}
+
+function applyNavOrder() {
+  let saved = [];
+  try { saved = JSON.parse(localStorage.getItem(navOrderKey())); } catch { /* nothing saved yet */ }
+  if (!Array.isArray(saved)) saved = [];
+  // Only ids that match a real reorderable button are used, so a stale or edited
+  // value can't inject anything; buttons it doesn't mention keep their place after.
+  const known = reorderBtns();
+  const ordered = [...saved.map(id => known.find(b => b.id === id)).filter(Boolean),
+                   ...known.filter(b => !saved.includes(b.id))];
+  const spacer = document.querySelector('.rail-spacer');
+  ordered.forEach(b => spacer.before(b));
+}
+
+// Put `dragged` before or after `over`, depending on which half of `over` the
+// pointer is in. The rail is a column on desktop and a row on the phone's bottom
+// bar, so compare along whichever axis it flows. Mouse and touch both use this.
+function moveNavBtn(dragged, over, x, y) {
+  if (!over || over === dragged) return;
+  const r = over.getBoundingClientRect();
+  const row = getComputedStyle(over.parentElement).flexDirection === 'row';
+  const after = row ? x > r.left + r.width / 2 : y > r.top + r.height / 2;
+  over.parentElement.insertBefore(dragged, after ? over.nextSibling : over);
+}
+
+const navRail = document.querySelector('.icon-rail');
+let dragBtn = null;      // button being dragged with the mouse
+let touchBtn = null;     // button being dragged by a long-press
+let pressTimer = null, pressX = 0, pressY = 0;
+
+// Mouse: the native HTML5 drag-and-drop events.
+navRail.addEventListener('dragstart', e => {
+  const b = e.target.closest('[data-reorder]');
+  if (!b) return;
+  dragBtn = b;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', b.id); // Firefox won't start a drag without data
+  b.classList.add('dragging');
+});
+navRail.addEventListener('dragover', e => {
+  if (!dragBtn) return;
+  e.preventDefault(); // marks the rail as a valid drop target
+  moveNavBtn(dragBtn, e.target.closest('[data-reorder]'), e.clientX, e.clientY);
+});
+navRail.addEventListener('dragend', () => {
+  if (!dragBtn) return;
+  dragBtn.classList.remove('dragging');
+  dragBtn = null;
+  saveNavOrder();
+});
+
+// Touch: HTML5 drag events don't fire from a finger on most phones, so a
+// 400 ms press-and-hold picks the button up, then the finger moves it. Moving
+// before the hold completes is a normal scroll, so the timer is cancelled.
+navRail.addEventListener('touchstart', e => {
+  const b = e.target.closest('[data-reorder]');
+  if (!b) return;
+  pressX = e.touches[0].clientX; pressY = e.touches[0].clientY;
+  pressTimer = setTimeout(() => { touchBtn = b; b.classList.add('dragging'); }, 400);
+}, { passive: true });
+navRail.addEventListener('touchmove', e => {
+  const t = e.touches[0];
+  if (!touchBtn) {
+    if (Math.abs(t.clientX - pressX) > 10 || Math.abs(t.clientY - pressY) > 10) clearTimeout(pressTimer);
+    return;
+  }
+  e.preventDefault(); // holding a button: move it, don't scroll the page
+  moveNavBtn(touchBtn, document.elementFromPoint(t.clientX, t.clientY)?.closest('[data-reorder]'), t.clientX, t.clientY);
+}, { passive: false });
+const endTouchDrag = e => {
+  clearTimeout(pressTimer);
+  if (!touchBtn) return;
+  touchBtn.classList.remove('dragging');
+  touchBtn = null;
+  saveNavOrder();
+  e.preventDefault(); // the lift of the finger must not also count as a tap
+};
+navRail.addEventListener('touchend', endTouchDrag);
+navRail.addEventListener('touchcancel', endTouchDrag);
+
+// Keyboard: Alt + arrow keys move the focused button, so reordering doesn't
+// need a pointer at all.
+navRail.addEventListener('keydown', e => {
+  const b = e.target.closest('[data-reorder]');
+  const step = { ArrowUp: -1, ArrowLeft: -1, ArrowDown: 1, ArrowRight: 1 }[e.key];
+  if (!b || !e.altKey || !step) return;
+  const visible = reorderBtns().filter(x => x.offsetParent); // Admin is hidden for students
+  const target = visible[visible.indexOf(b) + step];
+  if (!target) return;
+  target.parentElement.insertBefore(b, step > 0 ? target.nextSibling : target);
+  b.focus();
+  saveNavOrder();
+  e.preventDefault();
+});
+
 function launchApp(u){
+  applyNavOrder();
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
   if(u.role==="admin"){document.getElementById("rail-admin").style.display="flex";}
@@ -2419,9 +2535,8 @@ document.getElementById('agree-check')?.addEventListener('change',updateAgreeGat
 window.addEventListener('resize',updateAgreeGate);
 
 function maybeShowAgreement(u){
-  let agreed=false;
-  try{ agreed=sessionStorage.getItem('msuka_agreed')==='1'; }catch{}
-  if(agreed) return;
+  // Accepted once per account: the server says so at login (users.agreed_at).
+  if(u.agreed) return;
   document.getElementById('agree-name').textContent=u.name||'user';
   // Re-lock on every showing, so a second login cannot inherit the first's state.
   const box=document.getElementById('agree-check');
@@ -2436,7 +2551,10 @@ function acceptAgreement(){
   // be able to dismiss the gate either.
   const box=document.getElementById('agree-check');
   if(!box || !box.checked) return;
-  try{ sessionStorage.setItem('msuka_agreed','1'); }catch{}
+  // Record it on the account so no later login asks again; the session copy covers a page reload.
+  fetch('/api/agree',{method:'POST',headers:{Authorization:'Bearer '+currentUser.token}}).catch(()=>{});
+  currentUser.agreed=true;
+  try{ sessionStorage.setItem('msuka_user', JSON.stringify(currentUser)); }catch{}
   document.getElementById('agree-overlay').classList.remove('show');
 }
 function declineAgreement(){
@@ -2564,7 +2682,14 @@ function initSocket() {
   socket = io({ auth:{ token: currentUser.token } });
 
   socket.on('connect', () => { initConversations(); });
-  socket.on('connect_error', err => { alert('Connection error: '+err.message); });
+  socket.on('connect_error', err => {
+    // The server's io.use rejects revoked/expired tokens with these messages.
+    if (/revoked|Invalid token|Auth required/.test(err.message)) return handleAuthExpired();
+    alert('Connection error: '+err.message);
+  });
+  // The server only force-disconnects a socket when it revokes the user's
+  // tokens (logout elsewhere, password change, account removed).
+  socket.on('disconnect', reason => { if (reason === 'io server disconnect') handleAuthExpired(); });
 
   socket.on('users:update', users => {
     // Exclude admin from online users list visible to others
@@ -2575,15 +2700,6 @@ function initSocket() {
       return true;
     });
     renderGlobalOnlineUsers();
-    renderContactsPanel();
-    if (currentNav==='private') renderPrivateList();
-    // Refresh subtitle for any currently-open private chat so status stays live.
-    const activeConv = conversations[activeConvKey];
-    if (activeConv && activeConv.type === 'private') {
-      const isOn = onlineUsers.some(u => u.email === activeConv.email);
-      document.getElementById('chat-subtitle').innerHTML =
-        `<span class="status-dot ${isOn?'online':'offline'}"></span>${isOn?'Online':'Offline'}`;
-    }
   });
 
   socket.on('messages:history', ({key, messages}) => {
@@ -2592,12 +2708,11 @@ function initSocket() {
     if (activeConvKey===key) renderMessages(key);
     if (key==='group_general') updateGlobalPreview();
     else if (key.startsWith('group_')) { if(currentNav==='groups') renderGroupsList(); }
-    else { if(currentNav==='private') renderPrivateList(); }
   });
 
   socket.on('message:new', msg => {
     const key = msg.convKey;
-    if (!conversations[key]) conversations[key]={type:msg.convType||'private',name:msg.senderName||msg.sender,messages:[],unread:0,lastMsg:'',lastTime:''};
+    if (!conversations[key]) conversations[key]={type:msg.convType||'group',name:msg.senderName||msg.sender,messages:[],unread:0,lastMsg:'',lastTime:''};
     conversations[key].messages.push(msg);
     conversations[key].lastMsg  = msg.type==='image'?'📷 Image':msg.type==='file'?'📎 '+msg.file_name:msg.type==='voice'?'🎙️ Voice message':msg.text;
     conversations[key].lastTime = msg.timestamp;
@@ -2615,7 +2730,7 @@ function initSocket() {
         // Browser notification
         showBrowserNotif(`MSUkaIP — ${msg.sender}`, preview, () => openConversation(key));
         playNotifSound();
-        bumpNotifBadge();
+        refreshUnreadIndicator();
         // Add to notifications list (clickable history)
         const icon = msg.type==='announcement'?'📢':msg.type==='image'?'📷':msg.type==='file'?'📎':msg.type==='voice'?'🎙️':'💬';
         pushNotif({ icon, title, msg: preview, convKey: key });
@@ -2627,7 +2742,6 @@ function initSocket() {
     // Refresh correct section
     if (key === 'group_general') updateGlobalPreview();
     else if (key.startsWith('group_')) { if (currentNav==='groups') renderGroupsList(); }
-    else { if (currentNav==='private') renderPrivateList(); }
   });
 
   socket.on('message:deleted', ({ id, convKey }) => {
@@ -2646,7 +2760,6 @@ function initSocket() {
     }
     if (convKey === 'group_general') updateGlobalPreview();
     else if (convKey.startsWith('group_')) { if (currentNav==='groups') renderGroupsList(); }
-    else { if (currentNav==='private') renderPrivateList(); }
   });
 
   socket.on('message:error', ({ msgId, reason }) => {
@@ -2690,7 +2803,7 @@ function initSocket() {
     showToast('call', '📞 Incoming Call', `${from.name} is calling you…`, ()=>acceptCall());
     showBrowserNotif('📞 Incoming Call – MSUkaIP', `${from.name} is calling you`, ()=>acceptCall());
     startRingtone();
-    bumpNotifBadge();
+    refreshUnreadIndicator();
     pushNotif({ icon:'📞', title:'Incoming Call', msg:`${from.name} called you`, convKey:null });
   });
   socket.on('call:ringing', ({callId,targetName})=>{ currentCallId=callId; showCallPanel(`Calling ${targetName}…`); startRingtone(); });
@@ -2709,17 +2822,11 @@ function initSocket() {
   socket.on('room:answer',       async({answer,fromSocketId})=>await groupPeers[fromSocketId]?.setRemoteDescription(answer));
   socket.on('room:ice-candidate',({candidate,fromSocketId})=>groupPeers[fromSocketId]?.addIceCandidate(candidate));
 
-  // One row per existing conversation, newest message only — this is what makes
-  // the Private list show real history instead of only whoever is online.
+  // One row per existing conversation, newest message only. A group must
+  // already exist (groups:get names it); skip rather than invent a
+  // conversation titled after its own key.
   socket.on('conversations:summary', list => {
     list.forEach(c => {
-      // A private thread may be entirely new to this client, so create it. A
-      // group must already exist (groups:get names it); skip rather than invent
-      // a conversation titled after its own key.
-      if (c.peer && !conversations[c.convKey]) {
-        conversations[c.convKey] = { type:'private', email:c.peer.email, name:c.peer.name,
-                                     messages:[], unread:0, lastMsg:'', lastTime:'' };
-      }
       const conv = conversations[c.convKey];
       if (!conv) return;
       // Same preview wording the live message:new handler uses, so a seeded row
@@ -2730,7 +2837,6 @@ function initSocket() {
                     : c.lastText;
       conv.lastTime = c.lastTime;
     });
-    renderPrivateList();
     renderGroupsList();
     renderAllList();
     updateGlobalPreview();
@@ -2738,7 +2844,7 @@ function initSocket() {
 }
 
 function initConversations() {
-  conversations['group_general']={type:'group',id:'general',name:'Global Chat',messages:[],unread:0,lastMsg:'CICS broadcast channel — everyone',lastTime:''};
+  conversations['group_general']={type:'group',id:'general',name:'CICS Chat',messages:[],unread:0,lastMsg:'CICS broadcast channel — everyone',lastTime:''};
   socket.emit('groups:get');
   // Asked for AFTER groups:get so the group names are already in place when the
   // summaries land — the summary only carries each conversation's last message,
@@ -2755,7 +2861,7 @@ let currentNav = 'global';
 
 function openGlobalChat() {
   // Mirror the Notifications pattern: rail click swaps the left panel to a
-  // dedicated Global Chat view, then auto-opens the channel on the right.
+  // dedicated CICS Chat view, then auto-opens the channel on the right.
   switchNav('globalchat', null);
   openConversation('group_general');
 }
@@ -2789,6 +2895,10 @@ async function saveProfile(e){
   }catch{ setMsg('profile-msg','Server error',false); }
 }
 
+// True while a password change is in flight: the server revokes our socket
+// before its HTTP reply arrives, and handleAuthExpired should then say why.
+let passwordChanging = false;
+
 async function changePassword(e){
   e.preventDefault();
   const cur = document.getElementById('set-cur').value;
@@ -2800,19 +2910,20 @@ async function changePassword(e){
   if (next.length < 8)      return setMsg('password-msg','New password must be at least 8 characters',false);
   if (next !== confirm2)    return setMsg('password-msg','New passwords do not match',false);
   if (next === cur)         return setMsg('password-msg','New password must be different',false);
+  passwordChanging = true;
   try{
     const res = await fetch('/api/user/password',{ method:'PUT',
       headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${currentUser.token}` },
       body: JSON.stringify({ currentPassword: cur, newPassword: next }) });
     const data = await res.json();
-    if (!res.ok) return setMsg('password-msg', data.error || 'Could not change password', false);
+    if (!res.ok) { passwordChanging = false; return setMsg('password-msg', data.error || 'Could not change password', false); }
     // The server revoked every token including this one, so staying on the
     // page would just fail the next request. Say so, then sign out.
     setMsg('password-msg','Password changed — signing you out…',true);
     document.getElementById('set-cur').value = document.getElementById('set-new').value =
       document.getElementById('set-confirm').value = '';
     setTimeout(logout, 1400);
-  }catch{ setMsg('password-msg','Server error',false); }
+  }catch{ passwordChanging = false; setMsg('password-msg','Server error',false); }
 }
 
 let unreadOnly = false;
@@ -2841,7 +2952,7 @@ function switchNav(name, btn) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   const pill = document.getElementById(pillId) || btn;
   if (pill) pill.classList.add('active');
-  // Global Chat and Notifications are views, not list filters — there is no
+  // CICS Chat and Notifications are views, not list filters — there is no
   // pill for them. Hiding the track is honest; leaving it up with nothing
   // selected reads as a broken control.
   const navTrack = document.querySelector('.nav-btns');
@@ -2855,63 +2966,33 @@ function switchNav(name, btn) {
   // section and had its last rows clipped by overflow:hidden.
   document.getElementById('section-global').style.display         = name === 'global'      ? 'flex'  : 'none';
   document.getElementById('section-groups').style.display         = name === 'groups'      ? 'flex'  : 'none';
-  document.getElementById('section-private').style.display        = name === 'private'     ? 'flex'  : 'none';
   document.getElementById('section-notif').style.display          = name === 'notif'       ? 'flex'  : 'none';
   document.getElementById('section-settings').style.display       = name === 'settings'    ? 'flex'  : 'none';
   // Settings reads the signed-in user's own record, so fill it on open rather
   // than at login — the name can have changed in another tab.
   if (name === 'settings') { const n = document.getElementById('set-name'); if (n && currentUser) n.value = currentUser.name || ''; }
-  // The floating + creates a group, which only means anything while a
-  // conversation list is open. It is a sibling of all the sections, so it used
-  // to sit over Notifications too; on Settings it physically covered the
-  // Change password button.
+  // The floating + creates a group, so it only shows on the Groups list. On
+  // All/Unread it was redundant (groups are made from Groups) and covered the
+  // last conversation row; on Settings it covered Change password.
   const fab = document.querySelector('.fab-new-group');
-  if (fab) fab.style.display = ['global','groups','private'].includes(name) ? '' : 'none';
+  if (fab) fab.style.display = name === 'groups' ? '' : 'none';
   document.getElementById('section-globalchat').style.display     = name === 'globalchat'  ? 'flex'  : 'none';
 
   // Rail active state
   document.getElementById('rail-globalchat')?.classList.toggle('active', name === 'globalchat');
 
-  // Top label for Global Chat view
-  const topLabel = document.getElementById('globalchat-top-label');
-  if (topLabel) topLabel.style.display = name === 'globalchat' ? 'block' : 'none';
-
   // Update the left-panel title
   const h2 = document.querySelector('.left-header-titles h2');
   if (h2) {
     h2.textContent = name === 'groups'     ? 'Groups'
-                   : name === 'private'    ? 'Private'
                    : name === 'notif'      ? 'Notifications'
-                   : name === 'globalchat' ? 'Global Chat'
+                   : name === 'globalchat' ? 'CICS Chat'
                    : 'Messages';
   }
 
   if (name === 'global')  renderAllList();
   if (name === 'groups')  renderGroupsList();
-  if (name === 'private') renderPrivateList();
   if (name === 'notif')   renderNotifList();
-}
-
-function renderContactsPanel() {
-  const list = document.getElementById('contacts-list');
-  const count = document.getElementById('contacts-count');
-  if (!list) return;
-  const visible = onlineUsers.filter(u => currentUser?.role === 'admin' ? true : u.role !== 'admin');
-  count.textContent = visible.length;
-  if (!visible.length) { list.innerHTML = '<div class="contacts-empty">No one online yet</div>'; return; }
-  list.innerHTML = visible.map(u => {
-    const color = colorFor(u.name);
-    return `<div class="contact-item" onclick="openConversation('private_${u.email}')">
-      <div class="conv-avatar">
-        <div class="avatar-circle ${color}" style="width:38px;height:38px;font-size:.82rem;">${initials(u.name)}</div>
-        <div class="online-badge"></div>
-      </div>
-      <div class="contact-info">
-        <div class="contact-name">${u.name}</div>
-        <div class="contact-status"><span class="status-dot online"></span>Active now</div>
-      </div>
-    </div>`;
-  }).join('');
 }
 
 function filterConversations() {
@@ -2919,10 +3000,9 @@ function filterConversations() {
   // just the online strip.
   if (currentNav === 'global')  renderAllList();
   if (currentNav === 'groups')  renderGroupsList();
-  if (currentNav === 'private') renderPrivateList();
 }
 
-// ── Render online users under Global Chat ─────────────────────────────────────
+// ── Render online users under CICS Chat ─────────────────────────────────────
 function renderGlobalOnlineUsers() {
   const list   = document.getElementById('global-online-list');
   const list2  = document.getElementById('globalchat-online-list');
@@ -2950,21 +3030,20 @@ function renderGlobalOnlineUsers() {
   // treatment, and it costs a fraction of the height of the full rows so more
   // conversations stay above the fold. Each avatar is a real <button> carrying
   // the person's name in aria-label and title, because a bare circle would give
-  // a screen-reader user and a mouse user nothing to identify. It calls the same
-  // openPrivateFromGlobal() the full row does, so behaviour is unchanged.
+  // a screen-reader user and a mouse user nothing to identify. It is display
+  // only: calling happens from the full rows in the CICS Chat panel.
   if (list) {
     list.innerHTML = `<div class="online-strip">` + visibleUsers.map(u => `
-      <button type="button" class="os-item" title="${esc(u.name)} · ${esc(u.role)}"
-              aria-label="Chat with ${esc(u.name)}, ${esc(u.role)}, online"
-              onclick="openPrivateFromGlobal('${u.email}','${esc(u.name)}','${u.role}')">
+      <div class="os-item" title="${esc(u.name)} · ${esc(u.role)}"
+           aria-label="${esc(u.name)}, ${esc(u.role)}, online">
         <span class="avatar-circle ${colorFor(u.name)}">${esc(initials(u.name))}</span>
         <span class="online-badge"></span>
-      </button>`).join('') + `</div>`;
+      </div>`).join('') + `</div>`;
   }
 
-  // The Global Chat panel keeps the FULL rows. There the online list is the
+  // The CICS Chat panel keeps the FULL rows. There the online list is the
   // panel's main content rather than a header strip, so names, roles and the
-  // explicit "Chat" button are worth the height — reducing it to bare circles
+  // explicit "Call" button are worth the height — reducing it to bare circles
   // would strip that view of everything it shows.
   if (!list2) return;
   const html = visibleUsers.map(u => {
@@ -2973,7 +3052,7 @@ function renderGlobalOnlineUsers() {
     const roleClass = u.role === 'faculty' ? 'faculty' : 'student';
     const roleLabel = u.role === 'faculty' ? '🎓 Faculty' : '🎓 Student';
     return `
-      <div class="user-card" onclick="openPrivateFromGlobal('${u.email}','${u.name}','${u.role}')">
+      <div class="user-card">
         <div class="uc-avatar">
           <div class="avatar-circle ${colorFor(u.name)}">${initials(u.name)}</div>
           <div class="online-badge"></div>
@@ -2982,9 +3061,9 @@ function renderGlobalOnlineUsers() {
           <div class="uc-name">${u.name}</div>
           <div class="uc-role ${roleClass}">${roleLabel}</div>
         </div>
-        <button class="btn-chat-pill" onclick="event.stopPropagation();openPrivateFromGlobal('${u.email}','${u.name}','${u.role}')">
-          <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-          Chat
+        <button class="btn-chat-pill" aria-label="Call ${esc(u.name)}" onclick="startCall('${u.email}')">
+          <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.34 1.9.65 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.31 1.85.53 2.81.65A2 2 0 0 1 22 16.92z"/></svg>
+          Call
         </button>
       </div>`;
   }).join('');
@@ -2996,7 +3075,6 @@ function renderGlobalOnlineUsers() {
 // deliberate instead of like a failed load. Icons are inline SVG from the same
 // stroke set as the rail, since nothing may be fetched on an offline LAN.
 const EMPTY_ICONS = {
-  private:'<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a6 6 0 0 1 12 0v2"/>',
   groups :'<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5"/><path d="M15 19c0-2 2-3.5 4-3.5"/>',
   search :'<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
   online :'<circle cx="12" cy="12" r="9"/><path d="M8 12h8"/>',
@@ -3009,13 +3087,6 @@ function emptyState(icon, title, hint) {
   </div>`;
 }
 
-function openPrivateFromGlobal(email, name, role) {
-  // Switch to private tab and open chat
-  const key = 'private_' + email;
-  if (!conversations[key]) conversations[key] = { type:'private', email, name, messages:[], unread:0, lastMsg:'', lastTime:'' };
-  switchNav('private', document.getElementById('nav-private'));
-  openConversation(key);
-}
 function groupRows(search) {
   const groups = Object.entries(conversations)
     .filter(([key, conv]) => conv.type === 'group' && key !== 'group_general')
@@ -3060,7 +3131,7 @@ function renderGroupsList() {
              : emptyState('groups', 'No groups yet', 'Use + New Group in the sidebar to start one.');
 }
 
-// ── Render Private list ───────────────────────────────────────────────────────
+// ── Conversation list helpers ─────────────────────────────────────────────────
 // Which date heading a conversation belongs under. Timestamps arrive either as
 // the database's localtime 'YYYY-MM-DD HH:MM:SS' or as an ISO string from a
 // live message, and `new Date()` parses both. Comparison is by calendar day,
@@ -3076,7 +3147,7 @@ function dateBucket(ts) {
 }
 
 // Renders rows already sorted newest-first, inserting a divider each time the
-// bucket changes. Shared by the Private and Groups lists so both group the same
+// bucket changes. Shared by the Groups and All lists so both group the same
 // way from one place.
 function withDateGroups(rows) {
   let current = null;
@@ -3089,98 +3160,24 @@ function withDateGroups(rows) {
 }
 
 // Row builders return {lastTime, html} so the same rows can be poured into the
-// Private tab, the Groups tab, or the combined All tab without three copies of
-// the markup. withDateGroups() then adds the dividers wherever they are used.
-function privateRows(search) {
-  // The list is the UNION of two sources: people with existing history (from
-  // conversations:summary) and people currently online. Presence alone used to
-  // drive it, which meant a thread vanished the moment the other person logged
-  // off. Keyed by email so someone who is both appears once.
-  const byEmail = new Map();
-  Object.entries(conversations).forEach(([key, conv]) => {
-    if (conv.type !== 'private' || !conv.email) return;
-    byEmail.set(conv.email, { key, name:conv.name, email:conv.email, role:conv.role || '', conv });
-  });
-  onlineUsers.forEach(u => {
-    const key = 'private_' + u.email;
-    if (!byEmail.has(u.email)) byEmail.set(u.email, { key, name:u.name, email:u.email, role:u.role, conv:conversations[key] || {} });
-    else byEmail.get(u.email).role = u.role;
-  });
-
-  const onlineEmails = new Set(onlineUsers.map(u => u.email));
-  const entries = [...byEmail.values()]
-    .filter(e => !search || e.name.toLowerCase().includes(search))
-    // Newest conversation first; anyone with no history at all sinks to the end.
-    .sort((a, b) => String(b.conv.lastTime || '').localeCompare(String(a.conv.lastTime || '')));
-
-  return entries.map(e => {
-    const conv    = e.conv || {};
-    const isOn    = onlineEmails.has(e.email);
-    const time    = conv.lastTime ? formatTime(conv.lastTime) : '';
-    const unread  = conv.unread > 0 ? `<div class="unread-badge">${conv.unread}</div>` : '';
-    // Presence line only when there is no history to preview, so a real last
-    // message always wins the preview slot.
-    const preview = conv.lastMsg
-      ? `<div class="conv-preview">${esc(conv.lastMsg)}</div>`
-      : `<div class="conv-preview presence">${isOn ? '● Online' : '○ Offline'}${e.role ? ' · ' + esc(e.role) : ''}</div>`;
-    return { lastTime: conv.lastTime, unread: Number(conv.unread) || 0, html: `
-      <div class="conv-item ${activeConvKey === e.key ? 'active' : ''} ${conv.unread > 0 ? 'unread' : ''}" onclick="openConversation('${e.key}')">
-        <div class="conv-avatar">
-          <div class="avatar-circle ${colorFor(e.name)}">${esc(initials(e.name))}</div>
-          ${isOn ? '<div class="online-badge"></div>' : ''}
-        </div>
-        <div class="conv-info">
-          <div class="conv-name">${esc(e.name)}</div>
-          ${preview}
-        </div>
-        <div class="conv-meta">
-          <span class="conv-time">${time}</span>
-          ${unread}
-        </div>
-      </div>` };
-  });
-}
-
-function renderPrivateList() {
-  const search = document.getElementById('search-input').value.toLowerCase();
-  const list   = document.getElementById('private-list');
-  if (!list) return;
-  const rows = privateRows(search);
-  list.innerHTML = rows.length ? withDateGroups(rows)
-    : search ? emptyState('search', 'No matches', 'No one here matches “' + esc(search) + '”.')
-             : emptyState('private', 'No conversations yet', 'Start one from Global Chat — tap anyone who is online.');
-}
-
-// The All tab: every conversation in one place, direct messages and groups
-// interleaved strictly by recency, which is what the design shows.
+// Groups tab or the All tab without two copies of the markup. withDateGroups() then adds the dividers wherever they are used.
+// The All tab: every group conversation in one place, newest first.
 function renderAllList() {
   const search = document.getElementById('search-input').value.toLowerCase();
   const list   = document.getElementById('all-list');
   if (!list) return;
-  let rows = [...privateRows(search), ...groupRows(search)]
+  let rows = groupRows(search)
     .sort((a, b) => String(b.lastTime || '').localeCompare(String(a.lastTime || '')));
   if (unreadOnly) rows = rows.filter(r => r.unread > 0);
   list.innerHTML = rows.length ? withDateGroups(rows)
     : unreadOnly ? emptyState('search', 'Nothing unread', 'You are all caught up.')
     : search ? emptyState('search', 'No matches', 'Nothing here matches “' + esc(search) + '”.')
-             : emptyState('private', 'No conversations yet', 'Say hello in Global Chat, or message someone who is online.');
+             : emptyState('groups', 'No conversations yet', 'Say hello in CICS Chat, or create a group with the + button.');
 }
 
-// ── Update global chat preview ────────────────────────────────────────────────
+// ── Refresh the CICS Chat side panel after a general-chat change ─────────────
 function updateGlobalPreview() {
-  const conv = conversations['group_general'];
-  if (!conv) return;
-  const previewEl = document.getElementById('global-preview');
-  const timeEl    = document.getElementById('global-time');
-  const unreadEl  = document.getElementById('global-unread');
-  const itemEl    = document.getElementById('global-chat-item');
-  if (previewEl && conv.lastMsg) previewEl.textContent = conv.lastMsg;
-  if (timeEl && conv.lastTime)   timeEl.textContent    = formatTime(conv.lastTime);
-  if (unreadEl) {
-    if (conv.unread > 0) { unreadEl.textContent = conv.unread; unreadEl.style.display = 'block'; }
-    else unreadEl.style.display = 'none';
-  }
-  if (itemEl) itemEl.classList.toggle('active', activeConvKey === 'group_general');
+  if (!conversations['group_general']) return;
   renderGlobalOnlineUsers();
 }
 
@@ -3236,11 +3233,9 @@ function openConversation(key) {
   {
     const sub=document.getElementById('chat-subtitle');
     if(isGlobal){ sub.textContent='Everyone in CICS is here'; }
-    else if(isGroup){ sub.textContent=`Group chat · ${conv.memberCount||'multiple'} members`; }
-    else { const isOn=onlineUsers.some(u=>u.email===conv.email); sub.innerHTML=`<span class="status-dot ${isOn?'online':'offline'}"></span>${isOn?'Online':'Offline'}`; }
+    else { sub.textContent=`Group chat · ${conv.memberCount||'multiple'} members`; }
   }
-  document.getElementById('call-btn').style.display=isGroup?'none':'flex';
-  // Global Chat is a group by key but is not callable — see the room:join
+  // CICS Chat is a group by key but is not callable — see the room:join
   // guard in server.js for why (mesh WebRTC does not scale to everyone).
   document.getElementById('group-call-btn').style.display=(isGroup && !isGlobal)?'flex':'none';
   document.getElementById('empty-state').style.display='none';
@@ -3249,8 +3244,7 @@ function openConversation(key) {
   renderMessages(key);
   // Refresh the correct section
   if (isGlobal) updateGlobalPreview();
-  else if (isGroup) renderGroupsList();
-  else renderPrivateList();
+  else renderGroupsList();
   document.getElementById('msg-input').focus();
 }
 
@@ -3431,8 +3425,7 @@ function pickEmoji(e){
 function insertEmoji(){toggleEmojiPicker();}
 async function uploadFile() {
   const fileInput=document.getElementById('file-input');
-  const imgInput=document.getElementById('image-input');
-  const input = (fileInput.files[0] ? fileInput : imgInput);
+  const input=fileInput;
   const file=input.files[0];
   if(!file||!activeConvKey)return;
   if(file.size>5*1024*1024){alert('Max file size is 5MB!');input.value='';return;}
@@ -3510,9 +3503,11 @@ async function getMic(){
     // HTTPS listener failed to start. Offer the secure URL as a tap target
     // rather than alert(): iOS adds a "Suppress dialogs" button to repeated
     // alerts, and once a tester taps it every later warning is silently lost.
+    // The HTTPS port lives in .env (HTTPS_PORT); ask the server instead of hardcoding it.
+    const {httpsPort}=await fetch('/api/config').then(r=>r.json()).catch(()=>({httpsPort:3443}));
     showToast('voice','Voice needs a secure connection',
-      `Tap to reopen at https://${location.hostname}:3443 and accept the certificate once.`,
-      ()=>{ location.href=`https://${location.hostname}:3443${location.pathname}`; });
+      `Tap to reopen at https://${location.hostname}:${httpsPort} and accept the certificate once.`,
+      ()=>{ location.href=`https://${location.hostname}:${httpsPort}${location.pathname}`; });
     return null;
   }
   try{
@@ -3524,10 +3519,8 @@ async function getMic(){
     return null;
   }
 }
-async function startCall(){
-  const conv=conversations[activeConvKey];
-  if(!conv||conv.type!=='private')return;
-  const target=onlineUsers.find(u=>u.email===conv.email);
+async function startCall(email){
+  const target=onlineUsers.find(u=>u.email===email);
   if(!target)return alert('User is offline');
   localStream=await getMic();
   if(!localStream)return;
@@ -3567,7 +3560,7 @@ async function startGroupCall(){
   // joins the same room (a random per-caller id could never be shared, so the
   // old scheme left each caller alone). The server only lets group members join.
   if(!activeConvKey || !activeConvKey.startsWith('group_')){ alert('Open a group chat to start a group call.'); return; }
-  if(activeConvKey === 'group_general'){ alert('Global Chat does not support group calls. Start one from a group chat.'); return; }
+  if(activeConvKey === 'group_general'){ alert('CICS Chat does not support group calls. Start one from a group chat.'); return; }
   groupStream=await getMic();
   if(!groupStream)return;
   currentRoomId=activeConvKey;
@@ -3811,10 +3804,8 @@ function renderNotifList() {
         </div>`).join('')
     : '<div class="notif-empty"><span class="nei">🔕</span>No notifications yet</div>';
 
-  const inPanel   = document.getElementById('notif-list');
-  const inSection = document.getElementById('notif-section-list');
-  if (inPanel)   inPanel.innerHTML   = html;
-  if (inSection) inSection.innerHTML = html;
+  const list = document.getElementById('notif-section-list');
+  if (list) list.innerHTML = html;
 }
 
 function escapeHTML(s) {
@@ -3829,7 +3820,6 @@ function onNotifClick(id) {
   refreshUnreadIndicator();
   renderNotifList();
   if (n.convKey) openConversation(n.convKey);
-  document.getElementById('notif-panel').classList.remove('show');
 }
 
 function markAllReadNotifs() {
@@ -3841,61 +3831,42 @@ function markAllReadNotifs() {
 
 function refreshUnreadIndicator() {
   unreadCount = notifList.filter(n => !n.read).length;
-  // Messenger-style numeric badge; falls back to the small dot when there are
-  // no unread (so the bell still looks like a bell, never blank).
-  const dot   = document.getElementById('notif-dot');
+  // Messenger-style numeric badge, hidden when there are no unread.
   const count = document.getElementById('notif-count');
   if (count) {
     count.textContent = unreadCount > 99 ? '99+' : String(unreadCount);
     count.classList.toggle('show', unreadCount > 0);
   }
-  if (dot) dot.classList.remove('show'); // hide the small dot; the number replaces it
   document.title = unreadCount > 0
     ? `(${unreadCount}) MSUkaIP – CICS Messenger`
     : 'MSUkaIP – CICS Messenger';
 }
 
-function toggleNotifPanel(e) {
-  e?.stopPropagation();
-  const p = document.getElementById('notif-panel');
-  p.classList.toggle('show');
+// Session revoked server-side: sign out locally and say why on the login card.
+function handleAuthExpired(){
+  if (!currentUser) return;
+  const afterPasswordChange = passwordChanging; // logout() resets the flag
+  logout({ skipServer:true });
+  if (afterPasswordChange) showAuthMsg('login-msg','success','Password changed. Sign in with your new password.');
+  else showAuthMsg('login-msg','error','You were signed out. Please sign in again.');
 }
 
-// Outside click to close
-document.addEventListener('click', e => {
-  const p = document.getElementById('notif-panel');
-  if (!p || !p.classList.contains('show')) return;
-  if (p.contains(e.target)) return;
-  if (e.target.closest('.notif-btn')) return;
-  p.classList.remove('show');
-});
-
-function bumpNotifBadge() {
-  // Counter is the source of truth; this just refreshes the visual chrome.
-  refreshUnreadIndicator();
-}
-
-function clearNotifications() {
-  notifList = [];
-  unreadCount = 0;
-  const dot = document.getElementById('notif-dot');
-  if (dot) dot.classList.remove('show');
-  document.title = 'MSUkaIP – CICS Messenger';
-  renderNotifList();
-}
-
-function logout(){
-  if(socket)socket.disconnect();
+function logout({ skipServer=false }={}){
+  if(!currentUser) return; // already signed out (e.g. revoked, then the password-change timer fires)
+  const token=currentUser.token;
+  passwordChanging=false;
+  // Drop listeners first so the server's revoke-disconnect doesn't re-enter here.
+  if(socket){ socket.removeAllListeners(); socket.disconnect(); }
+  // Tell the server to revoke this token (bumps token_version). keepalive lets the
+  // request finish even as the page changes; failure is ignored so offline logout still works.
+  if(!skipServer) fetch('/api/logout',{method:'POST',keepalive:true,headers:{Authorization:'Bearer '+token}}).catch(()=>{});
   // Persist notifications to this user's storage before wiping the in-memory copy;
   // they'll be reloaded on next login for the same account.
   saveNotifList();
-  try{ sessionStorage.removeItem('msuka_user'); sessionStorage.removeItem('msuka_agreed'); }catch{}
+  try{ sessionStorage.removeItem('msuka_user'); }catch{}
   currentUser=null; conversations={}; onlineUsers=[]; activeConvKey=null; currentNav='global';
   notifList = [];
-  unreadCount = 0;
-  const dot = document.getElementById('notif-dot');
-  if (dot) dot.classList.remove('show');
-  document.title = 'MSUkaIP – CICS Messenger';
+  refreshUnreadIndicator(); // zeroes the count, hides the badge, resets the title
   renderNotifList();
   document.getElementById('app').style.display='none';
   document.getElementById('auth-screen').style.display='flex';
@@ -3903,7 +3874,6 @@ function logout(){
   document.getElementById('chat-panel').classList.remove('active');
   document.getElementById('empty-state').style.display='flex';
   document.getElementById('groups-list').innerHTML='';
-  document.getElementById('private-list').innerHTML='';
   document.getElementById('toast-container').innerHTML='';
   switchNav('global', document.getElementById('nav-global'));
 }
@@ -3920,7 +3890,7 @@ function logout(){
   if(!canvas || !canvas.getContext) return;
   const ctx=canvas.getContext('2d');
   const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const GOLD='212,160,23', LIGHT='255,240,200', LINK=140;   // LINK = px under which two nodes join
+  const GOLD='232,160,48', LIGHT='255,240,200', LINK=140;   // LINK = px under which two nodes join
   const dpr=Math.min(window.devicePixelRatio||1,2);
   let w=0,h=0, nodes=[], pulses=[], raf=null;
   const rnd=(a,b)=>a+Math.random()*(b-a);
