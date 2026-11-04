@@ -32,7 +32,9 @@ async function studentLogin(page) {
 // the demo student's one-time prompt. Clear it to see the first-login state again.
 function resetAgreement() {
   const { DatabaseSync } = require('node:sqlite');
-  const dbh = new DatabaseSync(require('path').join(__dirname, '..', 'msukaip.db'));
+  // Same path rule as backend/db.js, so a test server started with SQLITE_PATH
+  // (an isolated copy) is the one reset — never the live msukaip.db by accident.
+  const dbh = new DatabaseSync(process.env.SQLITE_PATH || require('path').join(__dirname, '..', 'msukaip.db'));
   dbh.prepare('UPDATE users SET agreed_at=NULL WHERE email=?').run(USER_EMAIL);
   dbh.close();
 }
@@ -101,7 +103,7 @@ test.describe('1. Authentication Tests', () => {
     // The landing hero is the page's single <h1>; the MSUkaIP brand label sits
     // in the sign-in card beside it.
     await expect(page.locator('h1')).toBeVisible();
-    await expect(page.locator('.auth-brand-name')).toContainText('MSUkaIP');
+    await expect(page.locator('.auth-logo')).toHaveAttribute('alt', 'MSUkaIP');
     await expect(page.locator('#login-email')).toBeVisible();
     await expect(page.locator('#login-password')).toBeVisible();
     console.log('✅ Login page loaded successfully');
@@ -361,7 +363,7 @@ test.describe('2. Messenger UI Tests', () => {
     await expect(page.locator('#rail-globalchat')).toBeVisible();
     await expect(page.locator('#rail-notif')).toBeVisible();
     await expect(page.locator('#nav-groups')).toBeVisible();
-    await expect(page.locator('#nav-private')).toHaveCount(0); // private chat was removed
+    await expect(page.locator('#nav-private')).toBeVisible(); // private chat restored 2026-11-04
     console.log('✅ Rail destinations + list filter pills visible');
   });
 
@@ -572,18 +574,20 @@ test.describe('2. Messenger UI Tests', () => {
     console.log('✅ CICS Chat group call hidden in UI and refused by the server');
   });
 
-  test('2.14b The server refuses a private_* conversation', async ({ page }) => {
-    // Private chat was removed from the UI; a stale or hand-made client must
-    // still get nothing back, even for a key whose rows remain in the database.
-    const history = await page.evaluate(() => new Promise(resolve => {
+  test('2.14b The server refuses someone else\'s private conversation', async ({ page }) => {
+    // Private chat is back, but only between the two participants. Asking for
+    // the stored (canonical, "a__b") key of a pair this user is not part of
+    // must return nothing, even though those rows exist in the database.
+    const otherPair = 'private_kisha@cics.msu.edu__other@cics.msu.edu';
+    const history = await page.evaluate((key) => new Promise(resolve => {
       /* eslint-disable no-undef -- evaluated in the browser page context */
       const t = setTimeout(() => resolve('(no reply)'), 4000);
       socket.once('messages:history', ({ key, messages }) => { clearTimeout(t); resolve({ key, count: messages.length }); });
-      socket.emit('messages:get', { key: 'private_kisha@cics.msu.edu' });
+      socket.emit('messages:get', { key });
       /* eslint-enable no-undef */
-    }));
-    expect(history).toEqual({ key: 'private_kisha@cics.msu.edu', count: 0 });
-    console.log('✅ private_* history refused by the server');
+    }), otherPair);
+    expect(history).toEqual({ key: otherPair, count: 0 });
+    console.log('✅ another pair\'s private history refused by the server');
   });
 
   // The five middle rail buttons can be reordered and the order is remembered

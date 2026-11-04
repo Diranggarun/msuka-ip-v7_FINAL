@@ -19,7 +19,7 @@ const out = path.join(__dirname, '..', 'site');
 
 // Every file landing.html (and its manifest/font CSS) refers to.
 const assets = ['manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png',
-  'icon-maskable-512.png', 'msukaip-logo.png', 'msu-seal.png', 'cics-mark.webp',
+  'icon-maskable-512.png', 'msukaip-logo.png', 'msukaip-logo-horizontal.svg', 'msukaip-mark.svg', 'msu-seal.png', 'cics-mark.webp',
   'nav-okir.png', 'hero-emblem.webp', 'fonts'];
 
 fs.rmSync(out, { recursive: true, force: true });

@@ -28,6 +28,10 @@ Thumbs.db
 # Claude Code — local state stays ignored; project agents are shared config
 .claude/*
 !.claude/agents/
+# Project-written skills are shared; third-party ones (symlinks) stay ignored
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/paper-sync/
 memory/
 
 # Third-party agent skills installed via `npx skills add`. Downloaded content,
@@ -52,3 +56,6 @@ msuka-ip-v7/msukaip.db
 msuka-ip-v7/msukaip.db-shm
 msuka-ip-v7/msukaip.db-wal
 msuka-ip-v7/backups/
+
+# Private Claude notes (never pushed)
+CLAUDE.local.md

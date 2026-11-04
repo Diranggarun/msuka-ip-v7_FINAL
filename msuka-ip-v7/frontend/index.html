@@ -13,6 +13,7 @@
        does not sit under a white strip. -->
   <link rel="manifest" href="/manifest.webmanifest"/>
   <meta name="theme-color" content="#721922"/>
+  <link rel="icon" type="image/svg+xml" href="/msukaip-mark.svg"/>
   <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png"/>
   <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -106,11 +107,20 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    (1085px in an 800px window): the excess was clipped by body, and its own
    scroll range was only content-minus-its-own-height — 100px — so a swipe moved
    barely at all and then stopped dead. Pinning it to the viewport gives it the
-   full range. dvh first for mobile, where the URL bar makes vh overshoot. */
-#auth-screen{display:flex;align-items:center;justify-content:center;height:100vh;height:100dvh;padding:clamp(20px,4vw,48px);background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400' fill='none' stroke='white' stroke-opacity='.13' stroke-width='2'%3E%3Ccircle cx='400' cy='0' r='60'/%3E%3Ccircle cx='400' cy='0' r='100'/%3E%3Ccircle cx='400' cy='0' r='140'/%3E%3Ccircle cx='400' cy='0' r='180'/%3E%3Ccircle cx='400' cy='0' r='220'/%3E%3Ccircle cx='400' cy='0' r='260'/%3E%3Ccircle cx='400' cy='0' r='300'/%3E%3Ccircle cx='400' cy='0' r='340'/%3E%3Ccircle cx='400' cy='0' r='380'/%3E%3C/svg%3E") right top / min(520px,60vw) no-repeat,url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400' fill='none' stroke='white' stroke-opacity='.13' stroke-width='2'%3E%3Ccircle cx='0' cy='400' r='60'/%3E%3Ccircle cx='0' cy='400' r='100'/%3E%3Ccircle cx='0' cy='400' r='140'/%3E%3Ccircle cx='0' cy='400' r='180'/%3E%3Ccircle cx='0' cy='400' r='220'/%3E%3Ccircle cx='0' cy='400' r='260'/%3E%3Ccircle cx='0' cy='400' r='300'/%3E%3Ccircle cx='0' cy='400' r='340'/%3E%3Ccircle cx='0' cy='400' r='380'/%3E%3C/svg%3E") left bottom / min(520px,60vw) no-repeat,var(--primary);position:relative;overflow-x:hidden;overflow-y:auto;}
+   full range.
+   position:fixed;inset:0 instead of height:100dvh: on iPhone Safari the page
+   itself can still scroll (body overflow:hidden is not enforced there, and the
+   keyboard pushes the page up). A 100dvh box scrolled up with it and left the
+   cream body showing underneath; a fixed box always covers the screen. */
+/* While the login is showing (JS hides it with style="display: none"), the page
+   behind it is maroon too, so an iOS rubber-band bounce never flashes cream. */
+html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
+#auth-screen{display:flex;align-items:center;justify-content:center;position:fixed;inset:0;padding:clamp(20px,4vw,48px);background:radial-gradient(1100px 700px at 30% 40%,transparent,rgba(var(--primary-dark-rgb),.55)),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400' fill='none' stroke='white' stroke-opacity='.13' stroke-width='2'%3E%3Ccircle cx='400' cy='0' r='60'/%3E%3Ccircle cx='400' cy='0' r='100'/%3E%3Ccircle cx='400' cy='0' r='140'/%3E%3Ccircle cx='400' cy='0' r='180'/%3E%3Ccircle cx='400' cy='0' r='220'/%3E%3Ccircle cx='400' cy='0' r='260'/%3E%3Ccircle cx='400' cy='0' r='300'/%3E%3Ccircle cx='400' cy='0' r='340'/%3E%3Ccircle cx='400' cy='0' r='380'/%3E%3C/svg%3E") right top / min(520px,60vw) no-repeat,url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400' fill='none' stroke='white' stroke-opacity='.13' stroke-width='2'%3E%3Ccircle cx='0' cy='400' r='60'/%3E%3Ccircle cx='0' cy='400' r='100'/%3E%3Ccircle cx='0' cy='400' r='140'/%3E%3Ccircle cx='0' cy='400' r='180'/%3E%3Ccircle cx='0' cy='400' r='220'/%3E%3Ccircle cx='0' cy='400' r='260'/%3E%3Ccircle cx='0' cy='400' r='300'/%3E%3Ccircle cx='0' cy='400' r='340'/%3E%3Ccircle cx='0' cy='400' r='380'/%3E%3C/svg%3E") left bottom / min(520px,60vw) no-repeat,var(--primary);overflow-x:hidden;overflow-y:auto;}
 /* Overlay darkened so the white hero text clears WCAG AA over the photo, and so
    the network animation reads as glowing lines rather than washing out. */
-#auth-screen::before{content:'';position:absolute;inset:0;z-index:0;background:radial-gradient(1100px 700px at 30% 40%,transparent,rgba(var(--primary-dark-rgb),.55));pointer-events:none;}
+/* The vignette is the first background layer on #auth-screen above, not a
+   ::before: #auth-screen is the scroll container, and an absolute inset:0
+   child only covers the first screen-height, so scrolling exposed a seam. */
 /* Login screen uses the landing page's deeper maroon (#3C0008) so the two read as
    one surface; the chat app keeps #721922. Tokens built from var(--primary) at
    :root are resolved there, so the --maroon-* and shadow aliases are restated here.
@@ -118,6 +128,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    as raised (gold on #5C0A16 is 6.3:1, on #2A0005 8.6:1). */
 #auth-screen{--primary:#3C0008;--primary-dark:#2A0005;--primary-rgb:60,0,8;--primary-dark-rgb:42,0,5;
   --maroon:var(--primary);--maroon-dark:var(--primary-dark);--maroon-light:#5C0A16;
+  --auth-card-hi:#6A1420;--auth-card-lo:#3E0610;
   --shadow-sm:0 2px 8px rgba(0,0,0,.25);--shadow-md:0 4px 20px rgba(0,0,0,.32);}
 #auth-screen::after{content:'';position:absolute;width:900px;height:900px;border-radius:50%;border:1px solid rgba(var(--accent-rgb),.08);top:50%;left:50%;transform:translate(-50%,-50%);z-index:1;pointer-events:none;}
 
@@ -141,6 +152,22 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
   background:url('/login-okir.png') no-repeat center / contain;
   -webkit-mask-image:linear-gradient(to bottom,#000 82%,transparent);mask-image:linear-gradient(to bottom,#000 82%,transparent);}
 @media (max-width:1240px){.lh-orn{display:none;}}
+/* Mirror copy for the right edge; only used in the phone layout below. */
+.lh-orn-r{display:none;}
+/* Phones/tablets: no empty side space for the column, so the same textile
+   becomes a woven border down BOTH edges, inside the screen's side padding
+   (clamp(20px,4vw,48px), minus 4px so it never touches the card). repeat-y
+   tiles it the full height; the right copy is mirrored so the two sides
+   balance. position:fixed keeps it on the screen edges while the form
+   scrolls. Opacity .35 and the top/bottom fade keep it a frame, not content. */
+@media (max-width:900px){
+  .lh-orn{display:block;position:fixed;top:0;bottom:0;left:2px;transform:none;
+    width:calc(clamp(20px,4vw,48px) - 4px);aspect-ratio:auto;max-height:none;z-index:0;opacity:.35;
+    background:url('/login-okir.png') repeat-y center top / 100% auto;
+    -webkit-mask-image:linear-gradient(to bottom,transparent,#000 10%,#000 90%,transparent);
+            mask-image:linear-gradient(to bottom,transparent,#000 10%,#000 90%,transparent);}
+  .lh-orn-r{left:auto;right:2px;transform:scaleX(-1);}
+}
 .lh-sub{font-size:1.02rem;line-height:1.6;color:rgba(255,255,255,.85);margin:0 0 26px;max-width:46ch;}
 .lh-feats{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:13px;}
 .lh-feats li{display:flex;align-items:center;gap:13px;font-size:.94rem;font-weight:600;color:rgba(255,255,255,.92);}
@@ -186,7 +213,9 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 /* width:min(400px,100%) not width:400px — a fixed 400px card overflowed every
    phone narrower than 440px, and because #auth-screen clips overflow-x the cut
    off part could not even be scrolled to (seen on a 360px Android). */
-.auth-card{background:rgba(255,255,255,.08);backdrop-filter:blur(10px) saturate(130%);-webkit-backdrop-filter:blur(10px) saturate(130%);border-radius:22px;width:min(400px,100%);max-height:92vh;box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 0 0 1px rgba(var(--accent-rgb),.14),0 26px 60px -14px rgba(0,0,0,.52),0 10px 28px -10px rgba(var(--primary-dark-rgb),.34);overflow-y:auto;overflow-x:hidden;position:relative;z-index:1;animation:cardIn .6s .52s both var(--ease-overshoot);border:1px solid rgba(255,255,255,.2);}
+/* Same card as admin.html: opaque warm maroon (lighter at the top), gold
+   hairline border and a soft gold halo. */
+.auth-card{background:linear-gradient(180deg,var(--auth-card-hi),var(--auth-card-lo));border-radius:20px;width:min(400px,100%);max-height:92vh;box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 0 24px rgba(var(--accent-rgb),.35),0 0 64px rgba(var(--accent-rgb),.14),0 26px 60px -14px rgba(0,0,0,.6);overflow-y:auto;overflow-x:hidden;position:relative;z-index:1;animation:cardIn .6s .52s both var(--ease-overshoot);border:1px solid var(--gold);}
 @keyframes cardIn{from{opacity:0;transform:translateY(28px) scale(.96)}to{opacity:1;transform:none}}
 /* Visible gold scrollbar on the card, so it is obvious the Create Account form
    scrolls. Same slim treatment already used by .icon-rail and .list-scroll, only
@@ -239,9 +268,9 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    Register (11px).
 
    Fully opaque, not .96: gold field labels stay legible through even a 4% gap.
-   No backdrop-filter: it nests badly inside .auth-card's own filter and flashed as
-   the compositing layer was promoted and demoted on each toggle. The card beneath
-   is already frosted, so a flat opaque fill is enough.
+   No backdrop-filter: it flashed as the compositing layer was promoted and
+   demoted on each toggle. The card beneath is an opaque gradient, so a flat
+   opaque fill matches it.
 
    .is-scrolled changes paint only, never layout, so unlike the condense it cannot
    change scrollHeight and therefore cannot rattle. That is why it needs no gate. */
@@ -258,29 +287,21 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 .auth-sticky.is-condensed .auth-logo-bar{display:flex;align-items:center;justify-content:center;gap:11px;padding:.5rem 1.5rem .45rem;}
 /* display:none, not max-height:0. The condensed bar is a flex row, and max-height
    only zeroes these lines' HEIGHT — they stayed in the row as flex items still
-   claiming horizontal space, which squeezed the seal into an oval. Taking them out
-   of the flow entirely is what keeps the seal round. */
+   claiming horizontal space, which squeezed the logo. Taking them out of the flow
+   entirely is what keeps it at its own width. */
 .auth-sticky.is-condensed .auth-sub,.auth-sticky.is-condensed .auth-sub2,.auth-sticky.is-condensed .auth-sub3{display:none;}
-.auth-sticky.is-condensed .auth-brand-name{font-size:1.05rem;}
-/* flex-shrink:0 so the seal keeps its 40px square regardless of the wordmark's
-   width — a flex item with a set width can still be compressed below it. */
-.auth-sticky.is-condensed .auth-seal-frame{width:40px;height:40px;margin:0;flex-shrink:0;box-shadow:0 0 0 2px var(--gold),0 3px 10px rgba(0,0,0,.45);}
+.auth-sticky.is-condensed .auth-logo-bar .auth-logo{height:40px;margin:0;}
 .auth-logo-bar::before{content:'';position:absolute;top:-30px;left:50%;transform:translateX(-50%);width:200px;height:200px;border-radius:50%;background:rgba(var(--accent-rgb),.06);}
-.auth-logo-bar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),var(--gold-bright),var(--gold),transparent);}
+.auth-logo-bar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.6;}
 .auth-logo-bar img{width:88px;height:88px;object-fit:contain;filter:drop-shadow(0 4px 16px rgba(0,0,0,.5));display:block;margin:0 auto .7rem;position:relative;z-index:1;}
-/* Brand label inside the login card. It used to be the page's <h1>; the landing
-   hero headline is now the single <h1>, so this is a styled div (one h1 per page
-   is the accessibility rule) — same look, different element. */
-.auth-logo-bar .auth-brand-name{font-family:'Cinzel',serif;font-size:1.55rem;font-weight:700;color:var(--gold-bright);letter-spacing:.1em;text-shadow:0 2px 10px rgba(0,0,0,.4);position:relative;z-index:1;transition:font-size var(--dur-slow) var(--ease-out);}
 .auth-logo-bar p{color:rgba(255,255,255,.6);font-size:.7rem;margin-top:4px;letter-spacing:.05em;position:relative;z-index:1;}
-/* width/height/margin are transitioned so the shrink into the condensed header
-   reads as one movement rather than a jump. */
-.auth-seal-frame{width:130px;height:130px;border-radius:50%;background:#fff;padding:0;display:flex;align-items:center;justify-content:center;position:relative;margin:0 auto .9rem;box-shadow:0 0 0 2px var(--gold),0 0 0 5px rgba(var(--accent-rgb),.25),0 10px 28px rgba(0,0,0,.5);overflow:hidden;z-index:1;transition:width var(--dur-slow) var(--ease-out),height var(--dur-slow) var(--ease-out),margin var(--dur-slow) var(--ease-out),box-shadow var(--dur-slow) var(--ease-out);}
-.auth-seal-frame::before{content:'';position:absolute;inset:-12px;border-radius:50%;border:1px dashed rgba(var(--accent-rgb),.4);pointer-events:none;}
-.auth-seal-frame img{width:118%;height:118%;object-fit:cover;object-position:center;margin:0;padding:0;filter:drop-shadow(0 1px 2px rgba(0,0,0,.2));position:relative;z-index:1;}
-.auth-sub{font-family:'Cinzel',serif;color:rgba(255,255,255,.78);font-size:.7rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin-top:6px;position:relative;z-index:1;}
-.auth-sub2{font-family:'Cinzel',serif;color:var(--gold-bright);font-size:.66rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin-top:2px;position:relative;z-index:1;}
-.auth-sub3{font-family:'Cinzel',serif;color:rgba(255,255,255,.6);font-size:.58rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;margin-top:2px;position:relative;z-index:1;}
+/* The stacked MSUkaIP logo. It carries the wordmark, so there is no separate
+   title text. Sized by height; height/margin are transitioned so the shrink
+   into the condensed header reads as one movement rather than a jump. */
+.auth-logo-bar .auth-logo{width:auto;height:112px;margin:0 auto .8rem;filter:drop-shadow(0 6px 14px rgba(0,0,0,.35));transition:height var(--dur-slow) var(--ease-out),margin var(--dur-slow) var(--ease-out);}
+.auth-sub{font-family:'Cinzel',serif;color:var(--gold-soft);font-size:.7rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin-top:6px;position:relative;z-index:1;}
+.auth-sub2{font-family:'Cinzel',serif;color:var(--gold-soft);font-size:.66rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin-top:2px;position:relative;z-index:1;}
+.auth-sub3{font-family:'Cinzel',serif;color:var(--gold-soft);font-size:.58rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;margin-top:2px;position:relative;z-index:1;}
 /* These three collapse via max-height/opacity rather than display:none, because
    display cannot be transitioned — hiding them that way dropped ~55px in a single
    frame and made the header jerk while the seal and padding were still easing. */
@@ -296,8 +317,23 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 .form-group input::placeholder,.form-group select::placeholder{color:rgba(255,255,255,.55);}
 .form-group input:focus,.form-group select:focus{border-color:var(--gold);background:rgba(255,255,255,.2);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.2);}
 .form-group select option{background:var(--maroon-dark);color:#fff;}
+/* Login card inputs match admin.html: dark maroon well, faint gold border,
+   gold focus ring. Scoped to .auth-card so no other form changes. */
+.auth-card .form-group input,.auth-card .form-group select{border:1px solid rgba(var(--accent-rgb),.35);border-radius:10px;padding:.68rem .9rem;background:rgba(var(--primary-dark-rgb),.6);backdrop-filter:none;}
+.auth-card .form-group input::placeholder{color:rgba(255,255,255,.6);}
+.auth-card .form-group input:focus,.auth-card .form-group select:focus{border-color:var(--gold);background:rgba(var(--primary-dark-rgb),.8);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.3);}
+/* Browser autofill paints inputs pale blue; a big inset shadow covers it. */
+.auth-card .form-group input:-webkit-autofill{-webkit-text-fill-color:#fff;caret-color:#fff;box-shadow:0 0 0 1000px var(--auth-card-lo) inset;transition:background-color 9999s;}
+.auth-card .form-group input:-webkit-autofill:focus{box-shadow:0 0 0 1000px var(--auth-card-lo) inset,0 0 0 3px rgba(var(--accent-rgb),.3);}
+/* Leading icon inside the input (envelope, lock, person). */
+.auth-field{position:relative;}
+.auth-card .auth-field input{padding-left:2.5rem;}
+.auth-field .field-icon{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);width:17px;height:17px;color:rgba(var(--accent-rgb),.75);pointer-events:none;transition:color .2s;}
+.auth-field:focus-within .field-icon{color:var(--gold);}
+/* iOS Safari zooms the page when a focused input's text is under 16px. */
+@media (max-width:600px){.auth-card .form-group input,.auth-card .form-group select{font-size:16px;}}
 .pw-wrap{position:relative;}
-.pw-wrap input{padding-right:2.6rem;}
+.auth-card .pw-wrap input{padding-right:2.6rem;}
 .pw-toggle{position:absolute;top:50%;right:.5rem;transform:translateY(-50%);background:transparent;border:none;padding:6px;cursor:pointer;color:rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;border-radius:6px;transition:color .2s,background .2s;}
 .pw-toggle:hover{color:var(--gold-bright);background:rgba(255,255,255,.1);}
 .pw-toggle:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
@@ -308,10 +344,14 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 /* transition names exact properties (not `all`), and the strong ease-out curve
    gives the hover lift intention. */
 .btn{width:100%;padding:.78rem;border:none;border-radius:10px;font-size:.92rem;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;margin-top:.4rem;transition:transform .18s var(--ease-out),box-shadow .2s;letter-spacing:.02em;}
-.btn-login{background:linear-gradient(135deg,var(--maroon-dark),var(--maroon-light));color:var(--gold-bright);box-shadow:var(--shadow-sm);}
-.btn-login:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);}
-.btn-register{background:linear-gradient(135deg,var(--gold-dark),var(--gold));color:var(--maroon-dark);box-shadow:var(--shadow-sm);}
-.btn-register:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);}
+/* Sign In + Create Account, same as admin.html's sign-in: transparent with a gold outline at
+   rest; the gold gradient on ::before fades in on hover/focus (gradients can't
+   be transitioned, opacity can). */
+.btn-login,.btn-register{position:relative;isolation:isolate;overflow:hidden;background:transparent;color:var(--gold);border:1.5px solid var(--gold);transition:transform .18s var(--ease-out),box-shadow .2s,color .25s;}
+.btn-login::before,.btn-register::before{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(255,255,255,.28),transparent 55%),linear-gradient(90deg,var(--accent-dark),var(--gold-bright) 50%,var(--accent-dark));opacity:0;transition:opacity .25s;}
+.btn-login:hover,.btn-login:focus-visible,.btn-register:hover,.btn-register:focus-visible{color:var(--maroon-dark);transform:translateY(-1px);box-shadow:0 8px 22px -6px rgba(var(--accent-rgb),.55);}
+.btn-login:hover::before,.btn-login:focus-visible::before,.btn-register:hover::before,.btn-register:focus-visible::before{opacity:1;}
+.btn-login:focus-visible,.btn-register:focus-visible{outline:2px solid var(--gold-soft);outline-offset:3px;}
 /* Press feedback — the button dips under the finger/click so the interface
    visibly acknowledges the press. Placed after :hover so it wins while pressed. */
 .btn:active{transform:scale(.97);transition-duration:.06s;}
@@ -322,9 +362,10 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 .btn-arrow{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:transform .32s var(--ease-out),background .32s;}
 .btn-arrow svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
 .btn-login .btn-arrow{background:rgba(var(--accent-rgb),.20);}
-.btn-register .btn-arrow{background:rgba(var(--primary-dark-rgb),.14);}
-.btn-login:hover .btn-arrow{transform:translateX(4px);background:rgba(var(--accent-rgb),.34);}
-.btn-register:hover .btn-arrow{transform:translateX(4px);background:rgba(var(--primary-dark-rgb),.22);}
+.btn-register .btn-arrow{background:rgba(var(--accent-rgb),.20);}
+.btn-login:hover .btn-arrow{transform:translateX(4px);background:rgba(255,255,255,.75);box-shadow:0 0 10px 2px rgba(255,255,255,.45);}
+.btn-login:focus-visible .btn-arrow,.btn-register:focus-visible .btn-arrow{background:rgba(255,255,255,.75);}
+.btn-register:hover .btn-arrow{transform:translateX(4px);background:rgba(255,255,255,.75);box-shadow:0 0 10px 2px rgba(255,255,255,.45);}
 @media (prefers-reduced-motion:reduce){.btn-arrow{transition:none;}.btn-login:hover .btn-arrow,.btn-register:hover .btn-arrow{transform:none;}}
 .amsg{padding:.6rem .9rem;border-radius:8px;font-size:.8rem;margin-top:.7rem;text-align:center;display:none;font-weight:700;}
 .amsg.error{background:#fde8e8;color:#c0392b;border:1px solid #f5c6c6;}
@@ -589,28 +630,14 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    that the rail can scroll. */
 .rail-logo{display:flex;flex-direction:column;align-items:center;gap:11px;padding:6px 6px 17px;text-align:center;position:relative;}
 .rail-logo::after{content:'';position:absolute;bottom:4px;left:14px;right:14px;height:1.5px;background:linear-gradient(90deg,transparent,var(--gold),var(--gold-bright),var(--gold),transparent);}
-/* The crest is the institutional anchor of the whole screen, so it is given
-   real size (104px, up from 84) and lit from behind: --glass-halo is a soft
-   gold radial bloom that makes the disc look like it is sitting slightly off
-   the glass. z-index keeps the disc above its own halo. */
-/* Faded rather than swapped for a gold version: the mark is already a
-   maroon-to-gold wordmark on transparent, so a "gold logo" would be a new
-   asset to draw, not a code change — and the wordmark needs a light disc
-   behind it to stay legible at all.
-   What made it shout was the disc, not the logo: pure #fff against dark
-   maroon glass is the largest value jump on the screen, so the brightest
-   thing in the app was its own badge. A warm off-white at 82% lets the glass
-   read through, keeps the wordmark legible, and lets the rail's contents win
-   the eye instead. */
-.rail-logo-frame{width:104px;height:104px;border-radius:50%;background:rgba(var(--bg-alt-rgb),.82);padding:0;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;box-shadow:0 0 0 2px rgba(var(--accent-rgb),.75),0 0 0 6px rgba(var(--accent-rgb),.16),0 0 22px rgba(var(--accent-rgb),.20),0 10px 30px rgba(0,0,0,.45);overflow:hidden;flex-shrink:0;}
-.rail-logo-frame::before{content:'';position:absolute;inset:-11px;border-radius:50%;border:1px dashed rgba(var(--accent-rgb),.35);pointer-events:none;}
-.rail-logo-frame img{width:118%;height:118%;object-fit:cover;object-position:center;display:block;opacity:.9;filter:drop-shadow(0 1px 2px rgba(0,0,0,.15));}
+/* The full MSUkaIP sticker logo (wordmark included, so no separate title text).
+   Its own cream outline keeps it legible on the dark rail without a disc. */
+.rail-logo-img{width:150px;height:auto;display:block;position:relative;z-index:1;filter:drop-shadow(0 4px 10px rgba(0,0,0,.35));}
 .rail-logo-text{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:2px;}
 /* Wordmark typography: Cinzel at a larger size with wider tracking reads as an
    engraved institutional mark rather than a heading. The subtitles step DOWN in
    size but UP in tracking, which is the classic way to make small caps hold
    their own under a large title without competing with it. */
-.rail-logo-text .rl-title{font-family:'Cinzel',serif;font-size:1.3rem;font-weight:700;color:var(--gold-bright);letter-spacing:.15em;line-height:1.1;text-shadow:0 2px 10px rgba(0,0,0,.5),0 0 18px rgba(var(--accent-rgb),.25);}
 .rail-logo-text .rl-sub{font-family:'Cinzel',serif;font-size:.6rem;color:var(--ink-mut);font-weight:700;letter-spacing:.17em;text-transform:uppercase;}
 
 /* Nav rows: full-width pills, icon left / label right / count far right.
@@ -691,7 +718,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    68px, so they drop out; the crest and the avatar initial remain as the
    institutional and account markers. The hover nudge is dropped too — sliding a
    centred icon sideways in a 68px column just looks like a misalignment. */
-@media (max-width:1100px){.icon-rail{width:68px;padding:14px 8px;align-items:center;}.rail-logo-text,.rail-btn .rlabel,.rail-btn .rbadge,.rail-avatar .ra-meta{display:none;}.rail-logo-frame{width:48px;height:48px;padding:0;border-radius:50%;}.rail-logo::after{display:none;}.rail-btn{justify-content:center;padding:10px;}.rail-btn:hover,.rail-btn:active{transform:none;}.rail-avatar{background:transparent;border:none;box-shadow:none;padding:0;}}
+@media (max-width:1100px){.icon-rail{width:68px;padding:14px 8px;align-items:center;}.rail-logo-text,.rail-btn .rlabel,.rail-btn .rbadge,.rail-avatar .ra-meta{display:none;}.rail-logo-img{width:54px;}.rail-logo::after{display:none;}.rail-btn{justify-content:center;padding:10px;}.rail-btn:hover,.rail-btn:active{transform:none;}.rail-avatar{background:transparent;border:none;box-shadow:none;padding:0;}}
 
 @media (max-width:880px){.icon-rail{width:60px;}.left-panel{width:280px;}}
 
@@ -963,7 +990,10 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
    The hover lift matches the conversation cards' so the panel moves as one. */
 .online-strip{display:flex;gap:var(--sp-2);padding:0 var(--sp-3) var(--sp-2);overflow-x:auto;scrollbar-width:none;}
 .online-strip::-webkit-scrollbar{display:none;}
-.os-item{position:relative;flex-shrink:0;line-height:0;border-radius:50%;}
+.os-item{position:relative;flex-shrink:0;border:none;background:transparent;padding:0;cursor:pointer;line-height:0;border-radius:50%;
+  transition:transform var(--dur-base) var(--ease-out);}
+.os-item:hover{transform:translateY(-2px);}
+@media (prefers-reduced-motion:reduce){.os-item:hover{transform:none;}}
 .os-item .avatar-circle{width:42px;height:42px;font-size:.85rem;box-shadow:0 0 0 2px var(--card-ring),0 3px 8px var(--card-shade);}
 .os-item .online-badge{bottom:1px;right:1px;width:11px;height:11px;}
 
@@ -979,7 +1009,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 /* RIGHT PANEL — the cream "paper" reading surface. */
 .right-panel{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--paper);}
 #empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-light);background:var(--paper);}
-.empty-logo{width:130px;height:130px;border-radius:50%;object-fit:cover;object-position:center;opacity:.35;margin-bottom:1rem;}
+.empty-logo{width:220px;height:auto;opacity:.85;margin-bottom:1.2rem;}
 #empty-state h3{font-size:1.1rem;color:var(--maroon);font-weight:700;margin-bottom:.4rem;font-family:'Cinzel',serif;}
 #empty-state p{font-size:.85rem;color:var(--text-light);}
 
@@ -1429,6 +1459,9 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 .call-timer{font-size:1.4rem;font-weight:800;text-align:center;color:var(--gold-bright);letter-spacing:.08em;margin:.5rem 0;font-family:'Cinzel',serif;}
 .call-controls{display:flex;gap:10px;justify-content:center;margin-top:.75rem;}
 .ctrl-btn{width:48px;height:48px;border-radius:50%;border:none;cursor:pointer;font-size:1.1rem;}
+/* Taps on the icon go to the button itself: some iOS versions drop a tap whose
+   target is an SVG inside a button, so Hang up / Mute seemed not to respond. */
+.ctrl-btn svg{pointer-events:none;}
 .ctrl-btn.mute{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.2);}
 .ctrl-btn.mute.active{background:var(--accent);border-color:transparent;}
 .ctrl-btn.hangup{background:#e74c3c;color:#fff;}
@@ -1448,8 +1481,11 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 /* ── Create Group modal ──────────────────────────────────────────────────── */
 /* The blur drops the maroon page behind into soft focus so the cream card is the
    only thing that reads sharply. */
-#modal-overlay{display:none;position:fixed;inset:0;background:rgba(var(--primary-dark-rgb),.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:400;align-items:center;justify-content:center;padding:20px;}
-#modal-overlay.open{display:flex;}
+#modal-overlay,#mic-help-overlay{display:none;position:fixed;inset:0;background:rgba(var(--primary-dark-rgb),.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:400;align-items:center;justify-content:center;padding:20px;}
+#modal-overlay.open,#mic-help-overlay.open{display:flex;}
+/* Numbered steps in the microphone help modal. */
+.mic-steps{margin:0 0 18px;padding-left:1.3rem;color:var(--text-mid);font-size:.9rem;line-height:1.65;}
+.mic-steps b{color:var(--maroon-dark);}
 /* overflow stays visible so the badge can hang over the top edge — the members
    list further down owns the scrolling instead of the card. The 48px top padding
    is what keeps the title clear of that overhanging badge. */
@@ -1530,8 +1566,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 /* The header now sits ON the parchment instead of a maroon band: seal in a gold
    ring, a vertical hairline, then the title in Cinzel maroon. */
 .agree-head{display:flex;align-items:center;gap:22px;padding:26px 30px 0;flex-shrink:0;}
-.agree-seal{width:104px;height:104px;border-radius:50%;background:var(--white);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 14px rgba(var(--primary-rgb),.14);}
-.agree-seal img{width:76%;height:76%;object-fit:contain;}
+.agree-logo{width:150px;height:auto;flex-shrink:0;}
 .agree-head-rule{width:1px;align-self:stretch;margin:10px 0;background:linear-gradient(180deg,transparent,var(--gray-200) 20%,var(--gray-200) 80%,transparent);}
 .agree-head h3{font-family:'Cinzel',serif;font-size:clamp(1.25rem,3.2vw,1.7rem);font-weight:700;color:var(--maroon-dark);letter-spacing:.01em;margin:0;line-height:1.15;}
 .agree-head p{font-size:.9rem;color:var(--text-mid);margin:6px 0 0;letter-spacing:.02em;}
@@ -1582,7 +1617,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 @media (max-width:560px){
   .agree-head{flex-direction:column;text-align:center;gap:12px;padding:20px 18px 0;}
   .agree-head-rule{display:none;}
-  .agree-seal{width:72px;height:72px;}
+  .agree-logo{width:104px;}
   .agree-body,.agree-orn,.agree-actions,.agree-foot{padding-left:18px;padding-right:18px;}
   .agree-consent{margin-left:18px;margin-right:18px;padding:13px 15px;}
   .agree-clause{gap:13px;padding:14px;}
@@ -1679,6 +1714,19 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
   /* dvh tracks the mobile address bar as it hides/shows; vh does not, which is
      what pushes the composer off-screen. Plain vh first as the fallback. */
   #app{flex-direction:column;padding:0;gap:0;height:100vh;height:100dvh;}
+  /* iPhone: pinned to the screen and sized to the VISIBLE area (--app-h, set by
+     fitAppToViewport() from visualViewport). Without this, Safari scrolled the
+     whole page when the keyboard opened, leaving a cream gap under the tab bar
+     and the composer floating mid-screen. Falls back to 100dvh. */
+  #app{position:fixed;top:0;left:0;right:0;height:var(--app-h,100dvh);}
+  /* Keyboard open: the tab bar would sit between the composer and the keyboard
+     and take ~60px of a now-small screen, so it steps aside while typing. */
+  body.kb-open .icon-rail{display:none;}
+  /* iOS Safari zooms the page when a field under 16px is focused, which pushed
+     the send button and the last tab off the right edge. 16px stops the zoom. */
+  #msg-input,#app input:not([type=checkbox]):not([type=radio]):not([type=file]),#app select,#app textarea{font-size:16px;}
+  /* The desktop rail's divider line; in the bottom bar it showed as a stray dash. */
+  .icon-rail .rail-spacer{display:none;}
   /* No room for decoration on a phone — the panels need every pixel, and the
      bottom strip is where the tab bar lives. */
   .app-tagline{display:none;}
@@ -1778,6 +1826,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
        messages travelling the links between them, over the campus LAN. -->
   <canvas id="net-canvas" aria-hidden="true"></canvas>
   <div class="lh-orn" aria-hidden="true"></div>
+  <div class="lh-orn lh-orn-r" aria-hidden="true"></div>
   <div class="landing-wrap">
     <div class="landing-hero">
       <p class="lh-eyebrow">CICS LAN Messenger</p>
@@ -1795,8 +1844,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
          one block while the form scrolls beneath them (see .auth-sticky). -->
     <div class="auth-sticky">
       <div class="auth-logo-bar">
-        <div class="auth-seal-frame"><img src="/msukaip-logo.png" alt="Mindanao State University"/></div>
-        <div class="auth-brand-name">MSUkaIP</div>
+        <img class="auth-logo" src="/msukaip-logo-stacked.svg" alt="MSUkaIP"/>
         <p class="auth-sub">CICS LAN Messenger</p>
         <p class="auth-sub2">Mindanao State University</p>
         <p class="auth-sub3">Main Campus</p>
@@ -1809,11 +1857,12 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
     <div class="tab-body" id="tab-login">
       <div class="form-group">
         <label for="login-email">Institutional Email</label>
-        <input type="email" id="login-email" placeholder="yourname@cics.msu.edu"/>
+        <div class="auth-field"><svg class="field-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22,6 12,13 2,6"/></svg><input type="email" id="login-email" placeholder="yourname@cics.msu.edu"/></div>
       </div>
       <div class="form-group">
         <label for="login-password">Password</label>
-        <div class="pw-wrap">
+        <div class="pw-wrap auth-field">
+          <svg class="field-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           <input type="password" id="login-password" placeholder="Your password"/>
           <button type="button" class="pw-toggle" aria-label="Show password" aria-pressed="false" onclick="togglePw(this,'login-password')">
             <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -1828,15 +1877,16 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
     <div class="tab-body" id="tab-register" style="display:none;">
       <div class="form-group">
         <label for="reg-name">Full Name</label>
-        <input type="text" id="reg-name" placeholder="e.g. Juan dela Cruz"/>
+        <div class="auth-field"><svg class="field-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><input type="text" id="reg-name" placeholder="e.g. Juan dela Cruz"/></div>
       </div>
       <div class="form-group">
         <label for="reg-email">Institutional Email</label>
-        <input type="email" id="reg-email" placeholder="yourname@cics.msu.edu"/>
+        <div class="auth-field"><svg class="field-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22,6 12,13 2,6"/></svg><input type="email" id="reg-email" placeholder="yourname@cics.msu.edu"/></div>
       </div>
       <div class="form-group">
         <label for="reg-password">Password</label>
-        <div class="pw-wrap">
+        <div class="pw-wrap auth-field">
+          <svg class="field-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           <input type="password" id="reg-password" placeholder="Min 8 characters"/>
           <button type="button" class="pw-toggle" aria-label="Show password" aria-pressed="false" onclick="togglePw(this,'reg-password')">
             <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -1846,7 +1896,8 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
       </div>
       <div class="form-group">
         <label for="reg-confirm">Confirm Password</label>
-        <div class="pw-wrap">
+        <div class="pw-wrap auth-field">
+          <svg class="field-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           <input type="password" id="reg-confirm" placeholder="Repeat your password"/>
           <button type="button" class="pw-toggle" aria-label="Show password" aria-pressed="false" onclick="togglePw(this,'reg-confirm')">
             <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -1874,9 +1925,8 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
   <!-- ICON RAIL -->
   <aside class="icon-rail">
     <div class="rail-logo">
-      <div class="rail-logo-frame"><img src="/msukaip-logo.png" alt="MSU"/></div>
+      <img class="rail-logo-img" src="/msukaip-logo-stacked.svg" alt="MSUkaIP"/>
       <div class="rail-logo-text">
-        <span class="rl-title">MSUkaIP</span>
         <span class="rl-sub">CICS LAN Messenger</span>
       </div>
     </div>
@@ -1963,6 +2013,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
     <div class="nav-btns">
       <button class="nav-btn active" id="nav-global" onclick="switchNav('global',this)">All</button>
       <button class="nav-btn" id="nav-groups" onclick="switchNav('groups',this)">Groups</button>
+      <button class="nav-btn" id="nav-private" onclick="switchNav('private',this)">Private</button>
       <button class="nav-btn" id="nav-unread" onclick="switchNav('unread',this)">Unread</button>
     </div>
 
@@ -1994,6 +2045,12 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
            duplication the rail cleanup removed. -->
       <div class="section-label">My Groups</div>
       <div id="groups-list"></div>
+    </div>
+
+    <!-- Direct (1-to-1) messages: people with history first, online people merged in. -->
+    <div id="section-private" class="list-scroll" style="display:none;flex:1;overflow-y:auto;flex-direction:column;">
+      <div class="section-label">Direct Messages</div>
+      <div id="private-list"></div>
     </div>
 
     <div id="section-settings" class="list-scroll" style="display:none;flex:1;overflow-y:auto;flex-direction:column;">
@@ -2041,7 +2098,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 
   <div class="right-panel center-panel">
     <div id="empty-state">
-      <img src="/msukaip-logo.png" class="empty-logo" alt="MSU"/>
+      <img src="/msukaip-logo-stacked.svg" class="empty-logo" alt="MSUkaIP"/>
       <h3>Welcome to MSUkaIP</h3>
       <p>Select a conversation to start messaging</p>
     </div>
@@ -2059,6 +2116,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
           <span id="chat-subtitle">—</span>
         </div>
         <div class="chat-header-actions">
+          <button class="header-action-btn" id="call-btn" onclick="startCall(conversations[activeConvKey]?.email)" title="Voice Call" aria-label="Voice call" style="display:none;"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.34 1.9.65 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.31 1.85.53 2.81.65A2 2 0 0 1 22 16.92z"/></svg></button>
           <button class="header-action-btn" id="group-call-btn" onclick="startGroupCall()" title="Group Call" style="display:none;"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5"/><path d="M15 19c0-2 2-3.5 4-3.5"/></svg></button>
         </div>
       </div>
@@ -2104,7 +2162,7 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
 <div id="agree-overlay" role="dialog" aria-modal="true" aria-labelledby="agree-title">
   <div class="agree-card">
     <div class="agree-head">
-      <div class="agree-seal"><img src="/msukaip-logo.png" alt="MSU seal"/></div>
+      <img class="agree-logo" src="/msukaip-logo-stacked.svg" alt="MSUkaIP"/>
       <div class="agree-head-rule"></div>
       <div>
         <h3 id="agree-title">Terms of Use &amp; Data Privacy</h3>
@@ -2195,6 +2253,24 @@ button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulatio
   <div id="group-controls">
     <button class="g-btn mute-g" id="group-mute-btn" onclick="toggleGroupMute()"><svg class="icn" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg><span class="g-btn-label">Mute</span></button>
     <button class="g-btn leave-g" onclick="leaveGroupCall()"><svg class="icn" viewBox="0 0 24 24" style="transform:rotate(135deg);"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.34 1.9.65 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.31 1.85.53 2.81.65A2 2 0 0 1 22 16.92z"/></svg><span>Leave</span></button>
+  </div>
+</div>
+
+<!-- MICROPHONE HELP. A web page cannot open the phone's Settings app (only
+     installed apps can), so when the mic is blocked this shows the exact steps
+     for the user's browser, plus "Try again" to ask for the mic once more. -->
+<div id="mic-help-overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mic-help-title">
+    <div class="modal-badge"><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/></svg></div>
+    <button class="modal-close" onclick="closeMicHelp()" title="Close" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3 id="mic-help-title">Allow the microphone</h3>
+    <p class="modal-sub" id="mic-help-sub"></p>
+    <div class="modal-orn"><i>&#9670;</i></div>
+    <ol class="mic-steps" id="mic-help-steps"></ol>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeMicHelp()">Close</button>
+      <button class="btn-confirm" onclick="retryMic()">Try again</button>
+    </div>
   </div>
 </div>
 
@@ -2700,6 +2776,9 @@ function initSocket() {
       return true;
     });
     renderGlobalOnlineUsers();
+    if (currentNav==='private') renderPrivateList();
+    // Keep an open private chat's Online/Offline subtitle live.
+    if (conversations[activeConvKey]?.type === 'private') setPrivateSubtitle(conversations[activeConvKey]);
   });
 
   socket.on('messages:history', ({key, messages}) => {
@@ -2708,11 +2787,14 @@ function initSocket() {
     if (activeConvKey===key) renderMessages(key);
     if (key==='group_general') updateGlobalPreview();
     else if (key.startsWith('group_')) { if(currentNav==='groups') renderGroupsList(); }
+    else { if(currentNav==='private') renderPrivateList(); }
   });
 
   socket.on('message:new', msg => {
     const key = msg.convKey;
-    if (!conversations[key]) conversations[key]={type:msg.convType||'group',name:msg.senderName||msg.sender,messages:[],unread:0,lastMsg:'',lastTime:''};
+    if (!conversations[key]) conversations[key] = key.startsWith('private_')
+      ? newPrivateConv(key.slice('private_'.length), msg.sender === currentUser?.name ? null : msg.sender)
+      : {type:msg.convType||'group',name:msg.senderName||msg.sender,messages:[],unread:0,lastMsg:'',lastTime:''};
     conversations[key].messages.push(msg);
     conversations[key].lastMsg  = msg.type==='image'?'📷 Image':msg.type==='file'?'📎 '+msg.file_name:msg.type==='voice'?'🎙️ Voice message':msg.text;
     conversations[key].lastTime = msg.timestamp;
@@ -2742,6 +2824,7 @@ function initSocket() {
     // Refresh correct section
     if (key === 'group_general') updateGlobalPreview();
     else if (key.startsWith('group_')) { if (currentNav==='groups') renderGroupsList(); }
+    else { if (currentNav==='private') renderPrivateList(); }
   });
 
   socket.on('message:deleted', ({ id, convKey }) => {
@@ -2760,6 +2843,7 @@ function initSocket() {
     }
     if (convKey === 'group_general') updateGlobalPreview();
     else if (convKey.startsWith('group_')) { if (currentNav==='groups') renderGroupsList(); }
+    else { if (currentNav==='private') renderPrivateList(); }
   });
 
   socket.on('message:error', ({ msgId, reason }) => {
@@ -2791,7 +2875,7 @@ function initSocket() {
     if(a!==b)return;
     const row=document.getElementById('typing-row');
     if(!row)return;
-    row.innerHTML=typing?`<div class="typing-bubble"><div class="typing-dots"><span></span><span></span><span></span></div><span class="typing-name">${name} is typing…</span></div>`:'';
+    row.innerHTML=typing?`<div class="typing-bubble"><div class="typing-dots"><span></span><span></span><span></span></div><span class="typing-name">${esc(name)} is typing…</span></div>`:'';
   });
 
   // VoIP
@@ -2822,11 +2906,15 @@ function initSocket() {
   socket.on('room:answer',       async({answer,fromSocketId})=>await groupPeers[fromSocketId]?.setRemoteDescription(answer));
   socket.on('room:ice-candidate',({candidate,fromSocketId})=>groupPeers[fromSocketId]?.addIceCandidate(candidate));
 
-  // One row per existing conversation, newest message only. A group must
+  // One row per existing conversation, newest message only. A private thread
+  // may be new to this client, so create it from c.peer. A group must
   // already exist (groups:get names it); skip rather than invent a
   // conversation titled after its own key.
   socket.on('conversations:summary', list => {
     list.forEach(c => {
+      if (c.peer && !conversations[c.convKey]) {
+        conversations[c.convKey] = { ...newPrivateConv(c.peer.email, c.peer.name), role:c.peer.role || '' };
+      }
       const conv = conversations[c.convKey];
       if (!conv) return;
       // Same preview wording the live message:new handler uses, so a seeded row
@@ -2838,6 +2926,7 @@ function initSocket() {
       conv.lastTime = c.lastTime;
     });
     renderGroupsList();
+    renderPrivateList();
     renderAllList();
     updateGlobalPreview();
   });
@@ -2966,6 +3055,7 @@ function switchNav(name, btn) {
   // section and had its last rows clipped by overflow:hidden.
   document.getElementById('section-global').style.display         = name === 'global'      ? 'flex'  : 'none';
   document.getElementById('section-groups').style.display         = name === 'groups'      ? 'flex'  : 'none';
+  document.getElementById('section-private').style.display        = name === 'private'     ? 'flex'  : 'none';
   document.getElementById('section-notif').style.display          = name === 'notif'       ? 'flex'  : 'none';
   document.getElementById('section-settings').style.display       = name === 'settings'    ? 'flex'  : 'none';
   // Settings reads the signed-in user's own record, so fill it on open rather
@@ -2985,6 +3075,7 @@ function switchNav(name, btn) {
   const h2 = document.querySelector('.left-header-titles h2');
   if (h2) {
     h2.textContent = name === 'groups'     ? 'Groups'
+                   : name === 'private'    ? 'Private'
                    : name === 'notif'      ? 'Notifications'
                    : name === 'globalchat' ? 'CICS Chat'
                    : 'Messages';
@@ -2992,6 +3083,7 @@ function switchNav(name, btn) {
 
   if (name === 'global')  renderAllList();
   if (name === 'groups')  renderGroupsList();
+  if (name === 'private') renderPrivateList();
   if (name === 'notif')   renderNotifList();
 }
 
@@ -3000,6 +3092,7 @@ function filterConversations() {
   // just the online strip.
   if (currentNav === 'global')  renderAllList();
   if (currentNav === 'groups')  renderGroupsList();
+  if (currentNav === 'private') renderPrivateList();
 }
 
 // ── Render online users under CICS Chat ─────────────────────────────────────
@@ -3030,15 +3123,16 @@ function renderGlobalOnlineUsers() {
   // treatment, and it costs a fraction of the height of the full rows so more
   // conversations stay above the fold. Each avatar is a real <button> carrying
   // the person's name in aria-label and title, because a bare circle would give
-  // a screen-reader user and a mouse user nothing to identify. It is display
-  // only: calling happens from the full rows in the CICS Chat panel.
+  // a screen-reader user and a mouse user nothing to identify. Tapping one
+  // opens a private chat with that person (calling is the Call button below).
   if (list) {
     list.innerHTML = `<div class="online-strip">` + visibleUsers.map(u => `
-      <div class="os-item" title="${esc(u.name)} · ${esc(u.role)}"
-           aria-label="${esc(u.name)}, ${esc(u.role)}, online">
+      <button type="button" class="os-item" title="${esc(u.name)} · ${esc(u.role)}"
+              aria-label="Chat with ${esc(u.name)}, ${esc(u.role)}, online"
+              data-email="${esc(u.email)}" onclick="openPrivateChat(this.dataset.email)">
         <span class="avatar-circle ${colorFor(u.name)}">${esc(initials(u.name))}</span>
         <span class="online-badge"></span>
-      </div>`).join('') + `</div>`;
+      </button>`).join('') + `</div>`;
   }
 
   // The CICS Chat panel keeps the FULL rows. There the online list is the
@@ -3052,16 +3146,16 @@ function renderGlobalOnlineUsers() {
     const roleClass = u.role === 'faculty' ? 'faculty' : 'student';
     const roleLabel = u.role === 'faculty' ? '🎓 Faculty' : '🎓 Student';
     return `
-      <div class="user-card">
+      <div class="user-card" title="Message ${esc(u.name)}" data-email="${esc(u.email)}" onclick="openPrivateChat(this.dataset.email)">
         <div class="uc-avatar">
-          <div class="avatar-circle ${colorFor(u.name)}">${initials(u.name)}</div>
+          <div class="avatar-circle ${colorFor(u.name)}">${esc(initials(u.name))}</div>
           <div class="online-badge"></div>
         </div>
         <div class="uc-info">
-          <div class="uc-name">${u.name}</div>
+          <div class="uc-name">${esc(u.name)}</div>
           <div class="uc-role ${roleClass}">${roleLabel}</div>
         </div>
-        <button class="btn-chat-pill" aria-label="Call ${esc(u.name)}" onclick="startCall('${u.email}')">
+        <button class="btn-chat-pill" aria-label="Call ${esc(u.name)}" data-email="${esc(u.email)}" onclick="event.stopPropagation();startCall(this.dataset.email)">
           <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.34 1.9.65 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.31 1.85.53 2.81.65A2 2 0 0 1 22 16.92z"/></svg>
           Call
         </button>
@@ -3078,7 +3172,89 @@ const EMPTY_ICONS = {
   groups :'<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5"/><path d="M15 19c0-2 2-3.5 4-3.5"/>',
   search :'<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
   online :'<circle cx="12" cy="12" r="9"/><path d="M8 12h8"/>',
+  private:'<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a6 6 0 0 1 12 0v2"/>',
 };
+
+// ── Private (1-to-1) chats ────────────────────────────────────────────────────
+// The client-side key is 'private_' + the other person's email; the server
+// maps it to the sorted-pair room. Name falls back to whoever is online, then
+// to the email itself, so a row is never blank.
+function newPrivateConv(email, name) {
+  const online = onlineUsers.find(u => u.email === email);
+  return { type:'private', email, name: name || online?.name || email,
+           messages:[], unread:0, lastMsg:'', lastTime:'' };
+}
+
+function openPrivateChat(email) {
+  const key = 'private_' + email;
+  if (!conversations[key]) conversations[key] = newPrivateConv(email);
+  switchNav('private', document.getElementById('nav-private'));
+  openConversation(key);
+}
+
+function setPrivateSubtitle(conv) {
+  const isOn = onlineUsers.some(u => u.email === conv.email);
+  document.getElementById('chat-subtitle').innerHTML =
+    `<span class="status-dot ${isOn?'online':'offline'}"></span>${isOn?'Online':'Offline'}`;
+}
+
+// Rows for the Private tab and the All tab: the UNION of people with history
+// (conversations:summary) and people online now, keyed by email so someone
+// who is both appears once. A thread no longer vanishes when its peer logs off.
+function privateRows(search) {
+  const byEmail = new Map();
+  Object.entries(conversations).forEach(([key, conv]) => {
+    if (conv.type !== 'private' || !conv.email) return;
+    byEmail.set(conv.email, { key, name:conv.name, email:conv.email, role:conv.role || '', conv });
+  });
+  onlineUsers.forEach(u => {
+    const key = 'private_' + u.email;
+    if (!byEmail.has(u.email)) byEmail.set(u.email, { key, name:u.name, email:u.email, role:u.role, conv:conversations[key] || {} });
+    else byEmail.get(u.email).role = u.role;
+  });
+
+  const onlineEmails = new Set(onlineUsers.map(u => u.email));
+  return [...byEmail.values()]
+    .filter(e => !search || e.name.toLowerCase().includes(search))
+    // Newest conversation first; anyone with no history sinks to the end.
+    .sort((a, b) => String(b.conv.lastTime || '').localeCompare(String(a.conv.lastTime || '')))
+    .map(e => privateRow(e, onlineEmails.has(e.email)));
+}
+
+function privateRow(e, isOn) {
+  const conv   = e.conv || {};
+  const time   = conv.lastTime ? formatTime(conv.lastTime) : '';
+  const unread = conv.unread > 0 ? `<div class="unread-badge">${conv.unread}</div>` : '';
+  // Presence line only when there is no history, so a real last message wins.
+  const preview = conv.lastMsg
+    ? `<div class="conv-preview">${esc(conv.lastMsg)}</div>`
+    : `<div class="conv-preview presence">${isOn ? '● Online' : '○ Offline'}${e.role ? ' · ' + esc(e.role) : ''}</div>`;
+  return { lastTime: conv.lastTime, unread: Number(conv.unread) || 0, html: `
+    <div class="conv-item ${activeConvKey === e.key ? 'active' : ''} ${conv.unread > 0 ? 'unread' : ''}" data-email="${esc(e.email)}" onclick="openPrivateChat(this.dataset.email)">
+      <div class="conv-avatar">
+        <div class="avatar-circle ${colorFor(e.name)}">${esc(initials(e.name))}</div>
+        ${isOn ? '<div class="online-badge"></div>' : ''}
+      </div>
+      <div class="conv-info">
+        <div class="conv-name">${esc(e.name)}</div>
+        ${preview}
+      </div>
+      <div class="conv-meta">
+        <span class="conv-time">${time}</span>
+        ${unread}
+      </div>
+    </div>` };
+}
+
+function renderPrivateList() {
+  const search = document.getElementById('search-input').value.toLowerCase();
+  const list   = document.getElementById('private-list');
+  if (!list) return;
+  const rows = privateRows(search);
+  list.innerHTML = rows.length ? withDateGroups(rows)
+    : search ? emptyState('search', 'No matches', 'No one here matches “' + esc(search) + '”.')
+             : emptyState('private', 'No conversations yet', 'Start one from CICS Chat — tap anyone who is online.');
+}
 function emptyState(icon, title, hint) {
   return `<div class="list-empty">
     <span class="le-icon"><svg viewBox="0 0 24 24">${EMPTY_ICONS[icon] || EMPTY_ICONS.search}</svg></span>
@@ -3104,7 +3280,7 @@ function groupRows(search) {
     const isActive = activeConvKey === key;
     const isCreator = conv.createdBy === currentUser?.name;
     return { lastTime: conv.lastTime, unread: Number(conv.unread) || 0, html: `
-      <div class="conv-item ${isActive ? 'active' : ''} ${conv.unread > 0 ? 'unread' : ''}" onclick="openConversation('${key}')">
+      <div class="conv-item ${isActive ? 'active' : ''} ${conv.unread > 0 ? 'unread' : ''}" data-key="${esc(key)}" onclick="openConversation(this.dataset.key)">
         <div class="conv-avatar">
           <div class="avatar-circle group"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5"/><path d="M15 19c0-2 2-3.5 4-3.5"/></svg></div>
         </div>
@@ -3160,19 +3336,19 @@ function withDateGroups(rows) {
 }
 
 // Row builders return {lastTime, html} so the same rows can be poured into the
-// Groups tab or the All tab without two copies of the markup. withDateGroups() then adds the dividers wherever they are used.
-// The All tab: every group conversation in one place, newest first.
+// Private, Groups or All tab without three copies of the markup. withDateGroups() then adds the dividers wherever they are used.
+// The All tab: direct messages and groups interleaved, newest first.
 function renderAllList() {
   const search = document.getElementById('search-input').value.toLowerCase();
   const list   = document.getElementById('all-list');
   if (!list) return;
-  let rows = groupRows(search)
+  let rows = [...privateRows(search), ...groupRows(search)]
     .sort((a, b) => String(b.lastTime || '').localeCompare(String(a.lastTime || '')));
   if (unreadOnly) rows = rows.filter(r => r.unread > 0);
   list.innerHTML = rows.length ? withDateGroups(rows)
     : unreadOnly ? emptyState('search', 'Nothing unread', 'You are all caught up.')
     : search ? emptyState('search', 'No matches', 'Nothing here matches “' + esc(search) + '”.')
-             : emptyState('groups', 'No conversations yet', 'Say hello in CICS Chat, or create a group with the + button.');
+             : emptyState('private', 'No conversations yet', 'Say hello in CICS Chat, or message someone who is online.');
 }
 
 // ── Refresh the CICS Chat side panel after a general-chat change ─────────────
@@ -3213,9 +3389,14 @@ function closeConversation(){
 }
 
 function openConversation(key) {
+  // A private chat with someone you have never messaged has no entry yet.
+  // Without this, conv was undefined, the line after chat-open threw, and a
+  // phone was left on the "Welcome" screen instead of the chat.
+  if (!conversations[key] && key && key.startsWith('private_')) conversations[key] = newPrivateConv(key.slice('private_'.length));
+  const conv=conversations[key];
+  if (!conv) return;
   activeConvKey=key;
   document.getElementById('app').classList.add('chat-open');
-  const conv=conversations[key];
   conv.unread=0;
   const tr=document.getElementById('typing-row');if(tr)tr.innerHTML='';
   const isGroup=conv.type==='group';
@@ -3233,8 +3414,11 @@ function openConversation(key) {
   {
     const sub=document.getElementById('chat-subtitle');
     if(isGlobal){ sub.textContent='Everyone in CICS is here'; }
-    else { sub.textContent=`Group chat · ${conv.memberCount||'multiple'} members`; }
+    else if(isGroup){ sub.textContent=`Group chat · ${conv.memberCount||'multiple'} members`; }
+    else { setPrivateSubtitle(conv); }
   }
+  // 1-to-1 voice call only makes sense in a private chat.
+  document.getElementById('call-btn').style.display=isGroup?'none':'flex';
   // CICS Chat is a group by key but is not callable — see the room:join
   // guard in server.js for why (mesh WebRTC does not scale to everyone).
   document.getElementById('group-call-btn').style.display=(isGroup && !isGlobal)?'flex':'none';
@@ -3244,7 +3428,8 @@ function openConversation(key) {
   renderMessages(key);
   // Refresh the correct section
   if (isGlobal) updateGlobalPreview();
-  else renderGroupsList();
+  else if (isGroup) renderGroupsList();
+  else renderPrivateList();
   document.getElementById('msg-input').focus();
 }
 
@@ -3473,7 +3658,7 @@ function filterMembers(){
 function syncMemberChips(){
   const chips=[...document.querySelectorAll('#members-checklist input:checked')].map(c=>{
     const n=c.dataset.name;
-    return `<span class="chip"><span class="avatar-circle ${colorFor(n)}">${esc(initials(n))}</span>${esc(n)}<button type="button" onclick="removeMemberChip('${esc(c.value)}')" title="Remove ${esc(n)}" aria-label="Remove ${esc(n)}"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span>`;
+    return `<span class="chip"><span class="avatar-circle ${colorFor(n)}">${esc(initials(n))}</span>${esc(n)}<button type="button" data-email="${esc(c.value)}" onclick="removeMemberChip(this.dataset.email)" title="Remove ${esc(n)}" aria-label="Remove ${esc(n)}"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span>`;
   }).join('');
   document.getElementById('member-chips').innerHTML=chips;
 }
@@ -3513,11 +3698,41 @@ async function getMic(){
   try{
     return await navigator.mediaDevices.getUserMedia({audio:true});
   }catch(err){
-    if(err.name==='NotAllowedError'||err.name==='SecurityError') showToast('voice','Microphone blocked','Open the lock or mic icon in the address bar, allow the microphone, then try again.');
+    if(err.name==='NotAllowedError'||err.name==='SecurityError') showToast('voice','Microphone blocked','Tap here to see how to allow it.',openMicHelp);
     else if(err.name==='NotFoundError') showToast('voice','No microphone found','This device has no microphone available.');
     else showToast('voice','Microphone unavailable',`Could not access the microphone (${err.name}).`);
     return null;
   }
+}
+// Steps to unblock the mic, picked by browser. The page cannot open Settings
+// itself, so it tells the user where to tap. Fixed strings only (no user data),
+// which is why they may go through innerHTML.
+function micHelpSteps(){
+  const ua=navigator.userAgent;
+  const ios=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  if(ios&&/CriOS|FxiOS|EdgiOS/.test(ua)){
+    const app=/CriOS/.test(ua)?'Chrome':/FxiOS/.test(ua)?'Firefox':'Edge';
+    return [`${app} on iPhone`,['Open the iPhone <b>Settings</b> app.',`Scroll down and tap <b>${app}</b>.`,'Turn <b>Microphone</b> on.','Come back here and tap <b>Try again</b>. If it still says blocked, reload the page.']];
+  }
+  if(ios) return ['Safari on iPhone',['Tap <b>aA</b> on the left of the address bar.','Tap <b>Website Settings</b>.','Set <b>Microphone</b> to <b>Allow</b>.','Tap <b>Try again</b>. Still blocked? Open <b>Settings → Safari → Microphone</b> and choose <b>Allow</b>.']];
+  if(/Android/.test(ua)) return ['Chrome on Android',['Tap the <b>icon left of the address bar</b> (lock or sliders).','Tap <b>Permissions</b> and turn <b>Microphone</b> on.','Still blocked? Open phone <b>Settings → Apps → Chrome → Permissions → Microphone</b> and choose <b>Allow</b>.','Come back and tap <b>Try again</b>.']];
+  return ['This browser',['Click the <b>lock or sliders icon</b> left of the address bar.','Set <b>Microphone</b> to <b>Allow</b>.','Click <b>Try again</b>.']];
+}
+function openMicHelp(){
+  const [where,steps]=micHelpSteps();
+  document.getElementById('mic-help-sub').textContent=`The microphone is blocked for this site in ${where}. Voice calls and voice notes need it.`;
+  document.getElementById('mic-help-steps').innerHTML=steps.map(s=>`<li>${s}</li>`).join('');
+  document.getElementById('mic-help-overlay').classList.add('open');
+}
+function closeMicHelp(){document.getElementById('mic-help-overlay').classList.remove('open');}
+// Ask for the mic again. Success means the permission is now granted, so the
+// test stream is stopped straight away; a call or voice note opens its own.
+async function retryMic(){
+  closeMicHelp();
+  const stream=await getMic();
+  if(!stream)return;
+  stream.getTracks().forEach(t=>t.stop());
+  showToast('voice','Microphone allowed','You can call and send voice notes now.');
 }
 async function startCall(email){
   const target=onlineUsers.find(u=>u.email===email);
@@ -3536,7 +3751,12 @@ async function acceptCall(){
   socket.emit('call:accept',{callId:currentCallId,callerSocketId:currentCallTarget});
 }
 function rejectCall(){stopRingtone();document.getElementById('incoming-call').classList.remove('show');socket.emit('call:reject',{callId:currentCallId,callerSocketId:currentCallTarget});currentCallId=null;currentCallTarget=null;}
-function hangup(){stopRingtone();socket.emit('call:end',{callId:currentCallId,targetSocketId:currentCallTarget});endCallUI();}
+// finally: the call screen always closes, even if telling the server fails
+// (e.g. the socket is mid-reconnect on a phone), so Hang up never looks dead.
+function hangup(){
+  try{ stopRingtone(); socket.emit('call:end',{callId:currentCallId,targetSocketId:currentCallTarget}); }
+  finally{ endCallUI(); currentCallId=null; currentCallTarget=null; }
+}
 function endCallUI(){peerConnection?.close();peerConnection=null;localStream?.getTracks().forEach(t=>t.stop());localStream=null;clearInterval(callTimerInterval);callSeconds=0;hideCallPanel();}
 function showCallPanel(n){document.getElementById('call-peer-name').textContent=n;document.getElementById('call-timer').textContent='00:00';document.getElementById('call-panel').classList.add('show');}
 function hideCallPanel(){document.getElementById('call-panel').classList.remove('show');}
@@ -3874,6 +4094,7 @@ function logout({ skipServer=false }={}){
   document.getElementById('chat-panel').classList.remove('active');
   document.getElementById('empty-state').style.display='flex';
   document.getElementById('groups-list').innerHTML='';
+  document.getElementById('private-list').innerHTML='';
   document.getElementById('toast-container').innerHTML='';
   switchNav('global', document.getElementById('nav-global'));
 }
@@ -3948,6 +4169,26 @@ function logout({ skipServer=false }={}){
   ['auth-screen','app'].forEach(id=>{ const el=document.getElementById(id); if(el) mo.observe(el,{attributes:true,attributeFilter:['style']}); });
   if(reduce) draw();                         // static mesh for reduced-motion users
 })();
+
+// Phone keyboard handling. visualViewport is the part of the page actually on
+// screen; it shrinks when the on-screen keyboard opens. The phone CSS sizes
+// #app to --app-h, so the composer always sits right above the keyboard, and
+// scrollTo(0,0) undoes Safari scrolling the page under the fixed app. kb-open
+// hides the bottom tab bar while typing. Skipped while pinch-zoomed (scale>1),
+// where the visible area is small for a different reason.
+const KEYBOARD_MIN_PX = 150;   // smaller differences are just the address bar
+function fitAppToViewport(){
+  const vv = window.visualViewport;
+  if (vv.scale > 1.01) return;
+  document.documentElement.style.setProperty('--app-h', vv.height + 'px');
+  document.body.classList.toggle('kb-open', window.innerHeight - vv.height > KEYBOARD_MIN_PX);
+  if (window.scrollY) window.scrollTo(0, 0);
+}
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', fitAppToViewport);
+  window.visualViewport.addEventListener('scroll', fitAppToViewport);
+  fitAppToViewport();
+}
 </script>
 </body>
 </html>

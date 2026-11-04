@@ -15,6 +15,7 @@
        before. `defer` runs it after the page is parsed, by which time the
        inline script at the bottom has registered the `survey` component. -->
   <script defer src="/vendor/alpine-csp.min.js"></script>
+  <link rel="icon" type="image/svg+xml" href="/msukaip-mark.svg"/>
   <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png"/>
   <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -143,7 +144,7 @@ button,label{touch-action:manipulation;}
    chips and the decorative ring had nothing left to separate the text from,
    so they are gone. The gold h2 is large text, so gold on maroon is fine. */
 .hero{background:var(--primary-dark);padding:2.5rem 1.5rem 2.6rem;text-align:center;color:#fff;}
-.hero img{width:96px;height:96px;border-radius:50%;object-fit:cover;object-position:center;margin-bottom:.75rem;background:#fff;}
+.hero img{width:200px;height:auto;margin:0 auto 1rem;display:block;filter:drop-shadow(0 6px 14px rgba(0,0,0,.35));}
 .hero h2{font-family:'Cinzel',serif;font-size:1.4rem;color:var(--gold-bright);letter-spacing:.06em;margin-bottom:.45rem;}
 .hero p{font-size:.85rem;color:rgba(255,255,255,.88);max-width:540px;margin:0 auto;line-height:1.6;}
 .hero-meta{display:flex;justify-content:center;gap:.6rem 1rem;margin-top:1.1rem;flex-wrap:wrap;}
@@ -303,7 +304,7 @@ button,label{touch-action:manipulation;}
 </div>
 
 <div class="hero">
-  <img src="/msukaip-logo.png" alt="MSU Logo"/>
+  <img src="/msukaip-logo-stacked.svg" alt="MSUkaIP"/>
   <h2>Share Your Feedback</h2>
   <p>Please rate the MSUkaIP LAN-based communication system. Your honest answers are used in the Chapter 4 data analysis of our capstone study, and all responses are confidential.</p>
   <div class="hero-meta">

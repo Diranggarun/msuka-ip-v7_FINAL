@@ -31,7 +31,7 @@ Other devices on the LAN (voice calls need HTTPS): **https://msukaip.local:3443*
 — the server announces this name itself (mDNS); change it with `APP_HOST` in
 `.env` (must end in `.local`). If a device can't resolve it (some Android
 phones), use `https://<server-ip>:3443` instead. Setup details and the
-firewall rules are in `DEPLOYMENT.md` §6.
+firewall rules are in `docs/guides/DEPLOYMENT.md` §6.
 
 Default seeded accounts (rotated on every server start, so demos can't drift):
 
@@ -40,7 +40,7 @@ Default seeded accounts (rotated on every server start, so demos can't drift):
 | `admin@cics.msu.edu` | `admin123` | Admin |
 | `student@cics.msu.edu` | `student123` | Student |
 
-**Change before LAN deployment** — see `DEPLOYMENT.md`.
+**Change before LAN deployment** — see `docs/guides/DEPLOYMENT.md`.
 
 ## Folder layout
 
@@ -64,14 +64,17 @@ msuka-ip-v7_Final/
 │   ├── .env.example              # Template for secrets / DB creds
 │   ├── package.json
 │   └── playwright.config.js
+├── docs/
+│   ├── project/                  # PROGRESS, DECISIONS, DEBUGGING, ERD, DEFENSE, AUDIT
+│   ├── guides/                   # DEPLOYMENT + setup, LAN, CICS-wifi and faculty test guides
+│   ├── paper/                    # Capstone paper chapters, revisions, word/ exports
+│   ├── prompts/                  # Original build spec + reusable prompts (historical)
+│   └── erd.mmd / erd.svg / erd.png  # Schema diagram (scripts/make-erd.js)
+├── tools/build-standalone.js     # Builds dist/MSUkaIP-UI-Prototype.html (single-file UI demo)
+├── dist/                         # Generated output
 ├── README.md                     # This file
-├── DEPLOYMENT.md                 # LAN deployment guide (firewall, secrets, smoke test)
-├── PROGRESS.md                   # Phase checklist + completion log
-├── ERD.md                        # Database schema reference
-├── DECISIONS.md                  # Build decisions log
-├── DEBUGGING.md                  # Known errors + fixes
-├── AUDIT.md                      # Codebase audit snapshot
-└── PROMPTS.md                    # Original 15-phase build spec
+├── CLAUDE.md                     # Instructions for Claude Code
+└── DESIGN.md                     # UI design system (read by the impeccable skill)
 ```
 
 ## Documentation map
@@ -79,12 +82,13 @@ msuka-ip-v7_Final/
 | If you want to… | Read |
 |---|---|
 | Set up a development environment | This file (Quick start) |
-| Deploy to a LAN for demo / defense | `DEPLOYMENT.md` |
-| Understand what's done and what's not | `PROGRESS.md` |
-| Learn the database schema | `ERD.md` |
-| Understand why a thing was built a certain way | `DECISIONS.md` |
-| Debug a specific error | `DEBUGGING.md` |
-| See the original build plan | `PROMPTS.md` |
+| Deploy to a LAN for demo / defense | `docs/guides/DEPLOYMENT.md` |
+| Understand what's done and what's not | `docs/project/PROGRESS.md` |
+| Learn the database schema | `docs/project/ERD.md` |
+| Understand why a thing was built a certain way | `docs/project/DECISIONS.md` |
+| Debug a specific error | `docs/project/DEBUGGING.md` |
+| Prepare for the oral defense | `docs/project/DEFENSE.md` |
+| See the original build plan | `docs/prompts/PROMPTS.md` |
 
 ## Key features
 
@@ -119,7 +123,7 @@ Generate strong secrets in PowerShell:
 
 ## Database
 
-SQLite file at `msuka-ip-v7/msukaip.db` (WAL mode, foreign keys ON). Schema is auto-created at boot by `setupDatabase()`. 7 tables: `users`, `groups_table`, `group_members`, `messages`, `calls`, `audit_logs`, `survey_responses`. Detailed in `ERD.md`. A one-time migration script from the old XAMPP/MySQL install exists: `npm run db:migrate-from-mysql`.
+SQLite file at `msuka-ip-v7/msukaip.db` (WAL mode, foreign keys ON). Schema is auto-created at boot by `setupDatabase()`. 7 tables: `users`, `groups_table`, `group_members`, `messages`, `calls`, `audit_logs`, `survey_responses`. Detailed in `docs/project/ERD.md`. A one-time migration script from the old XAMPP/MySQL install exists: `npm run db:migrate-from-mysql`.
 
 Audit the DB at any time:
 

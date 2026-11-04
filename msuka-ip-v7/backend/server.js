@@ -329,6 +329,10 @@ async function seedDemoConversations() {
     } else ids[p.email] = rows[0].id;
   }
 
+  const [me] = await db.query('SELECT id FROM users WHERE email=?',['student@cics.msu.edu']);
+  if (!me.length) return;
+  const myId = me[0].id;
+
   // Idempotency: if any peer has already spoken, the seed has run before. This
   // keeps a restart from stacking duplicate history, without wiping anything the
   // real user has since written.
@@ -346,6 +350,22 @@ async function seedDemoConversations() {
   const say = async (senderId, convKey, text, when) => db.query(
     'INSERT INTO messages (sender_id,conv_key,type,text,created_at) VALUES (?,?,?,?,?)',
     [senderId, convKey, 'chat', encryptMessage(text), when]);
+
+  // Private threads. buildPrivateKey sorts the addresses, so the key matches
+  // exactly what the live send path would produce for the same two people.
+  const pk = e => buildPrivateKey('student@cics.msu.edu', e);
+  await say(ids['kisha@cics.msu.edu'], pk('kisha@cics.msu.edu'), 'Naka-submit ka na ba ng capstone chapter 2?', at(0,8,41));
+  await say(myId,                      pk('kisha@cics.msu.edu'), 'Hindi pa, tinatapos ko pa yung ERD ngayon.',  at(0,8,44));
+  await say(ids['kisha@cics.msu.edu'], pk('kisha@cics.msu.edu'), 'Alright! See you later.',                     at(0,8,47));
+
+  await say(ids['tommy@cics.msu.edu'], pk('tommy@cics.msu.edu'), 'Pakisend na lang yung defense schedule.',      at(0,8,28));
+  await say(ids['tommy@cics.msu.edu'], pk('tommy@cics.msu.edu'), 'Picking up the product now...',                at(0,8,30));
+
+  await say(ids['ghost@cics.msu.edu'], pk('ghost@cics.msu.edu'), 'Wassup, where you at??',                       at(0,8,12));
+
+  await say(myId,                      pk('dre@cics.msu.edu'),   'Send the file when you can.',                  at(1,21,15));
+
+  await say(ids['santos@cics.msu.edu'], pk('santos@cics.msu.edu'), 'Meeting moved to Thursday, 10:00 AM.',       at(2,18,45));
 
   // A little life in the broadcast channel too, dated earlier so the Global
   // Chat preview is not empty on first open.
@@ -487,6 +507,14 @@ setInterval(() => {
 }, 5*60*1000).unref();
 
 const ALLOWED_EMAIL_DOMAINS = ['cics.msu.edu','s.msumain.edu.ph','msumain.edu.ph'];
+// The part before @: letters, digits, . _ - only, no "__". Emails end up inside
+// conversation keys (private_<a>__<b>) and HTML attributes, so a quote, bracket
+// or double underscore in one could break out of either. Checked on lowercase.
+const EMAIL_LOCAL_RE = /^[a-z0-9](?:[a-z0-9._-]{0,62}[a-z0-9])?$/;
+function emailLocalOk(emailLower){
+  const local = emailLower.split('@')[0] || '';
+  return emailLower.split('@').length === 2 && EMAIL_LOCAL_RE.test(local) && !local.includes('__');
+}
 app.post('/api/register', async (req,res) => {
   const {name,email,password,role='student'}=req.body;
   if(!name||!email||!password) return res.status(400).json({error:'All fields required'});
@@ -495,11 +523,12 @@ app.post('/api/register', async (req,res) => {
   const emailLower = String(email).trim().toLowerCase();
   const domain = emailLower.split('@')[1] || '';
   if(!ALLOWED_EMAIL_DOMAINS.includes(domain)) return res.status(400).json({error:'Only institutional emails are allowed (e.g. @cics.msu.edu, @s.msumain.edu.ph).'});
+  if(!emailLocalOk(emailLower)) return res.status(400).json({error:'Email may only use letters, numbers, dots, hyphens and single underscores.'});
   try {
-    const [ex]=await db.query('SELECT id FROM users WHERE email=?',[email.trim()]);
+    const [ex]=await db.query('SELECT id FROM users WHERE LOWER(email)=?',[emailLower]);
     if(ex.length>0) return res.status(409).json({error:'Email already registered'});
     const hash=await bcrypt.hash(password,12);
-    const [r]=await db.query('INSERT INTO users (name,email,password_hash,role,account_status) VALUES (?,?,?,?,?)',[name,email.trim(),hash,role,'pending']);
+    const [r]=await db.query('INSERT INTO users (name,email,password_hash,role,account_status) VALUES (?,?,?,?,?)',[name,emailLower,hash,role,'pending']);
     await logAudit(r.insertId,'REGISTER',`${name} registered`,req);
     res.json({message:'Account created! Wait for admin approval.'});
   } catch(err){ res.status(500).json({error:'Server error'}); }
@@ -512,7 +541,7 @@ app.post('/api/login', async (req,res) => {
   const rk = rateKey(req,email);
   if(loginLocked(rk)) return res.status(429).json({error:'Too many failed attempts. Try again in 15 minutes.'});
   try {
-    const [rows]=await db.query('SELECT * FROM users WHERE email=?',[email.trim()]);
+    const [rows]=await db.query('SELECT * FROM users WHERE LOWER(email)=LOWER(?) LIMIT 1',[String(email).trim()]);
     if(!rows.length) { recordLoginFailure(rk); await logAudit(null,'LOGIN_FAILED',`Unknown email at Chat login: ${String(email).trim()}`,req); return res.status(401).json({error:'Invalid credentials'}); }
     const user=rows[0];
     if(!await bcrypt.compare(password,user.password_hash)) { recordLoginFailure(rk); await logAudit(user.id,'LOGIN_FAILED',`Wrong password at Chat login: ${user.email}`,req); return res.status(401).json({error:'Invalid credentials'}); }
@@ -546,7 +575,7 @@ app.post('/api/admin/login', async (req,res) => {
   const rk = rateKey(req,email);
   if(loginLocked(rk)) return res.status(429).json({error:'Too many failed attempts. Try again in 15 minutes.'});
   try {
-    const [rows]=await db.query('SELECT * FROM users WHERE email=?',[email.trim()]);
+    const [rows]=await db.query('SELECT * FROM users WHERE LOWER(email)=LOWER(?) LIMIT 1',[String(email).trim()]);
     if(!rows.length) { recordLoginFailure(rk); await logAudit(null,'LOGIN_FAILED',`Unknown email at Admin login: ${String(email).trim()}`,req); return res.status(401).json({error:'Invalid credentials'}); }
     const user=rows[0];
     if(!await bcrypt.compare(password,user.password_hash)) { recordLoginFailure(rk); await logAudit(user.id,'LOGIN_FAILED',`Wrong password at Admin login: ${user.email}`,req); return res.status(401).json({error:'Invalid credentials'}); }
@@ -583,11 +612,17 @@ app.post('/api/upload', verifyToken, (req,res) => {
     const isImage=req.file.mimetype.startsWith('image/');
     const fileUrl=`/uploads/${req.file.filename}`;
     const msgType=isImage?'image':'file';
-    const convKey=req.body.convKey||'group_general';
-    if (convKey.startsWith('private_')) { fs.unlink(req.file.path,()=>{}); return res.status(400).json({error:'Private chat has been removed'}); }
+    const convKey=String(req.body.convKey||'group_general');
 
     try {
-      const realKey = convKey;
+      // Same access rule as message:send — a private key resolves to the sorted
+      // canonical key only when the peer is a valid chat partner of the caller.
+      const realKey = await resolveConvKey(req.user.id, req.user.email, convKey);
+      if (!realKey) {
+        fs.unlink(req.file.path,()=>{});
+        await logAudit(req.user.id,'ACCESS_DENIED',`Blocked upload to ${convKey}`,req);
+        return res.status(403).json({error:'You are not a member of this conversation.'});
+      }
       const [result]=await db.query(
         'INSERT INTO messages (sender_id,conv_key,type,text,file_name,file_url,file_size,file_type) VALUES (?,?,?,?,?,?,?,?)',
         [req.user.id,realKey,msgType,req.file.originalname,req.file.originalname,fileUrl,req.file.size,req.file.mimetype]
@@ -602,7 +637,7 @@ app.post('/api/upload', verifyToken, (req,res) => {
         timestamp:new Date().toISOString()
       };
 
-      io.to(realKey).emit('message:new',{...msg, convKey:realKey});
+      emitToConv(realKey,'message:new',msg);
 
       console.log(`📎  ${req.user.name} uploaded: ${req.file.originalname}`);
       res.json({message:'Uploaded',...msg, convKey});
@@ -625,16 +660,20 @@ app.post('/api/upload/voice', verifyToken, (req,res) => {
     try { encryptFileAtRest(req.file.path); }
     catch { fs.unlink(req.file.path,()=>{}); return res.status(500).json({error:'Could not secure file — upload cancelled'}); }
     const fileUrl=`/uploads/${req.file.filename}`;
-    const convKey=req.body.convKey||'group_general';
-    if(convKey.startsWith('private_')){ fs.unlink(req.file.path,()=>{}); return res.status(400).json({error:'Private chat has been removed'}); }
+    const convKey=String(req.body.convKey||'group_general');
     try {
-      const realKey=convKey;
+      const realKey=await resolveConvKey(req.user.id,req.user.email,convKey);
+      if(!realKey){
+        fs.unlink(req.file.path,()=>{});
+        await logAudit(req.user.id,'ACCESS_DENIED',`Blocked voice upload to ${convKey}`,req);
+        return res.status(403).json({error:'You are not a member of this conversation.'});
+      }
       const [result]=await db.query(
         'INSERT INTO messages (sender_id,conv_key,type,text,file_name,file_url,file_size,file_type) VALUES (?,?,?,?,?,?,?,?)',
         [req.user.id,realKey,'voice','Voice message',req.file.originalname,fileUrl,req.file.size,req.file.mimetype]
       );
       const msg={id:result.insertId,type:'voice',sender:req.user.name,role:req.user.role,text:'Voice message',file_name:req.file.originalname,file_url:fileUrl,file_size:req.file.size,file_type:req.file.mimetype,timestamp:new Date().toISOString()};
-      io.to(realKey).emit('message:new',{...msg,convKey:realKey});
+      emitToConv(realKey,'message:new',msg);
       res.json({message:'Voice uploaded',...msg});
     } catch(err){ res.status(500).json({error:'Server error'}); }
   });
@@ -796,12 +835,15 @@ app.post('/api/admin/users',verifyToken,adminOnly,async(req,res)=>{
   const {name,email,password,role='student'}=req.body;
   if(!name||!email||!password) return res.status(400).json({error:'All fields required'});
   if(password.length<8) return res.status(400).json({error:'Password must be at least 8 characters'});
+  const emailLower=String(email).trim().toLowerCase();
+  if(!emailLocalOk(emailLower)) return res.status(400).json({error:'Email may only use letters, numbers, dots, hyphens and single underscores.'});
+  if(!['student','faculty','admin'].includes(role)) return res.status(400).json({error:'Invalid role'});
   try {
-    const [ex]=await db.query('SELECT id FROM users WHERE email=?',[email]);
+    const [ex]=await db.query('SELECT id FROM users WHERE LOWER(email)=?',[emailLower]);
     if(ex.length>0) return res.status(409).json({error:'Email exists'});
     const hash=await bcrypt.hash(password,12);
-    const [r]=await db.query('INSERT INTO users (name,email,password_hash,role,account_status) VALUES (?,?,?,?,?)',[name,email,hash,role,'approved']);
-    await logAudit(req.user.id,'ADD_USER',`Added: ${email}`,req);
+    const [r]=await db.query('INSERT INTO users (name,email,password_hash,role,account_status) VALUES (?,?,?,?,?)',[name,emailLower,hash,role,'approved']);
+    await logAudit(req.user.id,'ADD_USER',`Added: ${emailLower}`,req);
     res.json({message:'User added',id:r.insertId});
   } catch(err){ res.status(500).json({error:'Server error'}); }
 });
@@ -1220,6 +1262,9 @@ io.use(async (socket,next)=>{
   try {
     const payload=jwt.verify(token,JWT_SECRET,JWT_VERIFY_OPTS);
     if(!await tokenStillValid(payload)) return next(new Error('Session expired or revoked'));
+    // Two-tier login: admins use /admin.html only (it opens no socket), so an
+    // admin token is refused here rather than allowed to chat with students.
+    if(payload.role==='admin') return next(new Error('Admins use the admin portal'));
     socket.user=payload; next();
   }
   catch { next(new Error('Invalid token')); }
@@ -1271,13 +1316,20 @@ io.on('connection', async(socket)=>{
   // message), which is all the list needs for its preview line, timestamp and
   // ordering; full history stays with messages:get, which is fetched on demand.
   // Access is decided here, never by the client: the key set is the general
-  // room and the groups this user belongs to, so no conversation the caller
-  // cannot see is ever enumerated.
+  // room, the groups this user belongs to, and private keys carrying its own
+  // address, so no conversation the caller cannot see is ever enumerated.
   socket.on('conversations:get', async()=>{
     try {
       const [myGroups]=await db.query(
         'SELECT g.id FROM groups_table g INNER JOIN group_members gm ON g.id=gm.group_id WHERE gm.user_id=?',[id]);
       const keys=['group_general',...myGroups.map(g=>'group_'+g.id)];
+      // buildPrivateKey sorts the two addresses, so this user's email is on one
+      // side or the other — both patterns are checked. LIKE treats `_` in an
+      // email as a wildcard, so each hit is re-checked exactly before use.
+      const [privateKeys]=await db.query(
+        "SELECT DISTINCT conv_key FROM messages WHERE conv_key LIKE 'private\\_%' ESCAPE '\\' AND (conv_key LIKE ? OR conv_key LIKE ?)",
+        ['private_'+email+'__%','%__'+email]);
+      privateKeys.map(r=>r.conv_key).filter(k=>privatePeer(k,email)).forEach(k=>keys.push(k));
 
       const summaries=[];
       for(const key of keys){
@@ -1287,8 +1339,18 @@ io.on('connection', async(socket)=>{
             WHERE m.conv_key=? ORDER BY m.id DESC LIMIT 1`,[key]);
         if(!rows.length) continue;
         const m=rows[0];
+        // The client addresses a private chat as `private_<other email>`, while
+        // the database stores the sorted canonical key — translate here so the
+        // client keeps using the key shape the rest of its code expects.
+        let clientKey=key, peer=null;
+        if(key.startsWith('private_')){
+          const otherEmail=privatePeer(key,email);
+          const [u]=await db.query('SELECT name,email,role FROM users WHERE email=?',[otherEmail]);
+          peer=u[0]||{name:otherEmail,email:otherEmail,role:'student'};
+          clientKey='private_'+peer.email;
+        }
         summaries.push({
-          convKey:key,
+          convKey:clientKey, peer,
           lastType:m.type,
           // Only chat text is encrypted at rest; file rows store the filename.
           lastText:m.type==='chat'?decryptMessage(m.text):(m.file_name||''),
@@ -1306,12 +1368,14 @@ io.on('connection', async(socket)=>{
   // Get messages for a conversation
   socket.on('messages:get', async({key})=>{
     try {
-      // Refuse history for a group the caller does not belong to (RA 10173).
-      if(!(await canAccessConv(id, key))){
+      // Refuse history for a conversation the caller is not part of (RA 10173).
+      // A private key comes back as the sorted canonical key stored in the DB.
+      const realKey=await resolveConvKey(id, email, key);
+      if(!realKey){
         await logAudit(id,'ACCESS_DENIED',`Blocked messages:get on ${key}`,socket);
         return socket.emit('messages:history',{key,messages:[]});
       }
-      const [rows]=await db.query(`SELECT m.id,m.conv_key,m.type,m.text,m.file_name,m.file_url,m.file_size,m.file_type,m.created_at AS timestamp,u.name AS sender,u.role FROM messages m LEFT JOIN users u ON m.sender_id=u.id WHERE m.conv_key=? ORDER BY m.created_at ASC LIMIT 100`,[key]);
+      const [rows]=await db.query(`SELECT m.id,m.conv_key,m.type,m.text,m.file_name,m.file_url,m.file_size,m.file_type,m.created_at AS timestamp,u.name AS sender,u.role FROM messages m LEFT JOIN users u ON m.sender_id=u.id WHERE m.conv_key=? ORDER BY m.created_at ASC LIMIT 100`,[realKey]);
       // Decrypt text for chat/announcement messages
       const decrypted = rows.map(m => ({
         ...m,
@@ -1325,18 +1389,19 @@ io.on('connection', async(socket)=>{
   socket.on('message:send', async({text,convKey})=>{
     const t=text?.trim(); if(!t||!convKey) return;
     try {
-      // Refuse posting into a group the caller does not belong to (RA 10173).
-      if(!(await canAccessConv(id, convKey))){
+      // Refuse posting into a conversation the caller is not part of (RA 10173).
+      const realKey=await resolveConvKey(id, email, convKey);
+      if(!realKey){
         await logAudit(id,'ACCESS_DENIED',`Blocked message:send to ${convKey}`,socket);
         return socket.emit('message:error',{convKey,reason:'You are not a member of this conversation.'});
       }
       // Encrypt before storing in database
       const encrypted = encryptMessage(t);
-      const [result]=await db.query('INSERT INTO messages (sender_id,conv_key,type,text) VALUES (?,?,?,?)',[id,convKey,'chat',encrypted]);
+      const [result]=await db.query('INSERT INTO messages (sender_id,conv_key,type,text) VALUES (?,?,?,?)',[id,realKey,'chat',encrypted]);
       // Send plain text to clients (decrypted in transit via Socket.IO over LAN)
-      const msg={id:result.insertId,type:'chat',sender:name,role,text:t,convKey,timestamp:new Date().toISOString()};
+      const msg={id:result.insertId,type:'chat',sender:name,role,text:t,timestamp:new Date().toISOString()};
 
-      io.to(convKey).emit('message:new',msg);
+      emitToConv(realKey,'message:new',msg);
     } catch(err){
       console.error('Send error:',err.message);
       socket.emit('message:error', { convKey, reason: 'Failed to save message — please try again.' });
@@ -1352,6 +1417,7 @@ io.on('connection', async(socket)=>{
       const m=rows[0];
       // Permission: sender or admin
       if(m.sender_id!==id && role!=='admin'){
+        await logAudit(id,'ACCESS_DENIED',`Blocked delete of msg ${msgId} in ${m.conv_key}`,socket);
         return socket.emit('message:error',{msgId,convKey,reason:'You can only delete your own messages'});
       }
       await db.query('DELETE FROM messages WHERE id=?',[msgId]);
@@ -1362,7 +1428,9 @@ io.on('connection', async(socket)=>{
       }
       await logAudit(id,'DELETE_MESSAGE',`Deleted msg ${msgId} from ${m.conv_key}`,socket);
 
-      io.to(m.conv_key).emit('message:deleted',{id:msgId,convKey:m.conv_key});
+      // Broadcast deletion. For private chats emitToConv sends each participant
+      // the key they use locally (`private_<other email>`).
+      emitToConv(m.conv_key,'message:deleted',{id:msgId});
       console.log(`🗑️   ${name} deleted message ${msgId}`);
     } catch(err){
       console.error('Delete message error:',err.message);
@@ -1370,10 +1438,17 @@ io.on('connection', async(socket)=>{
     }
   });
 
-  // Typing — broadcast to everyone else in the group's room.
-  const sendTyping=(convKey,typing)=>{
+  // Typing — for private chats, send to the recipient using THEIR convKey
+  // (i.e. private_<sender_email>); for groups, broadcast to the room.
+  const sendTyping=async(convKey,typing)=>{
     if(!convKey) convKey='group_general';
-    socket.broadcast.to(convKey).emit('typing:update',{name,convKey,typing});
+    if(typeof convKey!=='string') return;
+    // Same access gate as sending: no typing events into a group or private
+    // chat the caller is not part of.
+    const realKey=await resolveConvKey(id, email, convKey).catch(()=>null);
+    if(!realKey) return;
+    if(realKey.startsWith('private_')) emitToConv(realKey,'typing:update',{name,typing},email);
+    else socket.broadcast.to(realKey).emit('typing:update',{name,convKey:realKey,typing});
   };
   socket.on('typing:start',({convKey})=>sendTyping(convKey,true));
   socket.on('typing:stop', ({convKey})=>sendTyping(convKey,false));
@@ -1454,7 +1529,8 @@ io.on('connection', async(socket)=>{
     if(roomId === 'group_general'){
       return socket.emit('room:error',{reason:'CICS Chat does not support group calls. Start one from a group chat.'});
     }
-    if(!(await canAccessConv(id, roomId))){
+    // Group calls only — 1:1 calls go through call:initiate, not a room.
+    if(!roomId.startsWith('group_') || !(await canAccessConv(id, roomId, email))){
       await logAudit(id,'ACCESS_DENIED',`Blocked room:join on ${roomId}`,socket);
       return socket.emit('room:error',{reason:'You are not a member of this call.'});
     }
@@ -1477,21 +1553,67 @@ io.on('connection', async(socket)=>{
   });
 });
 
+// Deterministic key for a 1:1 conversation. Sorting the two emails guarantees
+// that Alice→Bob and Bob→Alice resolve to the same conv_key — so both clients
+// query the same row set from `messages` regardless of who opens the chat.
+function buildPrivateKey(email1,email2) {
+  return 'private_'+(email1<email2?email1+'__'+email2:email2+'__'+email1);
+}
+
+// The other participant of a canonical private key, or null if `myEmail` is
+// not exactly one of the two sides.
+function privatePeer(canonicalKey, myEmail) {
+  const parts = canonicalKey.slice('private_'.length).split('__');
+  if (parts.length !== 2) return null; // an email containing "__" would make a 3rd side
+  const [a,b] = parts;
+  if (a === myEmail) return b || null;
+  if (b === myEmail) return a || null;
+  return null;
+}
+
 // Authorization gate for conversations (RA 10173 — access control).
-// The only conversations are groups: a conv_key of the form `group_<id>` is
-// private to its members. Without this
-// check any authenticated user could read or post to any group just by guessing
-// the id, since the client supplies the key. `group_general` is the open
-// college-wide room and is intentionally exempt. Returns true if `userId` may
-// access `convKey`. Any other key is refused: private 1:1 chat was removed, so
-// old `private_*` rows stay in the database but can no longer be read or written.
-async function canAccessConv(userId, convKey) {
-  if (!convKey || !convKey.startsWith('group_')) return false;
-  if (convKey === 'group_general') return true;
-  const gid = convKey.slice('group_'.length);
-  if (!/^\d+$/.test(gid)) return false; // malformed group key
-  const [rows] = await db.query('SELECT 1 FROM group_members WHERE group_id=? AND user_id=? LIMIT 1', [gid, userId]);
-  return rows.length > 0;
+// The client supplies the key, so the server decides what it really means.
+// Returns the conv_key as stored in the DB, or null if the caller may not use it:
+// - `group_general` is the open college-wide room.
+// - `group_<id>` is private to its members. Without this check any authenticated
+//   user could read or post to any group just by guessing the id.
+// - `private_<other email>` (the client's form) becomes the sorted canonical key
+//   built from the CALLER's own email, so a user can only ever reach a private
+//   conversation they are one side of. The peer must be a real, approved,
+//   non-admin account and not the caller.
+async function resolveConvKey(userId, myEmail, convKey) {
+  if (!convKey || typeof convKey !== 'string') return null;
+  if (convKey === 'group_general') return convKey;
+  if (convKey.startsWith('group_')) {
+    const gid = convKey.slice('group_'.length);
+    if (!/^\d+$/.test(gid)) return null; // malformed group key
+    const [rows] = await db.query('SELECT 1 FROM group_members WHERE group_id=? AND user_id=? LIMIT 1', [gid, userId]);
+    return rows.length ? convKey : null;
+  }
+  if (convKey.startsWith('private_')) {
+    const peer = convKey.slice('private_'.length).trim();
+    // `__` would let a client pass a pre-built canonical key — refuse it.
+    if (!peer || peer.length > 254 || peer.includes('__') || peer.toLowerCase() === String(myEmail).toLowerCase()) return null;
+    const [u] = await db.query(
+      "SELECT email FROM users WHERE LOWER(email)=LOWER(?) AND account_status='approved' AND role!='admin' LIMIT 1", [peer]);
+    if (!u.length || u[0].email.includes('__') || String(myEmail).includes('__')) return null;
+    return buildPrivateKey(myEmail, u[0].email);
+  }
+  return null;
+}
+async function canAccessConv(userId, convKey, myEmail) {
+  return (await resolveConvKey(userId, myEmail, convKey)) !== null;
+}
+
+// Emit to everyone in a conversation. Groups use their Socket.IO room. A private
+// chat has no room: each participant's sockets get the event with the key THEY
+// use locally (`private_<other email>`). `skipEmail` leaves one side out (typing).
+function emitToConv(realKey, event, payload, skipEmail) {
+  if (!realKey.startsWith('private_')) return io.to(realKey).emit(event, {...payload, convKey:realKey});
+  for (const [sid,u] of onlineUsers.entries()) {
+    const other = privatePeer(realKey, u.email);
+    if (other && u.email !== skipEmail) io.to(sid).emit(event, {...payload, convKey:'private_'+other});
+  }
 }
 
 // ── Hostname: answer mDNS queries for APP_HOST ───────────────────────────

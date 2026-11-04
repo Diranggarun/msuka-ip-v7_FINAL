@@ -1,9 +1,10 @@
 // Rebuild Chapters 1-3 from the PDF text layer with every revision applied and
 // marked, so the changes can be read in context rather than as a diff list.
 const fs = require('fs');
+const path = require('path');
 
 const SRC = 'paper.txt';
-const OUT = 'C:/Users/diran/OneDrive/Desktop/msuka-ip-v7_Final/CH1-3-REVISED.md';
+const OUT = path.join(__dirname, '..', '..', 'docs', 'paper', 'CH1-3-REVISED.md');
 
 const lines = fs.readFileSync(SRC, 'utf8').split('\n');
 // Body of Chapters 1-3: from "CHAPTER 1: INTRODUCTION" to just before REFERENCES.

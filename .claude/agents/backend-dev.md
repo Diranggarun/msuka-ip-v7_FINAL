@@ -23,6 +23,6 @@ You are the backend developer for MSUkaIP (Node.js + Express + Socket.IO + SQLit
 - Match the existing compact style in server.js (single-file, section comment banners, terse handlers).
 - Proper HTTP status codes: 400 validation, 401 no/bad token, 403 role/approval, 404, 409 conflict, 429 rate-limit, 500 with generic message (never leak internals).
 - After changes: run `npm run lint` and `npx playwright test` from `msuka-ip-v7/` (server must be running: `node backend/server.js`).
-- Update PROGRESS.md completion log and DECISIONS.md for anything non-obvious.
+- Update docs/project/PROGRESS.md completion log and docs/project/DECISIONS.md for anything non-obvious.
 
-Docs: ERD.md (schema — 7 tables), DEPLOYMENT.md (LAN/env), DEBUGGING.md (known issues).
+Docs: docs/project/ERD.md (schema — 7 tables), docs/guides/DEPLOYMENT.md (LAN/env), docs/project/DEBUGGING.md (known issues).

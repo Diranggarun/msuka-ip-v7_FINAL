@@ -32,18 +32,27 @@ node backend/db-audit.js # schema + integrity audit
 - **Offline-LAN rule:** no CDNs, no external fonts, no internet APIs, no STUN/TURN. Everything self-hosted.
 - **Style:** match the existing compact single-file style; frontend reuses existing helpers (`appendMessage`, `showAuthMsg`, `fileSrc`, …) and the MSU palette `:root` tokens (`--primary` #721922, `--accent` #E8A030, `--bg-alt`, …; gold is never body text on white).
 
+## Real user data — read before testing
+
+The database may hold **real** user accounts and survey responses. Read `CLAUDE.local.md` (private, gitignored) before running tests, restarting the server, or cleaning data. Never delete real accounts or survey rows.
+
 ## After changes
 
-- `npm run lint` and the Playwright suite must pass (known flake: feedback-form radio clicks in Firefox may timeout — retry once before calling it a regression).
-- Update `PROGRESS.md` (completion log), `DECISIONS.md` (trade-offs), `DEBUGGING.md` (new known issues) when relevant.
+- `npm run lint` and the Playwright suite must pass (unless `CLAUDE.local.md` says testing is paused) (known flake: feedback-form radio clicks in Firefox may timeout — retry once before calling it a regression).
+- Update `docs/project/PROGRESS.md` (completion log), `docs/project/DECISIONS.md` (trade-offs), `docs/project/DEBUGGING.md` (new known issues) when relevant.
 
 ## Docs map
 
-`README.md` setup · `DEPLOYMENT.md` LAN deploy · `ERD.md` schema (7 tables) · `DECISIONS.md` why-choices · `DEBUGGING.md` known errors · `PROGRESS.md` phase checklist · `DEFENSE.md` oral-defense prep
+`README.md` setup · `DESIGN.md` UI design system (kept at root for the impeccable skill)
+- `docs/project/` — `PROGRESS.md` phase checklist · `DECISIONS.md` why-choices · `DEBUGGING.md` known errors · `ERD.md` schema (7 tables) · `DEFENSE.md` oral-defense prep · `AUDIT.md`
+- `docs/guides/` — `DEPLOYMENT.md` LAN deploy · setup, LAN/CICS-wifi and faculty test guides
+- `docs/paper/` — capstone paper chapters, revisions, Word exports (`word/`)
+- `docs/prompts/` — build spec and reusable prompts (historical)
+- `docs/erd.*` diagram (written by `scripts/make-erd.js`) · `tools/build-standalone.js` → `dist/MSUkaIP-UI-Prototype.html`
 
 ## Subagents
 
-Project agents live in `.claude/agents/`: `planner` (read-only architect), `backend-dev`, `frontend-dev`, `webrtc-specialist`, `code-reviewer` (read-only security review), `test-runner`, `debugger` (read-only investigation). Delegate matching work to them.
+Project agents live in `.claude/agents/`: `planner` (read-only architect), `backend-dev`, `frontend-dev`, `webrtc-specialist`, `code-reviewer` (read-only security review), `test-runner`, `debugger` (read-only investigation), `paper-editor` (capstone paper ↔ system, via Google Drive; follows the `paper-sync` skill in `.claude/skills/paper-sync/`). Delegate matching work to them.
 
 ## Skills — routing for this project
 
