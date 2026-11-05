@@ -157,6 +157,15 @@ section{scroll-margin-top:var(--nav-h);}
 .diagram{width:100%;max-width:none;justify-self:center;}
 .diagram text{font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;fill:var(--white);}
 @media (max-width:820px){.hero .wrap{grid-template-columns:1fr;}.diagram{max-width:440px;}}
+/* Phones keep both ornaments instead of hiding them. The woven band becomes a
+   strip across the top of the hero (the nav has no free space for it here),
+   and the emblem moves into the empty space right of the seals, sized so it
+   ends beside the short gold "MSUKAIP:" line and never covers the headline. */
+@media (max-width:820px){
+  .hero::after{content:'';position:absolute;top:0;left:0;right:0;height:40px;pointer-events:none;opacity:.4;
+    background:url('/nav-okir.png') repeat-x center;background-size:auto 100%;}
+  .hero-motifs{display:block;--w:clamp(70px,22vw,120px);left:auto;right:16px;top:56px;}
+}
 
 /* ── Feature cards ── */
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:20px;list-style:none;}
