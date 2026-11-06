@@ -50,7 +50,7 @@ Pick the mode from the request. Default to **audit** when unclear.
 
 ### Automatic sync — started by the paper-sync hook
 `.claude/hooks/paper-sync-check.js` runs at session start and after every `git commit`. When the system changed since the last recorded sync, it asks Claude to run this agent in **diff** mode. The base commit is in its message (and in `.claude/paper-sync-state.json`).
-1. `git diff --stat <base>` then `git diff <base> -- <file>` per changed file (this includes uncommitted edits). Skip changes the paper cannot see: styling, logos, icons, test-only refactors.
+1. `git diff --stat <base> HEAD` then `git diff <base> HEAD -- <file>` per changed file (committed changes only; uncommitted edits wait for their commit). Skip changes the paper cannot see: styling, logos, icons, test-only refactors.
 2. If nothing touches a paper claim: create **no** Doc. Record the sync and report "no paper changes needed".
 3. Otherwise read the paper (as in audit step 1), write revision items only for the changed claims, verify the finds, and create **both** a revisions Doc (`MSUkaIP Paper — Sync <base>..<head> (<Mon YYYY>)`) and the matching Apps Script copy (see "Applying revisions in place").
 4. Record the sync: `node .claude/hooks/paper-sync-check.js --mark <viewUrl>`.
