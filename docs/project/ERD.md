@@ -31,6 +31,7 @@ email           VARCHAR(150)   UNIQUE NOT NULL
 password_hash   VARCHAR(255)   NOT NULL                  -- bcryptjs (10 rounds)
 role            ENUM('student','faculty','admin')        DEFAULT 'student'
 account_status  ENUM('pending','approved','rejected')    DEFAULT 'pending'
+deactivated_at  TEXT NULL                                -- NULL = active; set = admin switched the account off
 status          ENUM('online','offline')                 DEFAULT 'offline'
 created_at      TIMESTAMP                                DEFAULT CURRENT_TIMESTAMP
 ```
@@ -77,11 +78,17 @@ Indexes: `PRIMARY(id)`, `idx_messages_conv_created(conv_key, created_at)`, `idx_
 ```
 id            INT PK AUTO_INCREMENT
 caller_id     INT NULL  FK → users(id) ON DELETE SET NULL
-receiver_id   INT NULL  FK → users(id) ON DELETE SET NULL
+receiver_id   INT NULL  FK → users(id) ON DELETE SET NULL   -- NULL for group calls
 status        ENUM('missed','answered','rejected') DEFAULT 'missed'
 started_at    TIMESTAMP NULL
 ended_at      TIMESTAMP NULL
-duration      INT DEFAULT 0    -- seconds, computed via TIMESTAMPDIFF on call:end
+duration      INT DEFAULT 0    -- seconds, computed on call:end / when the last person leaves a group call
+group_id      INT NULL  FK → groups_table(id) ON DELETE SET NULL  -- set for group calls only
+participants  INT NOT NULL DEFAULT 2  -- most people in the call at once (group calls)
+avg_rtt_ms       REAL NULL  -- call quality from getStats(): mean round-trip time (ms)
+avg_jitter_ms    REAL NULL  -- mean jitter (ms)
+packet_loss_pct  REAL NULL  -- mean packet loss (%)
+quality_reports  INT NOT NULL DEFAULT 0  -- how many participants' reports are averaged in
 ```
 
 ### audit_logs

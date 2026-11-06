@@ -13,8 +13,9 @@
        does not sit under a white strip. -->
   <link rel="manifest" href="/manifest.webmanifest"/>
   <meta name="theme-color" content="#721922"/>
-  <link rel="icon" type="image/svg+xml" href="/msukaip-mark.svg"/>
-  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png"/>
+  <!-- Gold MSUkaIP app icon on every browser tab (same as the admin portal). -->
+  <link rel="icon" type="image/png" sizes="64x64" href="/tab-icon-64.png"/>
+  <link rel="icon" type="image/png" sizes="192x192" href="/tab-icon-192.png"/>
   <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
@@ -290,7 +291,7 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
    claiming horizontal space, which squeezed the logo. Taking them out of the flow
    entirely is what keeps it at its own width. */
 .auth-sticky.is-condensed .auth-sub,.auth-sticky.is-condensed .auth-sub2,.auth-sticky.is-condensed .auth-sub3{display:none;}
-.auth-sticky.is-condensed .auth-logo-bar .auth-logo{height:40px;margin:0;}
+.auth-sticky.is-condensed .auth-logo-bar .auth-logo{height:48px;margin:0;}
 .auth-logo-bar::before{content:'';position:absolute;top:-30px;left:50%;transform:translateX(-50%);width:200px;height:200px;border-radius:50%;background:rgba(var(--accent-rgb),.06);}
 .auth-logo-bar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.6;}
 .auth-logo-bar img{width:88px;height:88px;object-fit:contain;filter:drop-shadow(0 4px 16px rgba(0,0,0,.5));display:block;margin:0 auto .7rem;position:relative;z-index:1;}
@@ -298,7 +299,7 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
 /* The stacked MSUkaIP logo. It carries the wordmark, so there is no separate
    title text. Sized by height; height/margin are transitioned so the shrink
    into the condensed header reads as one movement rather than a jump. */
-.auth-logo-bar .auth-logo{width:auto;height:112px;margin:0 auto .8rem;filter:drop-shadow(0 6px 14px rgba(0,0,0,.35));transition:height var(--dur-slow) var(--ease-out),margin var(--dur-slow) var(--ease-out);}
+.auth-logo-bar .auth-logo{width:auto;height:176px;margin:0 auto .8rem;filter:drop-shadow(0 6px 14px rgba(0,0,0,.35));transition:height var(--dur-slow) var(--ease-out),margin var(--dur-slow) var(--ease-out);}
 .auth-sub{font-family:'Cinzel',serif;color:var(--gold-soft);font-size:.7rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin-top:6px;position:relative;z-index:1;}
 .auth-sub2{font-family:'Cinzel',serif;color:var(--gold-soft);font-size:.66rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin-top:2px;position:relative;z-index:1;}
 .auth-sub3{font-family:'Cinzel',serif;color:var(--gold-soft);font-size:.58rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;margin-top:2px;position:relative;z-index:1;}
@@ -630,9 +631,10 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
    that the rail can scroll. */
 .rail-logo{display:flex;flex-direction:column;align-items:center;gap:11px;padding:6px 6px 17px;text-align:center;position:relative;}
 .rail-logo::after{content:'';position:absolute;bottom:4px;left:14px;right:14px;height:1.5px;background:linear-gradient(90deg,transparent,var(--gold),var(--gold-bright),var(--gold),transparent);}
-/* The full MSUkaIP sticker logo (wordmark included, so no separate title text).
-   Its own cream outline keeps it legible on the dark rail without a disc. */
-.rail-logo-img{width:150px;height:auto;display:block;position:relative;z-index:1;filter:drop-shadow(0 4px 10px rgba(0,0,0,.35));}
+/* Stacked MSUkaIP sticker logo across the rail. When the rail narrows to icons
+   (<=1100px) only the torch fits, so a second img swaps in there. */
+.rail-logo-img{width:100%;max-width:182px;height:auto;display:block;position:relative;z-index:1;}
+.rail-logo-torch{display:none;height:60px;width:auto;}
 .rail-logo-text{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:2px;}
 /* Wordmark typography: Cinzel at a larger size with wider tracking reads as an
    engraved institutional mark rather than a heading. The subtitles step DOWN in
@@ -718,7 +720,7 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
    68px, so they drop out; the crest and the avatar initial remain as the
    institutional and account markers. The hover nudge is dropped too — sliding a
    centred icon sideways in a 68px column just looks like a misalignment. */
-@media (max-width:1100px){.icon-rail{width:68px;padding:14px 8px;align-items:center;}.rail-logo-text,.rail-btn .rlabel,.rail-btn .rbadge,.rail-avatar .ra-meta{display:none;}.rail-logo-img{width:54px;}.rail-logo::after{display:none;}.rail-btn{justify-content:center;padding:10px;}.rail-btn:hover,.rail-btn:active{transform:none;}.rail-avatar{background:transparent;border:none;box-shadow:none;padding:0;}}
+@media (max-width:1100px){.icon-rail{width:68px;padding:14px 8px;align-items:center;}.rail-logo-text,.rail-btn .rlabel,.rail-btn .rbadge,.rail-avatar .ra-meta{display:none;}.rail-logo-img{display:none;}.rail-logo-torch{display:block;}.rail-logo::after{display:none;}.rail-btn{justify-content:center;padding:10px;}.rail-btn:hover,.rail-btn:active{transform:none;}.rail-avatar{background:transparent;border:none;box-shadow:none;padding:0;}}
 
 @media (max-width:880px){.icon-rail{width:60px;}.left-panel{width:280px;}}
 
@@ -1009,7 +1011,7 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
 /* RIGHT PANEL — the cream "paper" reading surface. */
 .right-panel{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--paper);}
 #empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-light);background:var(--paper);}
-.empty-logo{width:220px;height:auto;opacity:.85;margin-bottom:1.2rem;}
+.empty-logo{width:min(320px,80%);height:auto;opacity:.9;margin-bottom:1.2rem;}
 #empty-state h3{font-size:1.1rem;color:var(--maroon);font-weight:700;margin-bottom:.4rem;font-family:'Cinzel',serif;}
 #empty-state p{font-size:.85rem;color:var(--text-light);}
 
@@ -1215,6 +1217,11 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
    measures 1.24:1 on paper — invisible. --maroon is the sender's own colour and
    measures 11.41:1 here. */
 .msg-row.mine .msg-time::after{content:' \2713\2713';color:var(--maroon);font-weight:800;}
+/* Offline outbox: a message still waiting for the connection is faded, its
+   time slot says "Waiting for connection…", and it has no delivered ticks. */
+.msg-row.mine.pending .bubble{opacity:.65;}
+.msg-row.mine.pending .msg-time{font-style:italic;}
+.msg-row.mine.pending .msg-time::after{content:none;}
 
 .bubble-row{display:flex;align-items:center;gap:6px;max-width:100%;}
 .msg-row.mine .bubble-row{flex-direction:row-reverse;}
@@ -1465,6 +1472,15 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
 .ctrl-btn.mute{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.2);}
 .ctrl-btn.mute.active{background:var(--accent);border-color:transparent;}
 .ctrl-btn.hangup{background:#e74c3c;color:#fff;}
+/* Live call quality. The word (Good/Fair/Poor) is always shown, so the colour is
+   only a hint, never the only signal. Both call panels are maroon, so gold is fine here. */
+.call-quality{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 8px;font-size:.75rem;margin:.25rem 0;}
+.call-quality[hidden]{display:none;}
+.call-quality .q-label{font-weight:800;padding:1px 8px;border-radius:999px;border:1px solid var(--gold-bright);color:var(--gold-bright);}
+.call-quality[data-level="Fair"] .q-label{border-style:dashed;}
+.call-quality[data-level="Poor"] .q-label{background:#e74c3c;border-color:#e74c3c;color:#fff;}
+.call-quality .q-nums{opacity:.85;}
+#group-call-quality{margin-top:1.25rem;font-size:.85rem;}
 
 #group-call-panel{display:none;position:fixed;inset:0;background:rgba(var(--primary-dark-rgb),.97);z-index:300;flex-direction:column;align-items:center;justify-content:center;color:#fff;}
 #group-call-panel.show{display:flex;}
@@ -1566,7 +1582,7 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
 /* The header now sits ON the parchment instead of a maroon band: seal in a gold
    ring, a vertical hairline, then the title in Cinzel maroon. */
 .agree-head{display:flex;align-items:center;gap:22px;padding:26px 30px 0;flex-shrink:0;}
-.agree-logo{width:150px;height:auto;flex-shrink:0;}
+.agree-logo{width:210px;height:auto;flex-shrink:0;}
 .agree-head-rule{width:1px;align-self:stretch;margin:10px 0;background:linear-gradient(180deg,transparent,var(--gray-200) 20%,var(--gray-200) 80%,transparent);}
 .agree-head h3{font-family:'Cinzel',serif;font-size:clamp(1.25rem,3.2vw,1.7rem);font-weight:700;color:var(--maroon-dark);letter-spacing:.01em;margin:0;line-height:1.15;}
 .agree-head p{font-size:.9rem;color:var(--text-mid);margin:6px 0 0;letter-spacing:.02em;}
@@ -1617,7 +1633,7 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
 @media (max-width:560px){
   .agree-head{flex-direction:column;text-align:center;gap:12px;padding:20px 18px 0;}
   .agree-head-rule{display:none;}
-  .agree-logo{width:104px;}
+  .agree-logo{width:180px;}
   .agree-body,.agree-orn,.agree-actions,.agree-foot{padding-left:18px;padding-right:18px;}
   .agree-consent{margin-left:18px;margin-right:18px;padding:13px 15px;}
   .agree-clause{gap:13px;padding:14px;}
@@ -1674,6 +1690,31 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
 .rail-seal-txt b{font-family:'Cinzel',serif;font-size:.6rem;font-weight:700;color:var(--ink);
   letter-spacing:.04em;line-height:1.25;}
 .rail-seal-txt span{font-size:.56rem;color:var(--ink-mut);line-height:1.3;}
+
+/* ══ COLLAPSIBLE RAIL (desktop) ═══════════════════════════════════════════
+   The chevron at the top folds the rail to icons only, same as the admin
+   portal. It reuses the look of the automatic ≤1100px icon rail; the choice is
+   saved in localStorage by setRailCollapsed(). Below 1101px the rail is already
+   icons-only (or the phone tab bar), so the button is hidden there. Badges stay
+   visible as small counters on the icon's corner instead of disappearing. */
+.rail-toggle{align-self:flex-end;width:32px;height:32px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:none;border-radius:8px;background:transparent;color:var(--ink-mut);cursor:pointer;margin-bottom:2px;transition:background .15s,color .15s;}
+.rail-toggle:hover{background:var(--rail-hover);color:var(--gold-bright);}
+.rail-toggle:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px;}
+.rail-toggle svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+@media (max-width:1100px){.rail-toggle{display:none;}}
+@media (min-width:1101px){
+  .icon-rail.collapsed{width:68px;padding:14px 8px;align-items:center;}
+  .icon-rail.collapsed .rail-logo-text,.icon-rail.collapsed .rail-logo-img,.icon-rail.collapsed .rail-logo::after,
+  .icon-rail.collapsed .rail-btn .rlabel,.icon-rail.collapsed .rail-avatar .ra-meta,.icon-rail.collapsed .rail-seal-txt{display:none;}
+  .icon-rail.collapsed .rail-logo-torch{display:block;}
+  .icon-rail.collapsed .rail-btn{justify-content:center;padding:10px;}
+  .icon-rail.collapsed .rail-btn:hover,.icon-rail.collapsed .rail-btn:active{transform:none;}
+  .icon-rail.collapsed .rail-avatar{background:transparent;border:none;box-shadow:none;padding:0;}
+  .icon-rail.collapsed .rail-seal{justify-content:center;padding:11px 0 2px;}
+  .icon-rail.collapsed .rail-btn .rbadge{position:absolute;top:-2px;right:-2px;min-width:20px;padding:1px 5px;font-size:.66rem;}
+  .icon-rail.collapsed .rail-toggle{align-self:center;}
+  .icon-rail.collapsed .rail-toggle svg{transform:rotate(180deg);}
+}
 
 /* ══ TRANSPARENCY FALLBACKS ═══════════════════════════════════════════════
    These MUST sit after .left-panel and .icon-rail, not before them. A media
@@ -1765,6 +1806,14 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
     justify-content:center;border-radius:10px;}
   .icon-rail .rail-btn .rbadge,.icon-rail .rail-btn .notif-count{top:2px;right:50%;
     transform:translateX(18px);}
+  /* Text label under each icon, like a phone app's tab bar. The labels are the
+     same .rlabel spans the desktop rail shows beside its icons; the 1100px rule
+     hides them, so they are switched back on here and stacked under the icon. */
+  .icon-rail .rail-btn{flex:1 1 0;min-width:0;flex-direction:column;gap:2px;min-height:54px;padding:5px 0 6px;}
+  .icon-rail .rail-btn .rlabel,.icon-rail.collapsed .rail-btn .rlabel{display:block;flex:none;
+    max-width:100%;font-size:.6rem;font-weight:700;line-height:1.1;letter-spacing:-.01em;text-align:center;
+    color:rgba(255,255,255,.75);}
+  .icon-rail .rail-btn.active .rlabel{color:var(--gold-bright);}
 
   /* Both panes full width; only one displayed at a time. */
   .left-panel,.right-panel.center-panel{width:100%;flex:1 1 auto;
@@ -1844,7 +1893,7 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
          one block while the form scrolls beneath them (see .auth-sticky). -->
     <div class="auth-sticky">
       <div class="auth-logo-bar">
-        <img class="auth-logo" src="/msukaip-logo-stacked.svg" alt="MSUkaIP"/>
+        <img class="auth-logo" src="/msukaip-sticker-on-maroon.webp" alt="MSUkaIP"/>
         <p class="auth-sub">CICS LAN Messenger</p>
         <p class="auth-sub2">Mindanao State University</p>
         <p class="auth-sub3">Main Campus</p>
@@ -1923,9 +1972,13 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
 <!-- MESSENGER APP -->
 <div id="app">
   <!-- ICON RAIL -->
-  <aside class="icon-rail">
+  <aside class="icon-rail" id="icon-rail">
+    <button type="button" class="rail-toggle" id="rail-toggle" aria-controls="icon-rail" aria-expanded="true" aria-label="Collapse menu" title="Collapse menu" onclick="toggleRail()">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
     <div class="rail-logo">
-      <img class="rail-logo-img" src="/msukaip-logo-stacked.svg" alt="MSUkaIP"/>
+      <img class="rail-logo-img" src="/msukaip-sticker-on-maroon.webp" alt="MSUkaIP"/>
+      <img class="rail-logo-torch" src="/msukaip-torch-on-maroon.webp" alt="" aria-hidden="true"/>
       <div class="rail-logo-text">
         <span class="rl-sub">CICS LAN Messenger</span>
       </div>
@@ -2098,7 +2151,7 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
 
   <div class="right-panel center-panel">
     <div id="empty-state">
-      <img src="/msukaip-logo-stacked.svg" class="empty-logo" alt="MSUkaIP"/>
+      <img src="/msukaip-logo-on-light.webp" class="empty-logo" alt="MSUkaIP"/>
       <h3>Welcome to MSUkaIP</h3>
       <p>Select a conversation to start messaging</p>
     </div>
@@ -2162,7 +2215,7 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
 <div id="agree-overlay" role="dialog" aria-modal="true" aria-labelledby="agree-title">
   <div class="agree-card">
     <div class="agree-head">
-      <img class="agree-logo" src="/msukaip-logo-stacked.svg" alt="MSUkaIP"/>
+      <img class="agree-logo" src="/msukaip-logo-on-light.webp" alt="MSUkaIP"/>
       <div class="agree-head-rule"></div>
       <div>
         <h3 id="agree-title">Terms of Use &amp; Data Privacy</h3>
@@ -2240,6 +2293,7 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
   <h4><svg class="icn" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.34 1.9.65 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.31 1.85.53 2.81.65A2 2 0 0 1 22 16.92z"/></svg> On Call</h4>
   <p id="call-peer-name">—</p>
   <div class="call-timer" id="call-timer">00:00</div>
+  <div class="call-quality" id="call-quality" hidden><span class="q-label">—</span><span class="q-nums"></span></div>
   <div class="call-controls">
     <button class="ctrl-btn mute" id="mute-btn" onclick="toggleMute()" title="Mute"><svg class="icn icn-lg" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></button>
     <button class="ctrl-btn hangup" onclick="hangup()" title="Hang up"><svg class="icn icn-lg" viewBox="0 0 24 24" style="transform:rotate(135deg);"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.34 1.9.65 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.31 1.85.53 2.81.65A2 2 0 0 1 22 16.92z"/></svg></button>
@@ -2250,6 +2304,7 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
 <div id="group-call-panel">
   <h3><svg class="icn" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Group Call — CICS LAN</h3>
   <div id="peers-grid"></div>
+  <div class="call-quality" id="group-call-quality" hidden><span class="q-label">—</span><span class="q-nums"></span></div>
   <div id="group-controls">
     <button class="g-btn mute-g" id="group-mute-btn" onclick="toggleGroupMute()"><svg class="icn" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg><span class="g-btn-label">Mute</span></button>
     <button class="g-btn leave-g" onclick="leaveGroupCall()"><svg class="icn" viewBox="0 0 24 24" style="transform:rotate(135deg);"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.34 1.9.65 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.31 1.85.53 2.81.65A2 2 0 0 1 22 16.92z"/></svg><span>Leave</span></button>
@@ -2639,6 +2694,10 @@ function declineAgreement(){
   logout();
 }
 
+// Offline app shell (frontend/sw.js). Browsers only allow service workers on
+// HTTPS or localhost; elsewhere the check fails and the page works as before.
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+
 // Restore session if user navigated away (e.g. feedback page) and came back.
 window.addEventListener('DOMContentLoaded',()=>{
   try{
@@ -2756,11 +2815,16 @@ function initSocket() {
   // per stale socket. Reproduced by restoring a session and logging in again.
   if (socket) { try { socket.removeAllListeners(); socket.disconnect(); } catch { /* already gone */ } }
   socket = io({ auth:{ token: currentUser.token } });
+  outbox = [];   // new session: never send a previous user's queued messages
 
-  socket.on('connect', () => { initConversations(); });
+  let everConnected = false;
+  socket.on('connect', () => { everConnected = true; initConversations(); flushOutbox(); });
   socket.on('connect_error', err => {
     // The server's io.use rejects revoked/expired tokens with these messages.
     if (/revoked|Invalid token|Auth required/.test(err.message)) return handleAuthExpired();
+    // After a Wi-Fi drop Socket.IO retries every few seconds; an alert per retry
+    // would block the page. The outbox already shows "Waiting for connection…".
+    if (everConnected) return;
     alert('Connection error: '+err.message);
   });
   // The server only force-disconnects a socket when it revokes the user's
@@ -2820,6 +2884,7 @@ function initSocket() {
       conversations[key].unread=(conversations[key].unread||0)+1;
     }
 
+    settleOutbox(msg);   // the server echoed a queued message: drop its "waiting" copy
     if (activeConvKey===key) appendMessage(msg,key,true);
     // Refresh correct section
     if (key === 'group_general') updateGlobalPreview();
@@ -2846,9 +2911,10 @@ function initSocket() {
     else { if (currentNav==='private') renderPrivateList(); }
   });
 
-  socket.on('message:error', ({ msgId, reason }) => {
+  socket.on('message:error', ({ msgId, convKey, reason }) => {
     // If this error is for a pending optimistic delete, put the message back.
     if (msgId != null) restorePendingDelete(msgId);
+    else failOutbox(convKey);   // a send error: a queued message was refused
     if (reason) showToast('msg', 'Message error', reason);
   });
 
@@ -2890,11 +2956,14 @@ function initSocket() {
     refreshUnreadIndicator();
     pushNotif({ icon:'📞', title:'Incoming Call', msg:`${from.name} called you`, convKey:null });
   });
+  socket.on('call:failed',  ()=>{ stopRingtone(); endCallUI(); currentCallId=null; currentCallTarget=null; showToast('system','Call Failed','That person is not online right now.'); });
   socket.on('call:ringing', ({callId,targetName})=>{ currentCallId=callId; showCallPanel(`Calling ${targetName}…`); startRingtone(); });
   socket.on('call:accepted',async({callId,answererSocketId,answererName})=>{ stopRingtone(); currentCallTarget=answererSocketId; document.getElementById('call-peer-name').textContent=`In call with ${answererName}`; startCallTimer(); await startWebRTC(answererSocketId,true); });
   socket.on('call:rejected',({rejectedBy})=>{ stopRingtone(); hideCallPanel(); document.getElementById('incoming-call').classList.remove('show'); currentCallId=null; currentCallTarget=null; showToast('system','Call Rejected',`${rejectedBy} rejected your call.`); });
-  socket.on('call:ended',   ()=>{ stopRingtone(); document.getElementById('incoming-call').classList.remove('show'); endCallUI(); currentCallId=null; currentCallTarget=null; showToast('system','Call Ended','The call has ended.'); });
-  socket.on('call:cancelled',({cancelledBy})=>{ stopRingtone(); document.getElementById('incoming-call').classList.remove('show'); currentCallId=null; currentCallTarget=null; showToast('system','Call Cancelled',`${cancelledBy||'Caller'} cancelled the call.`); });
+  // Ended/cancelled now reach every tab the user has open, so a tab that is not
+  // in this call (callId differs) ignores it instead of showing a stray toast.
+  socket.on('call:ended',   ({callId}={})=>{ if(callId!==currentCallId) return; stopRingtone(); document.getElementById('incoming-call').classList.remove('show'); endCallUI(); currentCallId=null; currentCallTarget=null; showToast('system','Call Ended','The call has ended.'); });
+  socket.on('call:cancelled',({callId,cancelledBy}={})=>{ if(callId!==currentCallId) return; stopRingtone(); document.getElementById('incoming-call').classList.remove('show'); endCallUI(); currentCallId=null; currentCallTarget=null; showToast('system','Call Cancelled',`${cancelledBy||'Caller'} cancelled the call.`); });
   socket.on('webrtc:offer', async({offer,fromSocketId})=>{ await startWebRTC(fromSocketId,false); await peerConnection.setRemoteDescription(offer); const a=await peerConnection.createAnswer(); await peerConnection.setLocalDescription(a); socket.emit('webrtc:answer',{targetSocketId:fromSocketId,answer:a}); });
   socket.on('webrtc:answer',       async({answer})=>await peerConnection?.setRemoteDescription(answer));
   socket.on('webrtc:ice-candidate',({candidate})=>peerConnection?.addIceCandidate(candidate));
@@ -3437,6 +3506,7 @@ function renderMessages(key) {
   const area=document.getElementById('messages-area');
   area.innerHTML='';
   (conversations[key]?.messages||[]).forEach(msg=>appendMessage(msg,key));
+  outbox.filter(m=>m.convKey===key).forEach(appendOutboxRow); // still-waiting messages go last
   area.scrollTop=area.scrollHeight;
 }
 
@@ -3484,6 +3554,7 @@ function appendMessage(msg,key,isNew) {
   }
   area.appendChild(row);
   area.scrollTop=area.scrollHeight;
+  return row;   // the outbox marks its rows as pending
 }
 
 const pendingDeletes = new Map(); // msgId -> { convKey, original, originalIndex }
@@ -3529,9 +3600,82 @@ function sendMessage() {
   const input=document.getElementById('msg-input');
   const text=input.value.trim();
   if(!text||!socket||!activeConvKey)return;
+  // Offline: hold the message in the outbox instead of emitting into the void.
+  if(!socket.connected){ if(queueMessage(text,activeConvKey)) input.value=''; return; }
   socket.emit('message:send',{text,convKey:activeConvKey});
   input.value='';
   socket.emit('typing:stop',{convKey:activeConvKey});
+}
+
+// ── Offline outbox ─────────────────────────────────────────────────────────
+// While the socket is disconnected, typed TEXT messages wait here and are sent
+// in order when it reconnects. Kept in memory only, on purpose: the server
+// stores messages encrypted (AES-256-GCM), and saving plaintext in
+// localStorage/IndexedDB would leave a readable copy on the device. A reload
+// or logout simply drops the queue. (Socket.IO would buffer emits by itself,
+// but silently; this shows the user what is still waiting.)
+const OUTBOX_MAX = 50;
+let outbox = [];      // [{ id, convKey, text, sent }] — sent = emitted, waiting for the server's echo
+let outboxSeq = 0;
+const OUTBOX_LABEL = { waiting:'Waiting for connection…', sending:'Sending…' };
+
+function queueMessage(text, convKey) {
+  if (outbox.filter(m => !m.sent).length >= OUTBOX_MAX) {
+    showToast('system', 'Still offline', `Only ${OUTBOX_MAX} messages can wait for the connection. Please try again once you are back online.`);
+    return false;
+  }
+  const item = { id: ++outboxSeq, convKey, text, sent: false };
+  outbox = [...outbox, item];
+  if (activeConvKey === convKey) appendOutboxRow(item);
+  return true;
+}
+
+// Draw a queued message with the normal bubble, then mark it as pending.
+function appendOutboxRow(item) {
+  const row = appendMessage({ type:'chat', sender:currentUser.name, text:item.text, timestamp:new Date().toISOString() }, item.convKey, true);
+  row.classList.add('pending');
+  row.dataset.outboxId = item.id;
+  row.querySelector('.msg-time').textContent = item.sent ? OUTBOX_LABEL.sending : OUTBOX_LABEL.waiting;
+}
+
+// On reconnect: emit each unsent message once, oldest first. Marking it sent
+// means a second reconnect never emits it again (no duplicates).
+function flushOutbox() {
+  outbox = outbox.map(m => {
+    if (m.sent) return m;
+    socket.emit('message:send', { text: m.text, convKey: m.convKey });
+    return { ...m, sent: true };
+  });
+  document.querySelectorAll('#messages-area .msg-row.pending .msg-time').forEach(t => { t.textContent = OUTBOX_LABEL.sending; });
+}
+
+// The server echoes every saved message back as message:new. The first sent
+// outbox item with the same conversation and text is that message, so its
+// pending copy is removed and the real one is drawn by the normal handler.
+function settleOutbox(msg) {
+  if (msg.sender !== currentUser?.name || msg.type !== 'chat') return;
+  const item = outbox.find(m => m.sent && m.convKey === msg.convKey && m.text === msg.text);
+  if (!item) return;
+  outbox = outbox.filter(m => m !== item);
+  document.querySelector(`#messages-area [data-outbox-id="${item.id}"]`)?.remove();
+}
+
+// The server refused a send (message:error without msgId): mark the oldest
+// sent item in that conversation as not sent; the toast says why.
+function failOutbox(convKey) {
+  const item = outbox.find(m => m.sent && m.convKey === convKey);
+  if (!item) return;
+  outbox = outbox.filter(m => m !== item);
+  const t = document.querySelector(`#messages-area [data-outbox-id="${item.id}"] .msg-time`);
+  if (t) t.textContent = 'Not sent';
+}
+
+// Files, photos and voice notes are not queued (they would need to be kept in
+// the browser); just say they need the connection.
+function requireConnection(what) {
+  if (socket?.connected) return true;
+  showToast('system', 'No connection', `${what} need a connection. Please try again when you are back online.`);
+  return false;
 }
 
 const EMOJI_DATA = {
@@ -3614,6 +3758,7 @@ async function uploadFile() {
   const file=input.files[0];
   if(!file||!activeConvKey)return;
   if(file.size>5*1024*1024){alert('Max file size is 5MB!');input.value='';return;}
+  if(!requireConnection('Files and photos')){input.value='';return;}
   const btn=document.getElementById('attach-btn');
   const ATTACH_SVG = '<svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>';
   const SPINNER_SVG = '<svg viewBox="0 0 24 24" style="animation:spin 1s linear infinite;"><path d="M21 12a9 9 0 1 1-6.22-8.55"/></svg>';
@@ -3740,7 +3885,7 @@ async function startCall(email){
   localStream=await getMic();
   if(!localStream)return;
   currentCallTarget = target.socketId; // remember target so cancel-while-ringing works
-  socket.emit('call:initiate',{targetSocketId:target.socketId});
+  socket.emit('call:initiate',{targetEmail:email,targetSocketId:target.socketId});
 }
 async function acceptCall(){
   stopRingtone();
@@ -3754,10 +3899,12 @@ function rejectCall(){stopRingtone();document.getElementById('incoming-call').cl
 // finally: the call screen always closes, even if telling the server fails
 // (e.g. the socket is mid-reconnect on a phone), so Hang up never looks dead.
 function hangup(){
-  try{ stopRingtone(); socket.emit('call:end',{callId:currentCallId,targetSocketId:currentCallTarget}); }
+  // Quality goes first, while the server still sees this call as ours and open.
+  try{ stopRingtone(); stopQualityMonitor(); socket.emit('call:end',{callId:currentCallId,targetSocketId:currentCallTarget}); }
   finally{ endCallUI(); currentCallId=null; currentCallTarget=null; }
 }
-function endCallUI(){peerConnection?.close();peerConnection=null;localStream?.getTracks().forEach(t=>t.stop());localStream=null;clearInterval(callTimerInterval);callSeconds=0;hideCallPanel();}
+// Panel hides first, so a failing cleanup step below can never leave it stuck open.
+function endCallUI(){hideCallPanel();stopQualityMonitor();clearInterval(callTimerInterval);callSeconds=0;try{peerConnection?.close();}catch(e){console.warn('peer close failed',e);}peerConnection=null;localStream?.getTracks().forEach(t=>t.stop());localStream=null;}
 function showCallPanel(n){document.getElementById('call-peer-name').textContent=n;document.getElementById('call-timer').textContent='00:00';document.getElementById('call-panel').classList.add('show');}
 function hideCallPanel(){document.getElementById('call-panel').classList.remove('show');}
 function startCallTimer(){callSeconds=0;clearInterval(callTimerInterval);callTimerInterval=setInterval(()=>{callSeconds++;const m=String(Math.floor(callSeconds/60)).padStart(2,'0');const s=String(callSeconds%60).padStart(2,'0');document.getElementById('call-timer').textContent=`${m}:${s}`;},1000);}
@@ -3769,7 +3916,77 @@ async function startWebRTC(targetSocketId,isInitiator){
   localStream?.getTracks().forEach(t=>peerConnection.addTrack(t,localStream));
   peerConnection.ontrack=e=>document.getElementById('remote-audio').srcObject=e.streams[0];
   peerConnection.onicecandidate=e=>{if(e.candidate)socket.emit('webrtc:ice-candidate',{targetSocketId,candidate:e.candidate});};
+  startQualityMonitor();
   if(isInitiator){const o=await peerConnection.createOffer();await peerConnection.setLocalDescription(o);socket.emit('webrtc:offer',{targetSocketId,offer:o});}
+}
+
+// ── CALL QUALITY ── Every 2 s we read the browser's own WebRTC counters
+// (RTCPeerConnection.getStats) and show loss / jitter / round-trip time.
+// Thresholds (common rules of thumb for voice calls):
+//   Good = loss < 1%  AND RTT < 150 ms AND jitter < 30 ms
+//   Poor = loss > 5%  OR  RTT > 400 ms OR  jitter > 75 ms
+//   Fair = anything in between
+// When the call ends, the averages are sent to the server (call:quality).
+const QUALITY_POLL_MS=2000;
+let qualityTimer=null, qualityPrev={}, qualitySum=null;
+function startQualityMonitor(){
+  stopQualityMonitor(false); // never two timers at once
+  qualitySum={n:0,loss:0,jitter:0,rtt:0,rttN:0};
+  qualityTimer=setInterval(sampleQuality,QUALITY_POLL_MS);
+}
+// send=false only drops the numbers (e.g. on sign-out). Safe to call twice:
+// the second call finds qualitySum already null and does nothing.
+function stopQualityMonitor(send=true){
+  clearInterval(qualityTimer); qualityTimer=null;
+  const s=qualitySum; qualitySum=null; qualityPrev={};
+  document.querySelectorAll('.call-quality').forEach(el=>{el.hidden=true;});
+  if(!send||!s||s.n<1) return; // only report if at least one sample was taken
+  socket?.emit('call:quality',{lossPct:s.loss/s.n, jitterMs:s.jitter/s.n, rttMs:s.rttN?s.rtt/s.rttN:null, samples:s.n});
+}
+// One stats reading for one peer connection, or null if no audio is arriving yet.
+async function readPeerStats(key,pc){
+  const stats=await pc.getStats(); let out=null, rtt=null;
+  stats.forEach(r=>{
+    if(r.type==='inbound-rtp'&&r.kind==='audio'){
+      // The counters only grow, so loss for this 2 s window = change since last reading.
+      const prev=qualityPrev[key+r.id]||{lost:0,recv:0};
+      const lost=Math.max(0,(r.packetsLost||0)-prev.lost), recv=Math.max(0,(r.packetsReceived||0)-prev.recv);
+      qualityPrev[key+r.id]={lost:r.packetsLost||0,recv:r.packetsReceived||0};
+      out={loss:lost+recv?lost/(lost+recv)*100:0, jitter:(r.jitter||0)*1000}; // jitter: seconds -> ms
+    }
+    // The candidate pair actually in use (Chrome: nominated, Firefox: selected).
+    if(r.type==='candidate-pair'&&r.state==='succeeded'&&(r.nominated||r.selected)&&r.currentRoundTripTime!=null) rtt=r.currentRoundTripTime*1000;
+  });
+  if(out) out.rtt=rtt;
+  return out;
+}
+async function sampleQuality(){
+  // 1:1 call = one connection; group call = one connection per other person.
+  const peers=peerConnection?[['p2p',peerConnection]]:Object.entries(groupPeers);
+  let results;
+  try{ results=(await Promise.all(peers.map(([k,pc])=>readPeerStats(k,pc)))).filter(Boolean); }
+  catch(e){ console.warn('getStats failed',e); return; }
+  if(!results.length||!qualitySum) return; // not connected yet, or the call ended meanwhile
+  const mean=a=>a.reduce((x,y)=>x+y,0)/a.length; // group call: average across peers
+  const rtts=results.map(r=>r.rtt).filter(v=>v!=null);
+  const now={loss:mean(results.map(r=>r.loss)), jitter:mean(results.map(r=>r.jitter)), rtt:rtts.length?mean(rtts):null};
+  qualitySum.n++; qualitySum.loss+=now.loss; qualitySum.jitter+=now.jitter;
+  if(now.rtt!=null){ qualitySum.rtt+=now.rtt; qualitySum.rttN++; }
+  showQuality(now);
+}
+function qualityLevel({loss,jitter,rtt}){
+  const r=rtt??0; // RTT not reported yet -> judge on loss and jitter only
+  if(loss>5||r>400||jitter>75) return 'Poor';
+  if(loss<1&&r<150&&jitter<30) return 'Good';
+  return 'Fair';
+}
+function showQuality(q){
+  const el=document.getElementById(peerConnection?'call-quality':'group-call-quality');
+  const level=qualityLevel(q);
+  el.dataset.level=level;
+  el.querySelector('.q-label').textContent=level;
+  el.querySelector('.q-nums').textContent=`RTT ${q.rtt==null?'–':Math.round(q.rtt)} ms · Jitter ${Math.round(q.jitter)} ms · Loss ${q.loss.toFixed(1)}%`;
+  el.hidden=false;
 }
 
 // ══════════════════════════════════════════
@@ -3788,8 +4005,10 @@ async function startGroupCall(){
   document.getElementById('group-call-panel').classList.add('show');
   addPeerCard('self',currentUser.name+' (you)');
   socket.emit('room:join',{roomId:currentRoomId});
+  startQualityMonitor();
 }
-function leaveGroupCall(){socket.emit('room:leave',{roomId:currentRoomId});Object.values(groupPeers).forEach(pc=>pc.close());groupPeers={};groupStream?.getTracks().forEach(t=>t.stop());groupStream=null;currentRoomId=null;document.getElementById('group-call-panel').classList.remove('show');}
+// stopQualityMonitor runs before room:leave so the server still sees us in the room.
+function leaveGroupCall(){stopQualityMonitor();socket.emit('room:leave',{roomId:currentRoomId});Object.values(groupPeers).forEach(pc=>pc.close());groupPeers={};groupStream?.getTracks().forEach(t=>t.stop());groupStream=null;currentRoomId=null;document.getElementById('group-call-panel').classList.remove('show');}
 function toggleGroupMute(){if(!groupStream)return;isGroupMuted=!isGroupMuted;groupStream.getAudioTracks().forEach(t=>t.enabled=!isGroupMuted);const btn=document.getElementById('group-mute-btn');btn.innerHTML=(isGroupMuted?MIC_OFF_SVG:MIC_ON_SVG).replace('icn-lg','')+`<span>${isGroupMuted?'Unmute':'Mute'}</span>`;}
 function addPeerCard(sid,name){if(document.getElementById(`peer-${sid}`))return;const c=document.createElement('div');c.className='peer-card';c.id=`peer-${sid}`;c.innerHTML=`<div class="pa">${esc(initials(name))}</div><p>${esc(name)}</p>`;document.getElementById('peers-grid').appendChild(c);}
 async function createGroupPeer(targetSocketId,targetName,isInitiator){
@@ -3905,6 +4124,7 @@ function stopPTT(e) {
 })();
 
 async function sendVoiceMessage(blob) {
+  if (!requireConnection('Voice messages')) return;
   const fd = new FormData();
   const filename = `voice_${Date.now()}.webm`;
   fd.append('file', blob, filename);
@@ -3964,7 +4184,7 @@ function dismissToast(id) {
 
 function showBrowserNotif(title, body, onClick) {
   if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
-    const n = new Notification(title, { body, icon:'/msukaip-logo.png', tag:'msuka-notif' });
+    const n = new Notification(title, { body, icon:'/icon-192.png', tag:'msuka-notif' });
     if (onClick) n.onclick = () => { window.focus(); onClick(); n.close(); };
     setTimeout(() => n.close(), 6000);
   }
@@ -4075,6 +4295,7 @@ function logout({ skipServer=false }={}){
   if(!currentUser) return; // already signed out (e.g. revoked, then the password-change timer fires)
   const token=currentUser.token;
   passwordChanging=false;
+  stopQualityMonitor(false); // no leaked stats timer after sign-out (nothing sent: socket is closing)
   // Drop listeners first so the server's revoke-disconnect doesn't re-enter here.
   if(socket){ socket.removeAllListeners(); socket.disconnect(); }
   // Tell the server to revoke this token (bumps token_version). keepalive lets the
@@ -4169,6 +4390,24 @@ function logout({ skipServer=false }={}){
   ['auth-screen','app'].forEach(id=>{ const el=document.getElementById(id); if(el) mo.observe(el,{attributes:true,attributeFilter:['style']}); });
   if(reduce) draw();                         // static mesh for reduced-motion users
 })();
+
+// Rail collapse (wide screens): icons only, remembered across visits in
+// localStorage — same as the admin portal, under its own key. The try/catch
+// keeps it working when storage is blocked (e.g. some private-browsing modes).
+const RAIL_COLLAPSED_KEY = 'chatRailCollapsed';
+function setRailCollapsed(collapsed){
+  const rail = document.getElementById('icon-rail'), btn = document.getElementById('rail-toggle');
+  rail.classList.toggle('collapsed', collapsed);
+  const label = collapsed ? 'Expand menu' : 'Collapse menu';
+  btn.setAttribute('aria-expanded', String(!collapsed));
+  btn.setAttribute('aria-label', label);
+  btn.title = label;
+  try { localStorage.setItem(RAIL_COLLAPSED_KEY, collapsed ? '1' : '0'); } catch { /* storage blocked */ }
+}
+function toggleRail(){
+  setRailCollapsed(!document.getElementById('icon-rail').classList.contains('collapsed'));
+}
+try { setRailCollapsed(localStorage.getItem(RAIL_COLLAPSED_KEY) === '1'); } catch { setRailCollapsed(false); }
 
 // Phone keyboard handling. visualViewport is the part of the page actually on
 // screen; it shrinks when the on-screen keyboard opens. The phone CSS sizes

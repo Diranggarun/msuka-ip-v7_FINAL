@@ -34,6 +34,10 @@ function resetAgreement() {
   const { DatabaseSync } = require('node:sqlite');
   // Same path rule as backend/db.js, so a test server started with SQLITE_PATH
   // (an isolated copy) is the one reset — never the live msukaip.db by accident.
+  // Testing a separate server (BASE_URL set) without saying which DB copy it
+  // uses would silently write to the real msukaip.db — stop instead.
+  if (process.env.BASE_URL && !process.env.SQLITE_PATH)
+    throw new Error('BASE_URL is set but SQLITE_PATH is not: point SQLITE_PATH at the test server\'s DB copy.');
   const dbh = new DatabaseSync(process.env.SQLITE_PATH || require('path').join(__dirname, '..', 'msukaip.db'));
   dbh.prepare('UPDATE users SET agreed_at=NULL WHERE email=?').run(USER_EMAIL);
   dbh.close();
@@ -350,6 +354,10 @@ test.describe('1. Authentication Tests', () => {
 //  TEST GROUP 2: Messenger UI
 // ═══════════════════════════════════════════════════════════════════
 test.describe('2. Messenger UI Tests', () => {
+  // index.html registers sw.js. In Chromium, page.route() cannot see requests
+  // from a page a service worker controls, so 2.10's /api/logout stub would be
+  // bypassed. None of these tests exercise the offline shell, so keep it off.
+  test.use({ serviceWorkers: 'block' });
 
   test.beforeEach(async ({ page }) => {
     await studentLogin(page);
@@ -423,7 +431,7 @@ test.describe('2. Messenger UI Tests', () => {
     await page.click('#nav-groups');
     await page.click('.fab-new-group');
     await expect(page.locator('#modal-overlay')).toBeVisible();
-    await page.click('.btn-cancel');
+    await page.click('#modal-overlay .btn-cancel'); // scoped: the mic-help popup has a .btn-cancel too
     await expect(page.locator('#modal-overlay')).not.toBeVisible();
     console.log('✅ Group modal closes correctly');
   });
@@ -1003,7 +1011,9 @@ test.describe('5. Admin Dashboard Tests', () => {
     await page.keyboard.press('Enter');
     await expect(card).toHaveAttribute('aria-expanded', 'true');
     await expect(card.locator('.mon-bar').first()).toBeVisible({ timeout: 8000 });
-    expect(await card.locator('.mon-bar').count()).toBe(30);
+    // One bar per day on the sign-in track; a second (red) track of 30 is added
+    // only when the account has failed sign-ins, so count the first track alone.
+    expect(await card.locator('.mon-bars:not(.fail-track) .mon-bar').count()).toBe(30);
     expect(series).toHaveLength(1);
 
     // Collapse and reopen: the answer is cached, so no second request.

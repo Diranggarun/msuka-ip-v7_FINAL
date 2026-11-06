@@ -7,8 +7,9 @@
 <meta name="description" content="How to connect to MSUkaIP, the CICS messaging and calling app that runs on the campus network."/>
 <link rel="manifest" href="/manifest.webmanifest"/>
 <meta name="theme-color" content="#3C0008"/>
-<link rel="icon" type="image/svg+xml" href="/msukaip-mark.svg"/>
-<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png"/>
+<!-- Gold MSUkaIP app icon on every browser tab (same as the admin portal). -->
+<link rel="icon" type="image/png" sizes="64x64" href="/tab-icon-64.png"/>
+<link rel="icon" type="image/png" sizes="192x192" href="/tab-icon-192.png"/>
 <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png"/>
 <!-- Self-hosted fonts: the app runs on an offline LAN, so nothing loads from the internet. -->
 <link href="/fonts/google-fonts.css" rel="stylesheet"/>
@@ -61,7 +62,9 @@ section{scroll-margin-top:var(--nav-h);}
 .nav{position:sticky;top:0;z-index:10;background:var(--primary);color:var(--white);height:var(--nav-h);box-shadow:0 2px 10px rgba(0,0,0,.18);}
 .nav .wrap{display:flex;align-items:center;gap:24px;height:100%;}
 .brand{display:flex;align-items:center;gap:10px;color:var(--white);text-decoration:none;font-family:'Cinzel',serif;font-weight:700;font-size:1.15rem;}
-.brand img{height:clamp(40px,3.6vw,52px);width:auto;display:block;}
+/* Taller than the nav on purpose: the logo's top and bottom are its soft glow,
+   which fades to nothing, so letting that overhang keeps the wordmark readable. */
+.brand img{height:calc(var(--nav-h) + 22px);margin:-11px 0;width:auto;display:block;position:relative;z-index:1;}
 .nav-links{display:flex;gap:4px;list-style:none;margin-left:auto;}
 .nav-links a{display:block;padding:8px 12px;border-radius:8px;color:var(--white);text-decoration:none;font-weight:700;font-size:.95rem;}
 .nav-links a:hover{background:rgba(255,255,255,.12);}
@@ -194,6 +197,16 @@ section{scroll-margin-top:var(--nav-h);}
 .addr .btn{min-height:44px;}
 .addr-note{font-size:.92rem;color:var(--muted);margin-top:6px;}
 .copied{font-size:.92rem;font-weight:700;color:var(--primary);}
+/* QR code for phones: deep maroon squares on a white tile (16:1, scans like
+   black). It wraps under the caption on narrow screens. */
+.qr{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;margin-top:14px;}
+.qr[hidden]{display:none;}
+.qr-code{width:168px;height:168px;flex-shrink:0;background:var(--white);border:1px solid var(--line);border-radius:12px;padding:2px;overflow:hidden;}
+.qr-code svg{display:block;width:100%;height:100%;}
+.qr-code svg path{fill:var(--primary);}
+.qr-text{flex:1 1 220px;min-width:0;}
+.qr-text p{color:var(--muted);font-size:1rem;}
+.qr-text code{display:block;margin-top:6px;font:700 .95rem ui-monospace,Consolas,monospace;color:var(--primary);overflow-wrap:anywhere;}
 
 /* ── <details> accordions ("Show me" and the FAQ) — native, so keyboard and
    screen readers work without any script. ── */
@@ -235,7 +248,7 @@ footer a{color:var(--white);}
 
 <nav class="nav" aria-label="Main">
   <div class="wrap">
-    <a class="brand" href="#top"><img src="/msukaip-logo-horizontal.svg" alt="MSUkaIP"/></a>
+    <a class="brand" href="#top"><img src="/msukaip-logo-on-maroon.webp" alt="MSUkaIP"/></a>
     <span class="nav-weave" aria-hidden="true"></span>
     <ul class="nav-links">
       <li><a href="#about">About</a></li>
@@ -344,6 +357,15 @@ footer a{color:var(--white);}
           <span class="copied" id="copy-msg" role="status" aria-live="polite"></span>
         </div>
         <p class="addr-note" id="addr-note"></p>
+        <!-- Shown by the script only when this server answers /api/config, so it
+             stays hidden if the page is ever opened without the server. -->
+        <div class="qr" id="qr-block" hidden>
+          <div class="qr-code" id="qr-code"></div>
+          <div class="qr-text">
+            <p><strong>On your phone?</strong> Scan with your phone camera while on the CICS Wi-Fi.</p>
+            <code id="qr-url"></code>
+          </div>
+        </div>
         <details class="showme"><summary>Show me <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>
           <div>The first time, the browser may warn that the connection is not private. That is because the campus server signs its own certificate. Choose <strong>Advanced</strong>, then <strong>Proceed</strong>. You can remove the warning for good by installing the campus certificate from <a href="/msukaip-ca.crt">this link</a>.</div></details>
       </li>
@@ -431,7 +453,34 @@ footer a{color:var(--white);}
   </div>
 </footer>
 
+<!-- QR encoder (qrcode-generator, MIT), self-hosted: npm run vendor:qrcode -->
+<script src="/vendor/qrcode-generator.js"></script>
 <script>
+// Offline app shell (frontend/sw.js) — only on HTTPS or localhost, where
+// browsers expose navigator.serviceWorker. Missing on the static site: ignored.
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+
+// QR code that opens the chat. From another device, this page's own address
+// is the one that works; on the server PC it is "localhost", so use the
+// server's LAN name instead. Hidden if the encoder script did not load.
+function showQr(host, httpsPort, local) {
+  if (typeof qrcode !== 'function') return;
+  const url = (local ? `https://${host}:${httpsPort}` : location.origin) + '/index.html';
+  const qr = qrcode(0, 'M');        // 0 = pick the smallest size that fits; M = 15% error correction
+  qr.addData(url);
+  qr.make();
+  // Default margin = the 4-square quiet zone scanners need. The library escapes
+  // the <title> (the accessible name) itself; the URL is never inserted as HTML.
+  document.getElementById('qr-code').innerHTML =
+    qr.createSvgTag({ cellSize: 4, scalable: true, title: 'QR code that opens MSUkaIP at ' + url });
+  // Print the address with a line-break chance after each "/" so phones wrap it
+  // at a slash instead of mid-word (e.g. not "inde|x.html").
+  const urlEl = document.getElementById('qr-url');
+  urlEl.textContent = '';
+  url.split(/(?<=\/)/).forEach((part, i) => { if (i) urlEl.append(document.createElement('wbr')); urlEl.append(part); });
+  document.getElementById('qr-block').hidden = false;
+}
+
 // Show the address this page was opened from: on another device that is
 // exactly what to type. On the server PC itself it is "localhost", which
 // other devices can't use, so say where to find the real one.
@@ -447,6 +496,7 @@ footer a{color:var(--white);}
     document.getElementById('addr-note').textContent = local
       ? `You are on the server computer. Other devices can open ${byName}, or the network address shown in the server window when it starts (for example https://192.168.1.10:${httpsPort}).`
       : `Easier to remember: ${byName} — if your device cannot open it (some Android phones), use the numbers address instead.`;
+    showQr(host, httpsPort, local);
   }).catch(() => {});
 
   // navigator.clipboard only works on https or localhost. On a plain http LAN

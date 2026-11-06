@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="780" viewBox="0 0 1100 780" font-family="Segoe UI, Arial, sans-serif">
+<rect width="1100" height="780" fill="#fff"/>
+<defs>
+ <marker id="arr" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker>
+ <marker id="tri" viewBox="0 0 12 12" refX="12" refY="6" markerWidth="14" markerHeight="14" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#fff" stroke="#333"/></marker>
+ <marker id="open" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#333" stroke-width="1.3"/></marker>
+</defs>
+<rect x="14" y="36" width="1072" height="690" rx="10" fill="#fff" stroke="#888" stroke-width="1.6" stroke-dasharray="8 5"/>
+<text x="30" y="62.9" text-anchor="start" font-size="14" fill="#666" font-weight="700">CICS Local Area Network — runs fully offline, no internet connection needed</text>
+<rect x="70" y="90" width="230" height="130" rx="6" fill="#fff" stroke="#2F5597" stroke-width="1.5"/>
+<path d="M70,118 V96 Q70,90 76,90 H294 Q300,90 300,96 V118 Z" fill="#2F5597"/>
+<text x="185" y="108.9" text-anchor="middle" font-size="14" fill="#fff" font-weight="700">Student / Faculty device</text>
+<text x="82" y="140.375" text-anchor="start" font-size="12.5" fill="#222">Browser: index.html</text>
+<text x="82" y="158.375" text-anchor="start" font-size="12.5" fill="#222">Chat, files, voice calls</text>
+<text x="82" y="176.375" text-anchor="start" font-size="12.5" fill="#222">Laptop or phone on Wi-Fi</text>
+<rect x="70" y="300" width="230" height="110" rx="6" fill="#fff" stroke="#2F5597" stroke-width="1.5"/>
+<path d="M70,328 V306 Q70,300 76,300 H294 Q300,300 300,306 V328 Z" fill="#2F5597"/>
+<text x="185" y="318.9" text-anchor="middle" font-size="14" fill="#fff" font-weight="700">Administrator device</text>
+<text x="82" y="350.375" text-anchor="start" font-size="12.5" fill="#222">Browser: admin.html</text>
+<text x="82" y="368.375" text-anchor="start" font-size="12.5" fill="#222">Admin dashboard only</text>
+<rect x="70" y="490" width="230" height="130" rx="6" fill="#fff" stroke="#2F5597" stroke-width="1.5"/>
+<path d="M70,518 V496 Q70,490 76,490 H294 Q300,490 300,496 V518 Z" fill="#2F5597"/>
+<text x="185" y="508.9" text-anchor="middle" font-size="14" fill="#fff" font-weight="700">Student / Faculty device</text>
+<text x="82" y="540.375" text-anchor="start" font-size="12.5" fill="#222">Browser: index.html</text>
+<text x="82" y="558.375" text-anchor="start" font-size="12.5" fill="#222">Chat, files, voice calls</text>
+<text x="82" y="576.375" text-anchor="start" font-size="12.5" fill="#222">Laptop or phone on Wi-Fi</text>
+<rect x="440" y="86" width="380" height="590" rx="6" fill="#F7F9FC" stroke="#2F5597" stroke-width="1.8"/>
+<path d="M440,118 V92 Q440,86 446,86 H814 Q820,86 820,92 V118 Z" fill="#2F5597"/>
+<text x="630" y="107.25" text-anchor="middle" font-size="15" fill="#fff" font-weight="700">Local Server — Node.js (server.js)</text>
+<rect x="462" y="134" width="336" height="92" rx="5" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="630" y="158.725" text-anchor="middle" font-size="13.5" fill="#2F5597" font-weight="700">Express web server (HTTPS)</text>
+<text x="630" y="185.875" text-anchor="middle" font-size="12.5" fill="#222">Pages, login, register, uploads,</text>
+<text x="630" y="202.875" text-anchor="middle" font-size="12.5" fill="#222">admin actions — port 3443</text>
+<circle cx="478" cy="154" r="11" fill="#E8A030"/><text x="478" y="158.5" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">A</text>
+<rect x="462" y="240" width="336" height="92" rx="5" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="630" y="264.725" text-anchor="middle" font-size="13.5" fill="#2F5597" font-weight="700">Socket.IO (WebSocket)</text>
+<text x="630" y="291.875" text-anchor="middle" font-size="12.5" fill="#222">Messages, typing, online status,</text>
+<text x="630" y="308.875" text-anchor="middle" font-size="12.5" fill="#222">broadcasts — pushed instantly</text>
+<circle cx="478" cy="260" r="11" fill="#E8A030"/><text x="478" y="264.5" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">B</text>
+<rect x="462" y="346" width="336" height="92" rx="5" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="630" y="370.725" text-anchor="middle" font-size="13.5" fill="#2F5597" font-weight="700">WebRTC signaling relay</text>
+<text x="630" y="397.875" text-anchor="middle" font-size="12.5" fill="#222">Passes offer / answer / ICE</text>
+<text x="630" y="414.875" text-anchor="middle" font-size="12.5" fill="#222">between callers; no STUN/TURN</text>
+<circle cx="478" cy="366" r="11" fill="#E8A030"/><text x="478" y="370.5" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">C</text>
+<rect x="462" y="452" width="336" height="92" rx="5" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="630" y="476.725" text-anchor="middle" font-size="13.5" fill="#2F5597" font-weight="700">Security layer</text>
+<text x="630" y="503.875" text-anchor="middle" font-size="12.5" fill="#222">JWT sessions, bcrypt, AES-256-GCM,</text>
+<text x="630" y="520.875" text-anchor="middle" font-size="12.5" fill="#222">rate limiting, audit log</text>
+<rect x="462" y="558" width="336" height="92" rx="5" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="630" y="582.725" text-anchor="middle" font-size="13.5" fill="#2F5597" font-weight="700">In-memory state</text>
+<text x="630" y="609.875" text-anchor="middle" font-size="12.5" fill="#222">Online users, call rooms,</text>
+<text x="630" y="626.875" text-anchor="middle" font-size="12.5" fill="#222">login-attempt counters</text>
+<circle cx="478" cy="578" r="11" fill="#E8A030"/><text x="478" y="582.5" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">E</text>
+<rect x="870" y="170" width="200" height="190" rx="6" fill="#fff" stroke="#2F5597" stroke-width="1.5"/>
+<path d="M870,198 V176 Q870,170 876,170 H1064 Q1070,170 1070,176 V198 Z" fill="#2F5597"/>
+<text x="970" y="188.9" text-anchor="middle" font-size="14" fill="#fff" font-weight="700">SQLite database</text>
+<text x="882" y="220.375" text-anchor="start" font-size="12.5" fill="#222">msukaip.db (WAL mode)</text>
+<text x="882" y="238.375" text-anchor="start" font-size="12.5" fill="#222">users, groups, messages,</text>
+<text x="882" y="256.375" text-anchor="start" font-size="12.5" fill="#222">calls, audit logs,</text>
+<text x="882" y="274.375" text-anchor="start" font-size="12.5" fill="#222">survey responses</text>
+<text x="882" y="292.375" text-anchor="start" font-size="12.5" fill="#222">Message text encrypted</text>
+<circle cx="884" cy="184" r="11" fill="#E8A030"/><text x="884" y="188.5" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">D</text>
+<rect x="870" y="420" width="200" height="150" rx="6" fill="#fff" stroke="#2F5597" stroke-width="1.5"/>
+<path d="M870,448 V426 Q870,420 876,420 H1064 Q1070,420 1070,426 V448 Z" fill="#2F5597"/>
+<text x="970" y="438.9" text-anchor="middle" font-size="14" fill="#fff" font-weight="700">Uploads folder</text>
+<text x="882" y="470.375" text-anchor="start" font-size="12.5" fill="#222">Files, images and</text>
+<text x="882" y="488.375" text-anchor="start" font-size="12.5" fill="#222">voice messages</text>
+<text x="882" y="506.375" text-anchor="start" font-size="12.5" fill="#222">Encrypted at rest</text>
+<text x="882" y="524.375" text-anchor="start" font-size="12.5" fill="#222">(AES-256-GCM)</text>
+<polyline points="820,265 868,265" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)" marker-start="url(#arr)"/>
+<polyline points="820,495 868,495" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)" marker-start="url(#arr)"/>
+<polyline points="302,155 438,155" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)" marker-start="url(#arr)"/>
+<polyline points="302,355 438,355" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)" marker-start="url(#arr)"/>
+<polyline points="302,555 438,555" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)" marker-start="url(#arr)"/>
+<text x="370" y="201.7" text-anchor="middle" font-size="12" fill="#666">HTTPS + WebSocket</text>
+<text x="370" y="216.7" text-anchor="middle" font-size="12" fill="#666">(TLS over TCP)</text>
+<circle cx="370" cy="240" r="11" fill="#E8A030"/><text x="370" y="244.5" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">F</text>
+<polyline points="70,200 40,200 40,560 68,560" fill="none" stroke="#B03030" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arr)" marker-start="url(#arr)"/>
+<text x="0" y="0" transform="translate(32,380) rotate(-90)" text-anchor="middle" font-size="12" fill="#B03030" font-weight="700">Voice audio: WebRTC peer-to-peer (SRTP over UDP)</text>
+<polyline points="40,752 100,752" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<text x="110" y="756.375" text-anchor="start" font-size="12.5" fill="#222">Data over TCP (HTTPS / WebSocket) through the server</text>
+<polyline points="520,752 580,752" fill="none" stroke="#B03030" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arr)"/>
+<text x="590" y="756.375" text-anchor="start" font-size="12.5" fill="#222">Voice over UDP, device to device (never through the server)</text>
+</svg>

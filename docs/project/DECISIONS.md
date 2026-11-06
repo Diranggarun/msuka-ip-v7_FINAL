@@ -453,3 +453,11 @@ Choices inside that:
 - **Vendored, not CDN.** Offline LAN. The file is copied from `node_modules` to `frontend/vendor/alpine-csp.min.js` (`npm run vendor:alpine` after an upgrade) and served by `express.static`. ESLint ignores `frontend/vendor/`.
 - **Feedback page only, for now.** It is the simplest page. `admin.html` (tabs, modals, tables) is the next candidate. `index.html` (chat, sockets, WebRTC) stays plain JS: rewriting it is the most risk for the least gain.
 - **Answers are still read from the DOM** (`input:checked`) at submit, as before, rather than bound into Alpine state. It kept the scoring code and the radio ids the tests click unchanged.
+
+## 2026-11-06 — Call quality, offline outbox, auto backups, PM2
+
+- **Call quality from `getStats()`, not a library.** It is built into every browser, so nothing is installed and nothing leaves the LAN. Thresholds: Good = loss < 1 %, RTT < 150 ms, jitter < 30 ms; Poor = loss > 5 % or RTT > 400 ms or jitter > 75 ms; otherwise Fair. The server picks the call row itself (the user's own call only) and keeps a running mean `(avg·n + x)/(n+1)`, so every participant counts equally and nobody can overwrite another person's call.
+- **Outbox in memory only.** Queued messages are never written to localStorage/IndexedDB: messages are encrypted at rest on the server, and plaintext in the browser would undo that. Trade-off: closing the tab while offline loses unsent text.
+- **Service worker caches only the static shell.** `/api/*` and `/uploads/*` hold private data (RA 10173) and token URLs, so they are never cached; admin and survey pages must always be live. Pages and `socket.io.js` are network-first so updates are not hidden behind a stale cache. Bump `CACHE_VERSION` in `sw.js` when a shell file changes.
+- **Plain `setTimeout` chain instead of node-cron.** One timer computes the delay to the next 02:00 run and re-arms itself — a few lines a student can explain, no dependency. Only `auto-db-*.db` files are pruned (keep 14); manual backups are never deleted.
+- **PM2 with production as the default environment.** A bare `pm2 start` must never boot in dev mode, because dev mode resets the demo passwords. Boot on Windows uses `pm2 save` + a Task Scheduler logon task (`pm2 resurrect`), not the unmaintained `pm2-windows-startup`.

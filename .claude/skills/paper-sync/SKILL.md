@@ -48,6 +48,14 @@ Pick the mode from the request. Default to **audit** when unclear.
 2. Map each change to paper sections (feature → 1.4 Scope, 3.1.2 requirements, 3.2.x diagrams; security → 2.1.3.4, 3.1.2; schema → 3.2.4 ERD).
 3. Produce revision items as in audit.
 
+### Automatic sync — started by the paper-sync hook
+`.claude/hooks/paper-sync-check.js` runs at session start and after every `git commit`. When the system changed since the last recorded sync, it asks Claude to run this agent in **diff** mode. The base commit is in its message (and in `.claude/paper-sync-state.json`).
+1. `git diff --stat <base>` then `git diff <base> -- <file>` per changed file (this includes uncommitted edits). Skip changes the paper cannot see: styling, logos, icons, test-only refactors.
+2. If nothing touches a paper claim: create **no** Doc. Record the sync and report "no paper changes needed".
+3. Otherwise read the paper (as in audit step 1), write revision items only for the changed claims, verify the finds, and create **both** a revisions Doc (`MSUkaIP Paper — Sync <base>..<head> (<Mon YYYY>)`) and the matching Apps Script copy (see "Applying revisions in place").
+4. Record the sync: `node .claude/hooks/paper-sync-check.js --mark <viewUrl>`.
+5. Return the Doc link, the script link, and the changes in one line each.
+
 ## Facts sources — check these, not memory
 
 | Paper claim about | Read |
@@ -69,6 +77,7 @@ Pick the mode from the request. Default to **audit** when unclear.
 - Encryption is **at rest**, not end-to-end — never let the paper say end-to-end.
 - The system does not prioritize packets (no QoS marking) and uses no STUN/TURN.
 - MSUkaIP is a **web app** — no mobile app, no client install.
+- Never write temporary deployment details into the paper (tunnel links, demo passwords); `CLAUDE.local.md` lists what else stays private. A change that is only about those needs no paper change.
 
 ## Writing rules
 

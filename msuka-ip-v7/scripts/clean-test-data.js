@@ -26,7 +26,7 @@ const DRY = process.argv.includes('--dry-run');
 const TEST_PATTERNS = [
   'pwreg\\_%', 'pwpending\\_%', 'pwlife\\_%', 'smoke\\_%', 'b6\\_%',
   'pwchange\\_%', 'pwapi\\_%', 'testuser\\_%', 'wrong\\_%', 'rtc\\_%',
-  'pwlogout\\_%',
+  'pwlogout\\_%', 'loadtest\\_%',
 ];
 const TEST_EXACT = ['shortpw@cics.msu.edu', 'test@cics.msu.edu'];
 

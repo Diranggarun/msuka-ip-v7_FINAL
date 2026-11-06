@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="722" viewBox="0 0 1100 722" font-family="Segoe UI, Arial, sans-serif">
+<rect width="1100" height="722" fill="#fff"/>
+<defs>
+ <marker id="arr" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker>
+ <marker id="tri" viewBox="0 0 12 12" refX="12" refY="6" markerWidth="14" markerHeight="14" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#fff" stroke="#333"/></marker>
+ <marker id="open" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#333" stroke-width="1.3"/></marker>
+</defs>
+<text x="550" y="36.3" text-anchor="middle" font-size="18" fill="#2F5597" font-weight="700">Input-Process-Output (IPO) Diagram</text>
+<rect x="30" y="58" width="170" height="36" rx="6" fill="#2F5597" stroke="#2F5597" stroke-width="1.5"/>
+<text x="115" y="81.25" text-anchor="middle" font-size="15" fill="#fff" font-weight="700">Module</text>
+<rect x="230" y="58" width="230" height="36" rx="6" fill="#2F5597" stroke="#2F5597" stroke-width="1.5"/>
+<text x="345" y="81.25" text-anchor="middle" font-size="15" fill="#fff" font-weight="700">Input</text>
+<rect x="490" y="58" width="280" height="36" rx="6" fill="#2F5597" stroke="#2F5597" stroke-width="1.5"/>
+<text x="630" y="81.25" text-anchor="middle" font-size="15" fill="#fff" font-weight="700">Process</text>
+<rect x="800" y="58" width="270" height="36" rx="6" fill="#2F5597" stroke="#2F5597" stroke-width="1.5"/>
+<text x="935" y="81.25" text-anchor="middle" font-size="15" fill="#fff" font-weight="700">Output</text>
+<rect x="30" y="110" width="170" height="132" rx="6" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.5"/>
+<text x="115" y="171.25" text-anchor="middle" font-size="15" fill="#2F5597" font-weight="700">User &amp;</text>
+<text x="115" y="191.25" text-anchor="middle" font-size="15" fill="#2F5597" font-weight="700">Authentication</text>
+<rect x="230" y="110" width="230" height="132" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="252" y="162.375" text-anchor="start" font-size="12.5" fill="#222">Name, institutional email,</text>
+<circle cx="243" cy="158" r="2.6" fill="#2F5597"/>
+<text x="252" y="180.375" text-anchor="start" font-size="12.5" fill="#222">password (registration)</text>
+<text x="252" y="198.375" text-anchor="start" font-size="12.5" fill="#222">Email and password (login)</text>
+<circle cx="243" cy="194" r="2.6" fill="#2F5597"/>
+<rect x="490" y="110" width="280" height="132" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="512" y="135.375" text-anchor="start" font-size="12.5" fill="#222">Validate input, hash password</text>
+<circle cx="503" cy="131" r="2.6" fill="#2F5597"/>
+<text x="512" y="153.375" text-anchor="start" font-size="12.5" fill="#222">(bcrypt, 12 rounds)</text>
+<text x="512" y="171.375" text-anchor="start" font-size="12.5" fill="#222">Admin approval of new account</text>
+<circle cx="503" cy="167" r="2.6" fill="#2F5597"/>
+<text x="512" y="189.375" text-anchor="start" font-size="12.5" fill="#222">Check credentials; rate-limit</text>
+<circle cx="503" cy="185" r="2.6" fill="#2F5597"/>
+<text x="512" y="207.375" text-anchor="start" font-size="12.5" fill="#222">repeated failures</text>
+<text x="512" y="225.375" text-anchor="start" font-size="12.5" fill="#222">Sign session token (JWT)</text>
+<circle cx="503" cy="221" r="2.6" fill="#2F5597"/>
+<rect x="800" y="110" width="270" height="132" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="822" y="162.375" text-anchor="start" font-size="12.5" fill="#222">Pending / approved account</text>
+<circle cx="813" cy="158" r="2.6" fill="#2F5597"/>
+<text x="822" y="180.375" text-anchor="start" font-size="12.5" fill="#222">Session token or error message</text>
+<circle cx="813" cy="176" r="2.6" fill="#2F5597"/>
+<text x="822" y="198.375" text-anchor="start" font-size="12.5" fill="#222">Audit log entry</text>
+<circle cx="813" cy="194" r="2.6" fill="#2F5597"/>
+<polyline points="204,176 226,176" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<polyline points="464,176 486,176" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<polyline points="774,176 796,176" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<rect x="30" y="258" width="170" height="132" rx="6" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.5"/>
+<text x="115" y="329.25" text-anchor="middle" font-size="15" fill="#2F5597" font-weight="700">Messaging</text>
+<rect x="230" y="258" width="230" height="132" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="252" y="301.375" text-anchor="start" font-size="12.5" fill="#222">Message text, file, image</text>
+<circle cx="243" cy="297" r="2.6" fill="#2F5597"/>
+<text x="252" y="319.375" text-anchor="start" font-size="12.5" fill="#222">or voice recording</text>
+<text x="252" y="337.375" text-anchor="start" font-size="12.5" fill="#222">Target chat (General, group</text>
+<circle cx="243" cy="333" r="2.6" fill="#2F5597"/>
+<text x="252" y="355.375" text-anchor="start" font-size="12.5" fill="#222">or private)</text>
+<rect x="490" y="258" width="280" height="132" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="512" y="301.375" text-anchor="start" font-size="12.5" fill="#222">Validate payload and membership</text>
+<circle cx="503" cy="297" r="2.6" fill="#2F5597"/>
+<text x="512" y="319.375" text-anchor="start" font-size="12.5" fill="#222">Encrypt (AES-256-GCM)</text>
+<circle cx="503" cy="315" r="2.6" fill="#2F5597"/>
+<text x="512" y="337.375" text-anchor="start" font-size="12.5" fill="#222">Store in SQLite</text>
+<circle cx="503" cy="333" r="2.6" fill="#2F5597"/>
+<text x="512" y="355.375" text-anchor="start" font-size="12.5" fill="#222">Route through Socket.IO</text>
+<circle cx="503" cy="351" r="2.6" fill="#2F5597"/>
+<rect x="800" y="258" width="270" height="132" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="822" y="310.375" text-anchor="start" font-size="12.5" fill="#222">Message delivered instantly</text>
+<circle cx="813" cy="306" r="2.6" fill="#2F5597"/>
+<text x="822" y="328.375" text-anchor="start" font-size="12.5" fill="#222">Unread badge / notification</text>
+<circle cx="813" cy="324" r="2.6" fill="#2F5597"/>
+<text x="822" y="346.375" text-anchor="start" font-size="12.5" fill="#222">Encrypted message record</text>
+<circle cx="813" cy="342" r="2.6" fill="#2F5597"/>
+<polyline points="204,324 226,324" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<polyline points="464,324 486,324" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<polyline points="774,324 796,324" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<rect x="30" y="406" width="170" height="132" rx="6" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.5"/>
+<text x="115" y="477.25" text-anchor="middle" font-size="15" fill="#2F5597" font-weight="700">VoIP</text>
+<rect x="230" y="406" width="230" height="132" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="252" y="458.375" text-anchor="start" font-size="12.5" fill="#222">Call request and target</text>
+<circle cx="243" cy="454" r="2.6" fill="#2F5597"/>
+<text x="252" y="476.375" text-anchor="start" font-size="12.5" fill="#222">user or group</text>
+<text x="252" y="494.375" text-anchor="start" font-size="12.5" fill="#222">Microphone audio</text>
+<circle cx="243" cy="490" r="2.6" fill="#2F5597"/>
+<rect x="490" y="406" width="280" height="132" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="512" y="440.375" text-anchor="start" font-size="12.5" fill="#222">Relay signaling (offer, answer,</text>
+<circle cx="503" cy="436" r="2.6" fill="#2F5597"/>
+<text x="512" y="458.375" text-anchor="start" font-size="12.5" fill="#222">and ICE) through Socket.IO</text>
+<text x="512" y="476.375" text-anchor="start" font-size="12.5" fill="#222">Peer-to-peer WebRTC audio</text>
+<circle cx="503" cy="472" r="2.6" fill="#2F5597"/>
+<text x="512" y="494.375" text-anchor="start" font-size="12.5" fill="#222">(SRTP over UDP)</text>
+<text x="512" y="512.375" text-anchor="start" font-size="12.5" fill="#222">Log the call when it ends</text>
+<circle cx="503" cy="508" r="2.6" fill="#2F5597"/>
+<rect x="800" y="406" width="270" height="132" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="822" y="458.375" text-anchor="start" font-size="12.5" fill="#222">Active voice call</text>
+<circle cx="813" cy="454" r="2.6" fill="#2F5597"/>
+<text x="822" y="476.375" text-anchor="start" font-size="12.5" fill="#222">Call record: start, end,</text>
+<circle cx="813" cy="472" r="2.6" fill="#2F5597"/>
+<text x="822" y="494.375" text-anchor="start" font-size="12.5" fill="#222">duration, participants</text>
+<polyline points="204,472 226,472" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<polyline points="464,472 486,472" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<polyline points="774,472 796,472" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<rect x="30" y="554" width="170" height="132" rx="6" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.5"/>
+<text x="115" y="625.25" text-anchor="middle" font-size="15" fill="#2F5597" font-weight="700">Administration</text>
+<rect x="230" y="554" width="230" height="132" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="252" y="597.375" text-anchor="start" font-size="12.5" fill="#222">Approvals, user edits,</text>
+<circle cx="243" cy="593" r="2.6" fill="#2F5597"/>
+<text x="252" y="615.375" text-anchor="start" font-size="12.5" fill="#222">deactivation, sign-out</text>
+<text x="252" y="633.375" text-anchor="start" font-size="12.5" fill="#222">Broadcasts, group removal,</text>
+<circle cx="243" cy="629" r="2.6" fill="#2F5597"/>
+<text x="252" y="651.375" text-anchor="start" font-size="12.5" fill="#222">backup request</text>
+<rect x="490" y="554" width="280" height="132" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="512" y="606.375" text-anchor="start" font-size="12.5" fill="#222">Verify admin token and role</text>
+<circle cx="503" cy="602" r="2.6" fill="#2F5597"/>
+<text x="512" y="624.375" text-anchor="start" font-size="12.5" fill="#222">Execute the command</text>
+<circle cx="503" cy="620" r="2.6" fill="#2F5597"/>
+<text x="512" y="642.375" text-anchor="start" font-size="12.5" fill="#222">Write audit log entry</text>
+<circle cx="503" cy="638" r="2.6" fill="#2F5597"/>
+<rect x="800" y="554" width="270" height="132" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="822" y="597.375" text-anchor="start" font-size="12.5" fill="#222">Updated accounts and groups</text>
+<circle cx="813" cy="593" r="2.6" fill="#2F5597"/>
+<text x="822" y="615.375" text-anchor="start" font-size="12.5" fill="#222">Delivered announcement</text>
+<circle cx="813" cy="611" r="2.6" fill="#2F5597"/>
+<text x="822" y="633.375" text-anchor="start" font-size="12.5" fill="#222">Statistics, audit log, survey</text>
+<circle cx="813" cy="629" r="2.6" fill="#2F5597"/>
+<text x="822" y="651.375" text-anchor="start" font-size="12.5" fill="#222">results, backup file</text>
+<polyline points="204,620 226,620" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<polyline points="464,620 486,620" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+<polyline points="774,620 796,620" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#arr)"/>
+</svg>

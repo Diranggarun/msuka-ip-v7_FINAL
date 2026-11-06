@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="726" viewBox="0 0 1100 726" font-family="Segoe UI, Arial, sans-serif">
+<rect width="1100" height="726" fill="#fff"/>
+<defs>
+ <marker id="arr" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker>
+ <marker id="tri" viewBox="0 0 12 12" refX="12" refY="6" markerWidth="14" markerHeight="14" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#fff" stroke="#333"/></marker>
+ <marker id="open" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#333" stroke-width="1.3"/></marker>
+</defs>
+<rect x="420" y="24" width="260" height="54" rx="6" fill="#2F5597" stroke="#2F5597" stroke-width="1.5"/>
+<text x="550" y="46.75" text-anchor="middle" font-size="15" fill="#fff" font-weight="700">MSUkaIP Web App</text>
+<text x="550" y="65.75" text-anchor="middle" font-size="15" fill="#fff" font-weight="700">0.0 Main System</text>
+<polyline points="550,78 550,112" fill="none" stroke="#333" stroke-width="1.3"/>
+<polyline points="148,112 952,112" fill="none" stroke="#333" stroke-width="1.3"/>
+<polyline points="148,112 148,150" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="23" y="150" width="250" height="46" rx="6" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.5"/>
+<text x="148" y="177.9" text-anchor="middle" font-size="14" fill="#2F5597" font-weight="700">1.0 User &amp; Authentication</text>
+<polyline points="39,196 39,556" fill="none" stroke="#333" stroke-width="1.3"/>
+<polyline points="39,232 53,232" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="53" y="212" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="163" y="236.2" text-anchor="middle" font-size="12" fill="#222">1.1 Register with institutional email</text>
+<polyline points="39,286 53,286" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="53" y="266" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="163" y="290.2" text-anchor="middle" font-size="12" fill="#222">1.2 Wait for admin approval</text>
+<polyline points="39,340 53,340" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="53" y="320" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="163" y="344.2" text-anchor="middle" font-size="12" fill="#222">1.3 Accept Terms of Use</text>
+<polyline points="39,394 53,394" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="53" y="374" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="163" y="398.2" text-anchor="middle" font-size="12" fill="#222">1.4 Log in (bcrypt check, rate-limited)</text>
+<polyline points="39,448 53,448" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="53" y="428" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="163" y="452.2" text-anchor="middle" font-size="12" fill="#222">1.5 Receive session token (JWT, 8 h)</text>
+<polyline points="39,502 53,502" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="53" y="482" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="163" y="506.2" text-anchor="middle" font-size="12" fill="#222">1.6 Edit profile / change password</text>
+<polyline points="39,556 53,556" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="53" y="536" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="163" y="560.2" text-anchor="middle" font-size="12" fill="#222">1.7 Log out</text>
+<polyline points="416,112 416,150" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="291" y="150" width="250" height="46" rx="6" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.5"/>
+<text x="416" y="177.9" text-anchor="middle" font-size="14" fill="#2F5597" font-weight="700">2.0 Messaging</text>
+<polyline points="307,196 307,556" fill="none" stroke="#333" stroke-width="1.3"/>
+<polyline points="307,232 321,232" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="321" y="212" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="431" y="236.2" text-anchor="middle" font-size="12" fill="#222">2.1 Open chat (General, group, private)</text>
+<polyline points="307,286 321,286" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="321" y="266" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="431" y="290.2" text-anchor="middle" font-size="12" fill="#222">2.2 Create group chat</text>
+<polyline points="307,340 321,340" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="321" y="320" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="431" y="344.2" text-anchor="middle" font-size="12" fill="#222">2.3 Send text (AES-256-GCM encrypted)</text>
+<polyline points="307,394 321,394" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="321" y="374" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="431" y="398.2" text-anchor="middle" font-size="12" fill="#222">2.4 Send file, image or voice message</text>
+<polyline points="307,448 321,448" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="321" y="428" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="431" y="452.2" text-anchor="middle" font-size="12" fill="#222">2.5 Real-time delivery (Socket.IO)</text>
+<polyline points="307,502 321,502" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="321" y="482" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="431" y="506.2" text-anchor="middle" font-size="12" fill="#222">2.6 Typing indicator</text>
+<polyline points="307,556 321,556" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="321" y="536" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="431" y="560.2" text-anchor="middle" font-size="12" fill="#222">2.7 Load history / delete own message</text>
+<polyline points="684,112 684,150" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="559" y="150" width="250" height="46" rx="6" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.5"/>
+<text x="684" y="177.9" text-anchor="middle" font-size="14" fill="#2F5597" font-weight="700">3.0 VoIP</text>
+<polyline points="575,196 575,502" fill="none" stroke="#333" stroke-width="1.3"/>
+<polyline points="575,232 589,232" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="589" y="212" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="699" y="236.2" text-anchor="middle" font-size="12" fill="#222">3.1 Start one-to-one call</text>
+<polyline points="575,286 589,286" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="589" y="266" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="699" y="290.2" text-anchor="middle" font-size="12" fill="#222">3.2 Ring, accept or reject</text>
+<polyline points="575,340 589,340" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="589" y="320" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="699" y="344.2" text-anchor="middle" font-size="12" fill="#222">3.3 Join group call</text>
+<polyline points="575,394 589,394" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="589" y="374" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="699" y="398.2" text-anchor="middle" font-size="12" fill="#222">3.4 Exchange signaling (offer, ICE)</text>
+<polyline points="575,448 589,448" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="589" y="428" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="699" y="452.2" text-anchor="middle" font-size="12" fill="#222">3.5 Peer-to-peer audio (WebRTC, UDP)</text>
+<polyline points="575,502 589,502" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="589" y="482" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="699" y="506.2" text-anchor="middle" font-size="12" fill="#222">3.6 End call and save call record</text>
+<polyline points="952,112 952,150" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="827" y="150" width="250" height="46" rx="6" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.5"/>
+<text x="952" y="177.9" text-anchor="middle" font-size="14" fill="#2F5597" font-weight="700">4.0 Administration</text>
+<polyline points="843,196 843,664" fill="none" stroke="#333" stroke-width="1.3"/>
+<polyline points="843,232 857,232" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="857" y="212" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="967" y="236.2" text-anchor="middle" font-size="12" fill="#222">4.1 Log in through admin portal</text>
+<polyline points="843,286 857,286" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="857" y="266" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="967" y="290.2" text-anchor="middle" font-size="12" fill="#222">4.2 Approve / reject registrations</text>
+<polyline points="843,340 857,340" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="857" y="320" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="967" y="344.2" text-anchor="middle" font-size="12" fill="#222">4.3 Add, edit, deactivate, delete users</text>
+<polyline points="843,394 857,394" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="857" y="374" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="967" y="398.2" text-anchor="middle" font-size="12" fill="#222">4.4 Sign a user out everywhere</text>
+<polyline points="843,448 857,448" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="857" y="428" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="967" y="452.2" text-anchor="middle" font-size="12" fill="#222">4.5 Remove group chats</text>
+<polyline points="843,502 857,502" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="857" y="482" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="967" y="506.2" text-anchor="middle" font-size="12" fill="#222">4.6 Broadcast announcements</text>
+<polyline points="843,556 857,556" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="857" y="536" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="967" y="560.2" text-anchor="middle" font-size="12" fill="#222">4.7 View statistics and login activity</text>
+<polyline points="843,610 857,610" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="857" y="590" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="967" y="614.2" text-anchor="middle" font-size="12" fill="#222">4.8 View audit log and survey results</text>
+<polyline points="843,664 857,664" fill="none" stroke="#333" stroke-width="1.3"/>
+<rect x="857" y="644" width="220" height="40" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.2"/>
+<text x="967" y="668.2" text-anchor="middle" font-size="12" fill="#222">4.9 Back up the database</text>
+</svg>

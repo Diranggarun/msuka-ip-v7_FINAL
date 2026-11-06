@@ -10,9 +10,10 @@
        does not sit under a white strip. -->
   <link rel="manifest" href="/manifest.webmanifest"/>
   <meta name="theme-color" content="#721922"/>
-  <link rel="icon" type="image/svg+xml" href="/msukaip-mark.svg"/>
-  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png"/>
-  <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png"/>
+  <!-- Gold MSUkaIP app icon on every browser tab; the admin home-screen icon is gold too. -->
+  <link rel="icon" type="image/png" sizes="64x64" href="/tab-icon-64.png"/>
+  <link rel="icon" type="image/png" sizes="192x192" href="/tab-icon-192.png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/admin-icon-180.png"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <meta name="apple-mobile-web-app-title" content="MSUkaIP"/>
@@ -164,7 +165,7 @@ button,.tab{touch-action:manipulation;}
 .auth-logo-bar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.6;}
 .auth-logo-bar img{width:90px;height:90px;object-fit:contain;filter:drop-shadow(0 4px 16px rgba(0,0,0,.5));display:block;margin:0 auto .75rem;position:relative;z-index:1;}
 /* The stacked MSUkaIP logo carries the wordmark; the h1 below only says "Admin Portal". */
-.auth-logo-bar .auth-logo{width:auto;height:112px;margin:0 auto .7rem;filter:drop-shadow(0 6px 14px rgba(0,0,0,.35));}
+.auth-logo-bar .auth-logo{width:auto;height:176px;margin:0 auto .8rem;filter:drop-shadow(0 6px 14px rgba(0,0,0,.35));}
 /* The three sub-lines share one cream Cinzel, as in the mockup.
    --gold-soft is ~11:1 on the card top and ~15:1 at the bottom (floor is 4.5:1). */
 .auth-sub,.auth-sub2,.auth-sub3{font-family:'Cinzel',serif;color:var(--gold-soft);font-size:.64rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin-top:2px;position:relative;z-index:1;}
@@ -218,13 +219,14 @@ button,.tab{touch-action:manipulation;}
 .admin-rail::after{content:'';position:absolute;top:0;bottom:0;right:0;width:3px;background:linear-gradient(180deg,transparent,var(--gold),var(--gold-bright),var(--gold),transparent);}
 .admin-rail-logo{display:flex;flex-direction:column;align-items:center;gap:8px;padding:6px 6px 18px;text-align:center;position:relative;}
 .admin-rail-logo::after{content:'';position:absolute;bottom:6px;left:14px;right:14px;height:1.5px;background:linear-gradient(90deg,transparent,var(--gold),var(--gold-bright),var(--gold),transparent);}
-/* Same full MSUkaIP logo and size as index.html's .rail-logo-img, kept in step deliberately. */
-.admin-rail-logo-img{width:150px;height:auto;display:block;filter:drop-shadow(0 4px 10px rgba(0,0,0,.35));}
+/* Same logo pair and sizes as index.html's .rail-logo-img/.rail-logo-torch, kept in step deliberately. */
+.admin-rail-logo-img{width:100%;max-width:182px;height:auto;display:block;}
+.admin-rail-logo-torch{display:none;height:60px;width:auto;}
 .admin-rail-logo-text{display:flex;flex-direction:column;align-items:center;gap:3px;margin-top:4px;}
 .admin-rail-logo-text .arl-sub{font-family:'Cinzel',serif;font-size:.62rem;color:rgba(255,255,255,.75);font-weight:700;letter-spacing:.12em;text-transform:uppercase;}
 .admin-rail-logo-text .arl-sub2{font-family:'Cinzel',serif;font-size:.62rem;color:var(--gold-bright);font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-top:1px;}
 .admin-rail-logo-text .arl-sub3{font-family:'Cinzel',serif;font-size:.55rem;color:rgba(255,255,255,.6);font-weight:600;letter-spacing:.18em;text-transform:uppercase;margin-top:2px;}
-@media (max-width:1100px){.admin-rail-logo-text{display:none;}.admin-rail-logo-img{width:54px;}.admin-rail-logo::after{display:none;}}
+@media (max-width:1100px){.admin-rail-logo-text{display:none;}.admin-rail-logo-img{display:none;}.admin-rail-logo-torch{display:block;}.admin-rail-logo::after{display:none;}}
 .rail-tab{display:flex;align-items:center;gap:12px;padding:10px 12px;border:none;background:transparent;color:rgba(255,255,255,.7);border-radius:12px;cursor:pointer;font-size:.88rem;font-weight:700;font-family:'Nunito',sans-serif;transition:all .15s;text-align:left;width:100%;position:relative;}
 .rail-tab .ricon{width:22px;height:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
 .rail-tab .ricon svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
@@ -283,7 +285,8 @@ button,.tab{touch-action:manipulation;}
 @media (min-width:1101px){
   .admin-rail.collapsed{width:68px;padding:14px 8px;align-items:center;}
   .admin-rail.collapsed .admin-rail-logo-text,.admin-rail.collapsed .admin-rail-logo::after,.admin-rail.collapsed .rail-tab .rlabel,.admin-rail.collapsed .rail-tab .rail-badge,.admin-rail.collapsed .rail-group-head{display:none;}
-  .admin-rail.collapsed .admin-rail-logo-img{width:54px;}
+  .admin-rail.collapsed .admin-rail-logo-img{display:none;}
+  .admin-rail.collapsed .admin-rail-logo-torch{display:block;}
   .admin-rail.collapsed .rail-tab{justify-content:center;padding:10px;}
   .admin-rail.collapsed .rail-group,.admin-rail.collapsed .rail-group-items,.admin-rail.collapsed .rail-group-inner{display:contents;visibility:visible;}
   .admin-rail.collapsed .rail-toggle{align-self:center;}
@@ -963,7 +966,7 @@ tr:hover td{background:var(--maroon-soft);}
 <div id="auth-screen">
   <div class="auth-card">
     <div class="auth-logo-bar">
-      <img class="auth-logo" src="/msukaip-logo-stacked.svg" alt="MSUkaIP"/>
+      <img class="auth-logo" src="/msukaip-sticker-on-maroon.webp" alt="MSUkaIP"/>
       <h1>Admin Portal</h1>
       <p class="auth-sub">CICS LAN Messenger</p>
       <p class="auth-sub2">Mindanao State University</p>
@@ -998,7 +1001,8 @@ tr:hover td{background:var(--maroon-soft);}
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
     </button>
     <div class="admin-rail-logo">
-      <img class="admin-rail-logo-img" src="/msukaip-logo-stacked.svg" alt="MSUkaIP"/>
+      <img class="admin-rail-logo-img" src="/msukaip-sticker-on-maroon.webp" alt="MSUkaIP"/>
+      <img class="admin-rail-logo-torch" src="/msukaip-torch-on-maroon.webp" alt="" aria-hidden="true"/>
       <div class="admin-rail-logo-text">
         <span class="arl-sub">CICS LAN Messenger</span>
         <span class="arl-sub2">Mindanao State University</span>
@@ -2165,7 +2169,7 @@ function renderUsers(users){
       <td><strong style="color:var(--maroon-dark)">${esc(u.name)}</strong></td>
       <td style="color:var(--text-mid);font-size:.82rem">${esc(u.email)}</td>
       <td><span class="badge ${esc(u.role)}">${esc(u.role)}</span></td>
-      <td><span class="badge ${esc(u.account_status)}">${esc(u.account_status)}</span></td>
+      <td>${u.deactivated_at?'<span class="badge rejected">deactivated</span>':`<span class="badge ${esc(u.account_status)}">${esc(u.account_status)}</span>`}</td>
       <td><span class="badge ${esc(u.status)}">${esc(u.status)}</span></td>
       <td style="color:var(--text-light);font-size:.78rem">${new Date(u.created_at).toLocaleDateString()}</td>
       <td style="display:flex;gap:5px;">
@@ -2342,6 +2346,11 @@ function openEditModal(id){
       <option value="faculty" ${role==='faculty'?'selected':''}>Faculty</option>
       <option value="admin"   ${role==='admin'  ?'selected':''}>Admin</option>
     </select>
+    <label>Account access</label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button type="button" class="btn-sm btn-warning" onclick="setUserActive(${id},${!!u.deactivated_at})">${u.deactivated_at?'Reactivate account':'Deactivate account'}</button>
+      <button type="button" class="btn-sm btn-warning" onclick="revokeSessions(${id})">Sign out everywhere</button>
+    </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal()">Cancel</button>
       <button class="btn-confirm" onclick="saveEdit(${id})">Save Changes</button>
@@ -2358,6 +2367,26 @@ async function saveEdit(id){
     const res=await fetch(`/api/admin/users/${id}`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({name,email,password,role})});
     if(!res.ok){const d=await res.json();alert(d.error);return;}
     closeModal();loadUsers();
+  }catch{alert('Server error');}
+}
+
+// Deactivate keeps the account and its history but blocks sign-in and ends its
+// sessions; Reactivate lets it sign in again. Both are written to the audit log.
+async function setUserActive(id,active){
+  if(!active&&!confirm('Deactivate this account? The user is signed out and cannot sign in until reactivated.')) return;
+  try{
+    const res=await fetch(`/api/admin/users/${id}/active`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${authToken}`},body:JSON.stringify({active})});
+    const d=await res.json(); if(!res.ok){alert(d.error);return;}
+    closeModal();loadUsers();
+  }catch{alert('Server error');}
+}
+// Ends every session the user has open (all devices). They can sign in again.
+async function revokeSessions(id){
+  if(!confirm('Sign this user out on every device?')) return;
+  try{
+    const res=await fetch(`/api/admin/users/${id}/revoke-sessions`,{method:'POST',headers:{Authorization:`Bearer ${authToken}`}});
+    const d=await res.json(); if(!res.ok){alert(d.error);return;}
+    alert('Signed out on all devices.');
   }catch{alert('Server error');}
 }
 

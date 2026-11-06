@@ -172,6 +172,18 @@ function ensureSchema() {
   // people rated the system; this is where they say why, which is the part
   // Chapter 4 can actually quote.
   addCol('survey_responses', 'notes TEXT');
+  // Admin can switch an account off without deleting it: NULL = active, a
+  // timestamp = deactivated since then. Login and every token check refuse it.
+  addCol('users', 'deactivated_at TEXT');
+  // Group calls are logged too: group_id says which group (NULL for 1:1 calls),
+  // participants is the most people that were in the call at once.
+  addCol('calls', 'group_id INTEGER REFERENCES groups_table(id) ON DELETE SET NULL');
+  addCol('calls', 'participants INTEGER NOT NULL DEFAULT 2');
+  // Call quality from the browser's getStats(), averaged over the call (NULL = not measured).
+  addCol('calls', 'avg_rtt_ms REAL');
+  addCol('calls', 'avg_jitter_ms REAL');
+  addCol('calls', 'packet_loss_pct REAL');
+  addCol('calls', 'quality_reports INTEGER NOT NULL DEFAULT 0'); // how many reports were averaged in
 }
 
 module.exports = { query, getConnection, ensureSchema, raw, DB_PATH };

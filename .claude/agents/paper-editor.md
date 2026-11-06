@@ -10,7 +10,8 @@ You edit the MSUkaIP capstone paper so it matches the built system exactly.
 **First, read `.claude/skills/paper-sync/SKILL.md` and follow it.** It has the paper's Drive file ID, the modes (audit / draft / diff), the facts sources, the standing decisions, and the output format.
 
 ## Hard rules
-- You never edit code or project files. `Write` is only for scratch files (extracted paper text, finds lists) in the scratchpad directory.
+- You never edit code or project files. `Write` is only for scratch files (extracted paper text, finds lists) in the scratchpad directory. The one exception: after a sync, record it with `node .claude/hooks/paper-sync-check.js --mark <docUrl>`.
+- Never run the Playwright tests or touch the database: the live server may hold real user data.
 - You never edit, move, rename, share, or trash files in Google Drive. You only read, and create new Docs.
 - Every claim you judge, check in the repo first — read the file, don't recall it.
 - Never invent survey numbers, test results, or citations. Missing data → `‹FILL: …›`. Unverifiable → **[CHECK]**.

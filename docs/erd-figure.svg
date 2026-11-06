@@ -1,0 +1,236 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1090" height="910" viewBox="0 0 1090 910" font-family="Segoe UI, Arial, sans-serif">
+<rect width="1090" height="910" fill="#fff"/>
+<defs>
+ <marker id="many" viewBox="0 0 14 14" refX="14" refY="7" markerWidth="14" markerHeight="14" markerUnits="userSpaceOnUse" orient="auto">
+  <path d="M0,7 L14,0 M0,7 L14,14 M0,7 L14,7 M2,1 L2,13" stroke="#333" fill="none" stroke-width="1.3"/></marker>
+ <marker id="one" viewBox="0 0 14 14" refX="0" refY="7" markerWidth="14" markerHeight="14" markerUnits="userSpaceOnUse" orient="auto">
+  <path d="M5,1 L5,13 M9,1 L9,13" stroke="#333" fill="none" stroke-width="1.3"/></marker>
+</defs>
+<text x="40" y="30" font-size="12" fill="#444" xml:space="preserve"><tspan font-weight="700" fill="#2F5597">PK</tspan> primary key   <tspan font-weight="700" fill="#2F5597">FK</tspan> foreign key   ‖── exactly one   ──&lt; zero or many</text>
+<polyline points="420,212 365,212 365,160 290,160" fill="none" stroke="#333" stroke-width="1.3" marker-start="url(#one)" marker-end="url(#many)"/>
+<polyline points="420,212 345,212 345,330 290,330" fill="none" stroke="#333" stroke-width="1.3" marker-start="url(#one)" marker-end="url(#many)"/>
+<polyline points="40,282 22,282 22,136 40,136" fill="none" stroke="#333" stroke-width="1.3" marker-start="url(#one)" marker-end="url(#many)"/>
+<polyline points="40,282 10,282 10,885 1072,885 1072,584 1050,584" fill="none" stroke="#333" stroke-width="1.3" marker-start="url(#one)" marker-end="url(#many)"/>
+<polyline points="670,212 760,212 760,106 800,106" fill="none" stroke="#333" stroke-width="1.3" marker-start="url(#one)" marker-end="url(#many)"/>
+<polyline points="670,212 740,212 740,416 800,416" fill="none" stroke="#333" stroke-width="1.3" marker-start="url(#one)" marker-end="url(#many)"/>
+<polyline points="670,212 720,212 720,440 800,440" fill="none" stroke="#333" stroke-width="1.3" marker-start="url(#one)" marker-end="url(#many)"/>
+<polyline points="670,212 700,212 700,726 800,726" fill="none" stroke="#333" stroke-width="1.3" marker-start="url(#one)" marker-end="url(#many)"/>
+<rect x="420" y="170" width="250" height="294" rx="6" fill="#fff" stroke="#2F5597" stroke-width="1.5"/>
+<path d="M420,200 V176 Q420,170 426,170 H664 Q670,170 670,176 V200 Z" fill="#2F5597"/>
+<text x="545" y="190" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">users</text>
+<line x1="454" y1="200" x2="454" y2="464" stroke="#2F5597" stroke-width="1"/>
+<rect x="421" y="200" width="248" height="24" fill="#DCE6F4"/>
+<text x="437" y="216" text-anchor="middle" font-size="11" font-weight="700" fill="#2F5597">PK</text>
+<text x="462" y="216" font-size="12.5" fill="#222" font-weight="700">id</text>
+<text x="662" y="216" text-anchor="end" font-size="10" fill="#777">INTEGER</text>
+<line x1="420" y1="224" x2="670" y2="224" stroke="#2F5597" stroke-width=".6"/>
+<text x="462" y="240" font-size="12.5" fill="#222">name</text>
+<text x="662" y="240" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<line x1="420" y1="248" x2="670" y2="248" stroke="#2F5597" stroke-width=".6"/>
+<text x="462" y="264" font-size="12.5" fill="#222">email</text>
+<text x="662" y="264" text-anchor="end" font-size="10" fill="#777">TEXT UNIQUE</text>
+<line x1="420" y1="272" x2="670" y2="272" stroke="#2F5597" stroke-width=".6"/>
+<text x="462" y="288" font-size="12.5" fill="#222">password_hash</text>
+<text x="662" y="288" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<line x1="420" y1="296" x2="670" y2="296" stroke="#2F5597" stroke-width=".6"/>
+<text x="462" y="312" font-size="12.5" fill="#222">role</text>
+<text x="662" y="312" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<line x1="420" y1="320" x2="670" y2="320" stroke="#2F5597" stroke-width=".6"/>
+<text x="462" y="336" font-size="12.5" fill="#222">account_status</text>
+<text x="662" y="336" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<line x1="420" y1="344" x2="670" y2="344" stroke="#2F5597" stroke-width=".6"/>
+<text x="462" y="360" font-size="12.5" fill="#222">status</text>
+<text x="662" y="360" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<line x1="420" y1="368" x2="670" y2="368" stroke="#2F5597" stroke-width=".6"/>
+<text x="462" y="384" font-size="12.5" fill="#222">created_at</text>
+<text x="662" y="384" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<line x1="420" y1="392" x2="670" y2="392" stroke="#2F5597" stroke-width=".6"/>
+<text x="462" y="408" font-size="12.5" fill="#222">token_version</text>
+<text x="662" y="408" text-anchor="end" font-size="10" fill="#777">INTEGER</text>
+<line x1="420" y1="416" x2="670" y2="416" stroke="#2F5597" stroke-width=".6"/>
+<text x="462" y="432" font-size="12.5" fill="#222">agreed_at</text>
+<text x="662" y="432" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<line x1="420" y1="440" x2="670" y2="440" stroke="#2F5597" stroke-width=".6"/>
+<text x="462" y="456" font-size="12.5" fill="#222">deactivated_at</text>
+<text x="662" y="456" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<rect x="40" y="240" width="250" height="126" rx="6" fill="#fff" stroke="#2F5597" stroke-width="1.5"/>
+<path d="M40,270 V246 Q40,240 46,240 H284 Q290,240 290,246 V270 Z" fill="#2F5597"/>
+<text x="165" y="260" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">groups_table</text>
+<line x1="74" y1="270" x2="74" y2="366" stroke="#2F5597" stroke-width="1"/>
+<rect x="41" y="270" width="248" height="24" fill="#DCE6F4"/>
+<text x="57" y="286" text-anchor="middle" font-size="11" font-weight="700" fill="#2F5597">PK</text>
+<text x="82" y="286" font-size="12.5" fill="#222" font-weight="700">id</text>
+<text x="282" y="286" text-anchor="end" font-size="10" fill="#777">INTEGER</text>
+<line x1="40" y1="294" x2="290" y2="294" stroke="#2F5597" stroke-width=".6"/>
+<text x="82" y="310" font-size="12.5" fill="#222">name</text>
+<text x="282" y="310" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<line x1="40" y1="318" x2="290" y2="318" stroke="#2F5597" stroke-width=".6"/>
+<text x="57" y="334" text-anchor="middle" font-size="11" font-weight="700" fill="#2F5597">FK</text>
+<text x="82" y="334" font-size="12.5" fill="#222">created_by</text>
+<text x="282" y="334" text-anchor="end" font-size="10" fill="#777">INTEGER</text>
+<line x1="40" y1="342" x2="290" y2="342" stroke="#2F5597" stroke-width=".6"/>
+<text x="82" y="358" font-size="12.5" fill="#222">created_at</text>
+<text x="282" y="358" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<rect x="40" y="70" width="250" height="102" rx="6" fill="#fff" stroke="#2F5597" stroke-width="1.5"/>
+<path d="M40,100 V76 Q40,70 46,70 H284 Q290,70 290,76 V100 Z" fill="#2F5597"/>
+<text x="165" y="90" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">group_members</text>
+<line x1="74" y1="100" x2="74" y2="172" stroke="#2F5597" stroke-width="1"/>
+<rect x="41" y="100" width="248" height="24" fill="#DCE6F4"/>
+<text x="57" y="116" text-anchor="middle" font-size="11" font-weight="700" fill="#2F5597">PK</text>
+<text x="82" y="116" font-size="12.5" fill="#222" font-weight="700">id</text>
+<text x="282" y="116" text-anchor="end" font-size="10" fill="#777">INTEGER</text>
+<line x1="40" y1="124" x2="290" y2="124" stroke="#2F5597" stroke-width=".6"/>
+<text x="57" y="140" text-anchor="middle" font-size="11" font-weight="700" fill="#2F5597">FK</text>
+<text x="82" y="140" font-size="12.5" fill="#222">group_id</text>
+<text x="282" y="140" text-anchor="end" font-size="10" fill="#777">INTEGER</text>
+<line x1="40" y1="148" x2="290" y2="148" stroke="#2F5597" stroke-width=".6"/>
+<text x="57" y="164" text-anchor="middle" font-size="11" font-weight="700" fill="#2F5597">FK</text>
+<text x="82" y="164" font-size="12.5" fill="#222">user_id</text>
+<text x="282" y="164" text-anchor="end" font-size="10" fill="#777">INTEGER</text>
+<rect x="800" y="40" width="250" height="270" rx="6" fill="#fff" stroke="#2F5597" stroke-width="1.5"/>
+<path d="M800,70 V46 Q800,40 806,40 H1044 Q1050,40 1050,46 V70 Z" fill="#2F5597"/>
+<text x="925" y="60" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">messages</text>
+<line x1="834" y1="70" x2="834" y2="310" stroke="#2F5597" stroke-width="1"/>
+<rect x="801" y="70" width="248" height="24" fill="#DCE6F4"/>
+<text x="817" y="86" text-anchor="middle" font-size="11" font-weight="700" fill="#2F5597">PK</text>
+<text x="842" y="86" font-size="12.5" fill="#222" font-weight="700">id</text>
+<text x="1042" y="86" text-anchor="end" font-size="10" fill="#777">INTEGER</text>
+<line x1="800" y1="94" x2="1050" y2="94" stroke="#2F5597" stroke-width=".6"/>
+<text x="817" y="110" text-anchor="middle" font-size="11" font-weight="700" fill="#2F5597">FK</text>
+<text x="842" y="110" font-size="12.5" fill="#222">sender_id</text>
+<text x="1042" y="110" text-anchor="end" font-size="10" fill="#777">INTEGER</text>
+<line x1="800" y1="118" x2="1050" y2="118" stroke="#2F5597" stroke-width=".6"/>
+<text x="842" y="134" font-size="12.5" fill="#222">conv_key</text>
+<text x="1042" y="134" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<line x1="800" y1="142" x2="1050" y2="142" stroke="#2F5597" stroke-width=".6"/>
+<text x="842" y="158" font-size="12.5" fill="#222">type</text>
+<text x="1042" y="158" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<line x1="800" y1="166" x2="1050" y2="166" stroke="#2F5597" stroke-width=".6"/>
+<text x="842" y="182" font-size="12.5" fill="#222">text</text>
+<text x="1042" y="182" text-anchor="end" font-size="10" fill="#777">TEXT (encrypted)</text>
+<line x1="800" y1="190" x2="1050" y2="190" stroke="#2F5597" stroke-width=".6"/>
+<text x="842" y="206" font-size="12.5" fill="#222">file_name</text>
+<text x="1042" y="206" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<line x1="800" y1="214" x2="1050" y2="214" stroke="#2F5597" stroke-width=".6"/>
+<text x="842" y="230" font-size="12.5" fill="#222">file_url</text>
+<text x="1042" y="230" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<line x1="800" y1="238" x2="1050" y2="238" stroke="#2F5597" stroke-width=".6"/>
+<text x="842" y="254" font-size="12.5" fill="#222">file_size</text>
+<text x="1042" y="254" text-anchor="end" font-size="10" fill="#777">INTEGER</text>
+<line x1="800" y1="262" x2="1050" y2="262" stroke="#2F5597" stroke-width=".6"/>
+<text x="842" y="278" font-size="12.5" fill="#222">file_type</text>
+<text x="1042" y="278" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<line x1="800" y1="286" x2="1050" y2="286" stroke="#2F5597" stroke-width=".6"/>
+<text x="842" y="302" font-size="12.5" fill="#222">created_at</text>
+<text x="1042" y="302" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<rect x="800" y="350" width="250" height="270" rx="6" fill="#fff" stroke="#2F5597" stroke-width="1.5"/>
+<path d="M800,380 V356 Q800,350 806,350 H1044 Q1050,350 1050,356 V380 Z" fill="#2F5597"/>
+<text x="925" y="370" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">calls</text>
+<line x1="834" y1="380" x2="834" y2="620" stroke="#2F5597" stroke-width="1"/>
+<rect x="801" y="380" width="248" height="24" fill="#DCE6F4"/>
+<text x="817" y="396" text-anchor="middle" font-size="11" font-weight="700" fill="#2F5597">PK</text>
+<text x="842" y="396" font-size="12.5" fill="#222" font-weight="700">id</text>
+<text x="1042" y="396" text-anchor="end" font-size="10" fill="#777">INTEGER</text>
+<line x1="800" y1="404" x2="1050" y2="404" stroke="#2F5597" stroke-width=".6"/>
+<text x="817" y="420" text-anchor="middle" font-size="11" font-weight="700" fill="#2F5597">FK</text>
+<text x="842" y="420" font-size="12.5" fill="#222">caller_id</text>
+<text x="1042" y="420" text-anchor="end" font-size="10" fill="#777">INTEGER</text>
+<line x1="800" y1="428" x2="1050" y2="428" stroke="#2F5597" stroke-width=".6"/>
+<text x="817" y="444" text-anchor="middle" font-size="11" font-weight="700" fill="#2F5597">FK</text>
+<text x="842" y="444" font-size="12.5" fill="#222">receiver_id</text>
+<text x="1042" y="444" text-anchor="end" font-size="10" fill="#777">INTEGER</text>
+<line x1="800" y1="452" x2="1050" y2="452" stroke="#2F5597" stroke-width=".6"/>
+<text x="842" y="468" font-size="12.5" fill="#222">status</text>
+<text x="1042" y="468" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<line x1="800" y1="476" x2="1050" y2="476" stroke="#2F5597" stroke-width=".6"/>
+<text x="842" y="492" font-size="12.5" fill="#222">started_at</text>
+<text x="1042" y="492" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<line x1="800" y1="500" x2="1050" y2="500" stroke="#2F5597" stroke-width=".6"/>
+<text x="842" y="516" font-size="12.5" fill="#222">ended_at</text>
+<text x="1042" y="516" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<line x1="800" y1="524" x2="1050" y2="524" stroke="#2F5597" stroke-width=".6"/>
+<text x="842" y="540" font-size="12.5" fill="#222">duration</text>
+<text x="1042" y="540" text-anchor="end" font-size="10" fill="#777">INTEGER</text>
+<line x1="800" y1="548" x2="1050" y2="548" stroke="#2F5597" stroke-width=".6"/>
+<text x="842" y="564" font-size="12.5" fill="#222">created_at</text>
+<text x="1042" y="564" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<line x1="800" y1="572" x2="1050" y2="572" stroke="#2F5597" stroke-width=".6"/>
+<text x="817" y="588" text-anchor="middle" font-size="11" font-weight="700" fill="#2F5597">FK</text>
+<text x="842" y="588" font-size="12.5" fill="#222">group_id</text>
+<text x="1042" y="588" text-anchor="end" font-size="10" fill="#777">INTEGER</text>
+<line x1="800" y1="596" x2="1050" y2="596" stroke="#2F5597" stroke-width=".6"/>
+<text x="842" y="612" font-size="12.5" fill="#222">participants</text>
+<text x="1042" y="612" text-anchor="end" font-size="10" fill="#777">INTEGER</text>
+<rect x="800" y="660" width="250" height="198" rx="6" fill="#fff" stroke="#2F5597" stroke-width="1.5"/>
+<path d="M800,690 V666 Q800,660 806,660 H1044 Q1050,660 1050,666 V690 Z" fill="#2F5597"/>
+<text x="925" y="680" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">audit_logs</text>
+<line x1="834" y1="690" x2="834" y2="858" stroke="#2F5597" stroke-width="1"/>
+<rect x="801" y="690" width="248" height="24" fill="#DCE6F4"/>
+<text x="817" y="706" text-anchor="middle" font-size="11" font-weight="700" fill="#2F5597">PK</text>
+<text x="842" y="706" font-size="12.5" fill="#222" font-weight="700">id</text>
+<text x="1042" y="706" text-anchor="end" font-size="10" fill="#777">INTEGER</text>
+<line x1="800" y1="714" x2="1050" y2="714" stroke="#2F5597" stroke-width=".6"/>
+<text x="817" y="730" text-anchor="middle" font-size="11" font-weight="700" fill="#2F5597">FK</text>
+<text x="842" y="730" font-size="12.5" fill="#222">user_id</text>
+<text x="1042" y="730" text-anchor="end" font-size="10" fill="#777">INTEGER</text>
+<line x1="800" y1="738" x2="1050" y2="738" stroke="#2F5597" stroke-width=".6"/>
+<text x="842" y="754" font-size="12.5" fill="#222">action</text>
+<text x="1042" y="754" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<line x1="800" y1="762" x2="1050" y2="762" stroke="#2F5597" stroke-width=".6"/>
+<text x="842" y="778" font-size="12.5" fill="#222">details</text>
+<text x="1042" y="778" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<line x1="800" y1="786" x2="1050" y2="786" stroke="#2F5597" stroke-width=".6"/>
+<text x="842" y="802" font-size="12.5" fill="#222">created_at</text>
+<text x="1042" y="802" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<line x1="800" y1="810" x2="1050" y2="810" stroke="#2F5597" stroke-width=".6"/>
+<text x="842" y="826" font-size="12.5" fill="#222">ip</text>
+<text x="1042" y="826" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<line x1="800" y1="834" x2="1050" y2="834" stroke="#2F5597" stroke-width=".6"/>
+<text x="842" y="850" font-size="12.5" fill="#222">user_agent</text>
+<text x="1042" y="850" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<rect x="40" y="440" width="250" height="342" rx="6" fill="#fff" stroke="#2F5597" stroke-width="1.5"/>
+<path d="M40,470 V446 Q40,440 46,440 H284 Q290,440 290,446 V470 Z" fill="#2F5597"/>
+<text x="165" y="460" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">survey_responses</text>
+<line x1="74" y1="470" x2="74" y2="782" stroke="#2F5597" stroke-width="1"/>
+<rect x="41" y="470" width="248" height="24" fill="#DCE6F4"/>
+<text x="57" y="486" text-anchor="middle" font-size="11" font-weight="700" fill="#2F5597">PK</text>
+<text x="82" y="486" font-size="12.5" fill="#222" font-weight="700">id</text>
+<text x="282" y="486" text-anchor="end" font-size="10" fill="#777">INTEGER</text>
+<line x1="40" y1="494" x2="290" y2="494" stroke="#2F5597" stroke-width=".6"/>
+<text x="82" y="510" font-size="12.5" fill="#222">respondent_name</text>
+<text x="282" y="510" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<line x1="40" y1="518" x2="290" y2="518" stroke="#2F5597" stroke-width=".6"/>
+<text x="82" y="534" font-size="12.5" fill="#222">respondent_type</text>
+<text x="282" y="534" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<line x1="40" y1="542" x2="290" y2="542" stroke="#2F5597" stroke-width=".6"/>
+<text x="82" y="558" font-size="12.5" fill="#222">device</text>
+<text x="282" y="558" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<line x1="40" y1="566" x2="290" y2="566" stroke="#2F5597" stroke-width=".6"/>
+<text x="82" y="582" font-size="12.5" fill="#222">response_date</text>
+<text x="282" y="582" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<line x1="40" y1="590" x2="290" y2="590" stroke="#2F5597" stroke-width=".6"/>
+<text x="82" y="606" font-size="12.5" fill="#222">scores_json</text>
+<text x="282" y="606" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<line x1="40" y1="614" x2="290" y2="614" stroke="#2F5597" stroke-width=".6"/>
+<text x="82" y="630" font-size="12.5" fill="#222">mean_a</text>
+<text x="282" y="630" text-anchor="end" font-size="10" fill="#777">REAL</text>
+<line x1="40" y1="638" x2="290" y2="638" stroke="#2F5597" stroke-width=".6"/>
+<text x="82" y="654" font-size="12.5" fill="#222">mean_b</text>
+<text x="282" y="654" text-anchor="end" font-size="10" fill="#777">REAL</text>
+<line x1="40" y1="662" x2="290" y2="662" stroke="#2F5597" stroke-width=".6"/>
+<text x="82" y="678" font-size="12.5" fill="#222">mean_c</text>
+<text x="282" y="678" text-anchor="end" font-size="10" fill="#777">REAL</text>
+<line x1="40" y1="686" x2="290" y2="686" stroke="#2F5597" stroke-width=".6"/>
+<text x="82" y="702" font-size="12.5" fill="#222">mean_d</text>
+<text x="282" y="702" text-anchor="end" font-size="10" fill="#777">REAL</text>
+<line x1="40" y1="710" x2="290" y2="710" stroke="#2F5597" stroke-width=".6"/>
+<text x="82" y="726" font-size="12.5" fill="#222">overall</text>
+<text x="282" y="726" text-anchor="end" font-size="10" fill="#777">REAL</text>
+<line x1="40" y1="734" x2="290" y2="734" stroke="#2F5597" stroke-width=".6"/>
+<text x="82" y="750" font-size="12.5" fill="#222">created_at</text>
+<text x="282" y="750" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<line x1="40" y1="758" x2="290" y2="758" stroke="#2F5597" stroke-width=".6"/>
+<text x="82" y="774" font-size="12.5" fill="#222">notes</text>
+<text x="282" y="774" text-anchor="end" font-size="10" fill="#777">TEXT</text>
+<text x="165" y="800" text-anchor="middle" font-size="11" font-style="italic" fill="#555">No foreign key: survey answers are anonymous</text>
+</svg>

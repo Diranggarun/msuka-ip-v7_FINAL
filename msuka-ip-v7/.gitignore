@@ -15,7 +15,8 @@ msukaip.db-wal
 backups/
 uploads/
 
-# Static landing build for Vercel/Netlify (scripts/build-landing-site.js)
-site/
 # Random demo passwords for the public tunnel (never commit)
 .demo-passwords.txt
+
+# PM2 log files (ecosystem.config.js)
+logs/

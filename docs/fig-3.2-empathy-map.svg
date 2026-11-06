@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="900" viewBox="0 0 1000 900" font-family="Segoe UI, Arial, sans-serif"><rect width="1000" height="900" fill="#fff"/>
+<rect x="40" y="40" width="460" height="290" fill="#fff" stroke="#2F5597" stroke-width="1.6"/>
+<text x="270" y="80" text-anchor="middle" font-size="22" font-weight="700" fill="#2F5597">SEE</text>
+<circle cx="70" cy="115" r="3" fill="#2F5597"/><text x="84" y="120" font-size="16" fill="#222">“Reconnecting…” status on Messenger</text>
+<circle cx="70" cy="139" r="3" fill="#2F5597"/><text x="84" y="144" font-size="16" fill="#222">Students clustering in specific spots</text>
+<text x="84" y="168" font-size="16" fill="#222">for signal</text>
+<circle cx="70" cy="187" r="3" fill="#2F5597"/><text x="84" y="192" font-size="16" fill="#222">Strong Wi-Fi signal but “No Internet</text>
+<text x="84" y="216" font-size="16" fill="#222">Access”</text>
+<rect x="500" y="40" width="460" height="290" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.6"/>
+<text x="730" y="80" text-anchor="middle" font-size="22" font-weight="700" fill="#2F5597">HEAR</text>
+<circle cx="570" cy="115" r="3" fill="#2F5597"/><text x="584" y="120" font-size="16" fill="#222">“Do you have extra data load?”</text>
+<text x="584" y="144" font-size="16" fill="#222">(from classmates)</text>
+<circle cx="570" cy="163" r="3" fill="#2F5597"/><text x="584" y="168" font-size="16" fill="#222">“The internet connection is unstable</text>
+<text x="584" y="192" font-size="16" fill="#222">again.”</text>
+<circle cx="570" cy="211" r="3" fill="#2F5597"/><text x="584" y="216" font-size="16" fill="#222">“I didn’t receive the announcement.”</text>
+<rect x="40" y="330" width="460" height="290" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.6"/>
+<text x="270" y="370" text-anchor="middle" font-size="22" font-weight="700" fill="#2F5597">THINK AND FEEL</text>
+<circle cx="70" cy="445" r="3" fill="#2F5597"/><text x="84" y="450" font-size="16" fill="#222">Frustrated by missed deadlines due to</text>
+<text x="84" y="474" font-size="16" fill="#222">bad internet</text>
+<circle cx="70" cy="493" r="3" fill="#2F5597"/><text x="84" y="498" font-size="16" fill="#222">Desires a FREE communication</text>
+<text x="84" y="522" font-size="16" fill="#222">alternative</text>
+<circle cx="70" cy="541" r="3" fill="#2F5597"/><text x="84" y="546" font-size="16" fill="#222">Worried about the cost of mobile data</text>
+<rect x="500" y="330" width="460" height="290" fill="#fff" stroke="#2F5597" stroke-width="1.6"/>
+<text x="730" y="370" text-anchor="middle" font-size="22" font-weight="700" fill="#2F5597">SAY AND DO</text>
+<circle cx="570" cy="445" r="3" fill="#2F5597"/><text x="584" y="450" font-size="16" fill="#222">Buying mobile data load frequently</text>
+<circle cx="570" cy="469" r="3" fill="#2F5597"/><text x="584" y="474" font-size="16" fill="#222">Refreshing browsers repeatedly</text>
+<circle cx="570" cy="493" r="3" fill="#2F5597"/><text x="584" y="498" font-size="16" fill="#222">Walking to different floors to find</text>
+<text x="584" y="522" font-size="16" fill="#222">a signal</text>
+<circle cx="500" cy="330" r="72" fill="#fff" stroke="#2F5597" stroke-width="2.5"/>
+<circle cx="500" cy="296" r="20" fill="#DCE6F4" stroke="#2F5597" stroke-width="2"/>
+<path d="M465,350 Q500,308 535,350 Z" fill="#DCE6F4" stroke="#2F5597" stroke-width="2"/>
+<text x="500" y="370" text-anchor="middle" font-size="12" font-weight="700" fill="#2F5597">CICS Student</text><text x="500" y="385" text-anchor="middle" font-size="12" font-weight="700" fill="#2F5597">or Faculty</text>
+<rect x="40" y="640" width="460" height="220" fill="#FBE9E7" stroke="#C62828" stroke-width="1.6"/>
+<text x="270" y="678" text-anchor="middle" font-size="22" font-weight="700" fill="#C62828">PAINS</text>
+<circle cx="70" cy="717" r="3" fill="#C62828"/><text x="84" y="722" font-size="16" fill="#222">Dropped calls and failed file transfers</text>
+<circle cx="70" cy="741" r="3" fill="#C62828"/><text x="84" y="746" font-size="16" fill="#222">Delayed announcements when the</text>
+<text x="84" y="770" font-size="16" fill="#222">network is unstable</text>
+<circle cx="70" cy="789" r="3" fill="#C62828"/><text x="84" y="794" font-size="16" fill="#222">Academic stress and confusion</text>
+<rect x="500" y="640" width="460" height="220" fill="#E8F5E9" stroke="#2E7D32" stroke-width="1.6"/>
+<text x="730" y="678" text-anchor="middle" font-size="22" font-weight="700" fill="#2E7D32">GAINS</text>
+<circle cx="530" cy="717" r="3" fill="#2E7D32"/><text x="544" y="722" font-size="16" fill="#222">A dependable system that runs on</text>
+<text x="544" y="746" font-size="16" fill="#222">the campus Wi-Fi only</text>
+<circle cx="530" cy="765" r="3" fill="#2E7D32"/><text x="544" y="770" font-size="16" fill="#222">Real-time messaging and image sharing</text>
+<text x="544" y="794" font-size="16" fill="#222">without an internet connection</text>
+</svg>

@@ -5,6 +5,11 @@
   "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js",
+    "pm2:start": "pm2 start ecosystem.config.js --env production",
+    "pm2:stop": "pm2 stop msukaip",
+    "pm2:restart": "pm2 restart ecosystem.config.js --env production",
+    "pm2:logs": "pm2 logs msukaip",
+    "pm2:status": "pm2 status",
     "dev": "nodemon backend/server.js",
     "test": "npx playwright test",
     "test:headed": "npx playwright test --headed",
@@ -12,11 +17,11 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "preflight": "node scripts/preflight.js",
-    "build:site": "node scripts/build-landing-site.js",
     "backup": "node scripts/backup.js",
     "db:audit": "node backend/db-audit.js",
     "db:migrate-from-mysql": "node scripts/migrate-mysql-to-sqlite.js",
-    "vendor:alpine": "node -e \"require('fs').copyFileSync('node_modules/@alpinejs/csp/dist/cdn.min.js','frontend/vendor/alpine-csp.min.js')\""
+    "vendor:alpine": "node -e \"require('fs').copyFileSync('node_modules/@alpinejs/csp/dist/cdn.min.js','frontend/vendor/alpine-csp.min.js')\"",
+    "vendor:qrcode": "node -e \"require('fs').copyFileSync('node_modules/qrcode-generator/dist/qrcode.js','frontend/vendor/qrcode-generator.js')\""
   },
   "dependencies": {
     "@alpinejs/csp": "^3.17.5",
@@ -34,6 +39,8 @@
     "eslint-plugin-html": "^8.1.4",
     "globals": "^17.6.0",
     "mysql2": "^3.6.5",
-    "nodemon": "^3.0.2"
+    "nodemon": "^3.0.2",
+    "pm2": "^7.1.2",
+    "qrcode-generator": "^2.0.4"
   }
 }

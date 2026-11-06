@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="1130" viewBox="0 0 920 1130" font-family="Segoe UI, Arial, sans-serif">
+<rect width="920" height="1130" fill="#fff"/>
+<defs><marker id="a" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+<polyline points="460,88 460,128" fill="none" stroke="#333" stroke-width="1.5" marker-end="url(#a)"/>
+<polyline points="460,182 460,218" fill="none" stroke="#333" stroke-width="1.5" marker-end="url(#a)"/>
+<polyline points="600,270 745,270 745,296" fill="none" stroke="#333" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="680" y="262" text-anchor="middle" font-size="13" font-weight="700" fill="#C62828">No</text>
+<polyline points="745,352 745,388" fill="none" stroke="#333" stroke-width="1.5" marker-end="url(#a)"/>
+<polyline points="625,420 592,420" fill="none" stroke="#333" stroke-width="1.5" marker-end="url(#a)"/>
+<polyline points="460,322 460,390" fill="none" stroke="#333" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="484" y="360" text-anchor="middle" font-size="13" font-weight="700" fill="#2E7D32">Yes</text>
+<polyline points="460,450 460,488" fill="none" stroke="#333" stroke-width="1.5" marker-end="url(#a)"/>
+<polyline points="320,540 215,540 215,570" fill="none" stroke="#333" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="270" y="532" text-anchor="middle" font-size="13" font-weight="700" fill="#C62828">No</text>
+<polyline points="100,600 60,600 60,420 328,420" fill="none" stroke="#333" stroke-width="1.5" marker-end="url(#a)"/>
+<polyline points="460,592 460,640" fill="none" stroke="#333" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="484" y="620" text-anchor="middle" font-size="13" font-weight="700" fill="#2E7D32">Yes</text>
+<polyline points="460,700 460,738" fill="none" stroke="#333" stroke-width="1.5" marker-end="url(#a)"/>
+<polyline points="320,790 235,790 235,830" fill="none" stroke="#333" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="300" y="780" text-anchor="middle" font-size="13" font-weight="700" fill="#2F5597">Message</text>
+<polyline points="600,790 685,790 685,830" fill="none" stroke="#333" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="625" y="780" text-anchor="middle" font-size="13" font-weight="700" fill="#2F5597">Voice call</text>
+<polyline points="235,896 235,936" fill="none" stroke="#333" stroke-width="1.5" marker-end="url(#a)"/>
+<polyline points="685,896 685,936" fill="none" stroke="#333" stroke-width="1.5" marker-end="url(#a)"/>
+<polyline points="235,1002 235,1060 290,1060" fill="none" stroke="#333" stroke-width="1.5" marker-end="url(#a)"/>
+<polyline points="685,1002 685,1060 630,1060" fill="none" stroke="#333" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="270" y="32" width="380" height="56" rx="28" fill="#2F5597"/>
+<text x="460" y="65" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">User connects to the CICS Wi-Fi / LAN</text>
+<rect x="270" y="128" width="380" height="54" rx="6" fill="#fff" stroke="#2F5597" stroke-width="1.6"/>
+<text x="460" y="151.5" text-anchor="middle" font-size="14" fill="#222">Opens MSUkaIP in a browser</text>
+<text x="460" y="168.5" text-anchor="middle" font-size="14" fill="#222">(https://server-ip:3443)</text>
+<path d="M460,218 L600,270 L460,322 L320,270 Z" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.6"/>
+<text x="460" y="266.5" text-anchor="middle" font-size="14" font-weight="700" fill="#2F5597">Has an approved</text>
+<text x="460" y="283.5" text-anchor="middle" font-size="14" font-weight="700" fill="#2F5597">account?</text>
+<rect x="625" y="296" width="240" height="56" rx="6" fill="#fff" stroke="#2F5597" stroke-width="1.6"/>
+<text x="745" y="320.5" text-anchor="middle" font-size="14" fill="#222">Registers with an</text>
+<text x="745" y="337.5" text-anchor="middle" font-size="14" fill="#222">institutional email</text>
+<rect x="625" y="392" width="240" height="56" rx="6" fill="#fff" stroke="#2F5597" stroke-width="1.6"/>
+<text x="745" y="416.5" text-anchor="middle" font-size="14" fill="#222">Waits until an administrator</text>
+<text x="745" y="433.5" text-anchor="middle" font-size="14" fill="#222">approves the account</text>
+<rect x="328" y="390" width="264" height="60" rx="6" fill="#fff" stroke="#2F5597" stroke-width="1.6"/>
+<text x="460" y="416.5" text-anchor="middle" font-size="14" fill="#222">Logs in with email</text>
+<text x="460" y="433.5" text-anchor="middle" font-size="14" fill="#222">and password</text>
+<path d="M460,488 L600,540 L460,592 L320,540 Z" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.6"/>
+<text x="460" y="536.5" text-anchor="middle" font-size="14" font-weight="700" fill="#2F5597">Password correct</text>
+<text x="460" y="553.5" text-anchor="middle" font-size="14" font-weight="700" fill="#2F5597">and approved?</text>
+<rect x="100" y="570" width="230" height="60" rx="6" fill="#fff" stroke="#2F5597" stroke-width="1.6"/>
+<text x="215" y="596.5" text-anchor="middle" font-size="14" fill="#222">Error message; locked after</text>
+<text x="215" y="613.5" text-anchor="middle" font-size="14" fill="#222">5 failed tries in 15 min</text>
+<rect x="270" y="640" width="380" height="60" rx="6" fill="#fff" stroke="#2F5597" stroke-width="1.6"/>
+<text x="460" y="666.5" text-anchor="middle" font-size="14" fill="#222">Chat loads and a Socket.IO</text>
+<text x="460" y="683.5" text-anchor="middle" font-size="14" fill="#222">connection opens (session token)</text>
+<path d="M460,738 L600,790 L460,842 L320,790 Z" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.6"/>
+<text x="460" y="786.5" text-anchor="middle" font-size="14" font-weight="700" fill="#2F5597">Send a message</text>
+<text x="460" y="803.5" text-anchor="middle" font-size="14" font-weight="700" fill="#2F5597">or start a call?</text>
+<rect x="70" y="830" width="330" height="66" rx="6" fill="#fff" stroke="#2F5597" stroke-width="1.6"/>
+<text x="235" y="859.5" text-anchor="middle" font-size="14" fill="#222">Server checks the message, encrypts</text>
+<text x="235" y="876.5" text-anchor="middle" font-size="14" fill="#222">it (AES-256-GCM), saves it in SQLite</text>
+<rect x="70" y="936" width="330" height="66" rx="6" fill="#fff" stroke="#2F5597" stroke-width="1.6"/>
+<text x="235" y="965.5" text-anchor="middle" font-size="14" fill="#222">Socket.IO pushes it to the</text>
+<text x="235" y="982.5" text-anchor="middle" font-size="14" fill="#222">recipient right away</text>
+<rect x="520" y="830" width="330" height="66" rx="6" fill="#fff" stroke="#2F5597" stroke-width="1.6"/>
+<text x="685" y="859.5" text-anchor="middle" font-size="14" fill="#222">Server relays the call signaling</text>
+<text x="685" y="876.5" text-anchor="middle" font-size="14" fill="#222">(offer, answer, ICE) only</text>
+<rect x="520" y="936" width="330" height="66" rx="6" fill="#fff" stroke="#2F5597" stroke-width="1.6"/>
+<text x="685" y="965.5" text-anchor="middle" font-size="14" fill="#222">Audio flows directly device to device</text>
+<text x="685" y="982.5" text-anchor="middle" font-size="14" fill="#222">(WebRTC); call record is saved</text>
+<rect x="290" y="1031" width="340" height="58" rx="29" fill="#2F5597"/>
+<text x="460" y="1056.5" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">Recipient receives it instantly</text>
+<text x="460" y="1073.5" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">over the LAN — no internet used</text>
+</svg>

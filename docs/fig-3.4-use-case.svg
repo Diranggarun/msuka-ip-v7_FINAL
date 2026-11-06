@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="800" viewBox="0 0 1100 800" font-family="Segoe UI, Arial, sans-serif">
+<rect width="1100" height="800" fill="#fff"/>
+<defs>
+ <marker id="arr" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker>
+ <marker id="tri" viewBox="0 0 12 12" refX="12" refY="6" markerWidth="14" markerHeight="14" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#fff" stroke="#333"/></marker>
+ <marker id="open" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#333" stroke-width="1.3"/></marker>
+</defs>
+<rect x="222" y="40" width="656" height="730" rx="4" fill="#fff" stroke="#2F5597" stroke-width="1.6"/>
+<text x="550" y="69.25" text-anchor="middle" font-size="15" fill="#2F5597" font-weight="700">MSUkaIP Web-App Communication System</text>
+<polyline points="127,396 242,120" fill="none" stroke="#333" stroke-width="1.3"/>
+<polyline points="973,396 858,120" fill="none" stroke="#333" stroke-width="1.3"/>
+<polyline points="127,396 242,202" fill="none" stroke="#333" stroke-width="1.3"/>
+<polyline points="973,396 858,202" fill="none" stroke="#333" stroke-width="1.3"/>
+<polyline points="127,396 242,284" fill="none" stroke="#333" stroke-width="1.3"/>
+<polyline points="973,396 858,284" fill="none" stroke="#333" stroke-width="1.3"/>
+<polyline points="127,396 242,366" fill="none" stroke="#333" stroke-width="1.3"/>
+<polyline points="973,396 858,366" fill="none" stroke="#333" stroke-width="1.3"/>
+<polyline points="127,396 242,448" fill="none" stroke="#333" stroke-width="1.3"/>
+<polyline points="973,396 858,448" fill="none" stroke="#333" stroke-width="1.3"/>
+<polyline points="127,396 242,530" fill="none" stroke="#333" stroke-width="1.3"/>
+<polyline points="973,396 858,530" fill="none" stroke="#333" stroke-width="1.3"/>
+<polyline points="127,396 242,612" fill="none" stroke="#333" stroke-width="1.3"/>
+<polyline points="973,396 858,612" fill="none" stroke="#333" stroke-width="1.3"/>
+<polyline points="127,396 242,694" fill="none" stroke="#333" stroke-width="1.3"/>
+<polyline points="973,396 858,694" fill="none" stroke="#333" stroke-width="1.3"/>
+<polyline points="127,396 492,410" fill="none" stroke="#333" stroke-width="1.3"/>
+<polyline points="973,396 608,410" fill="none" stroke="#333" stroke-width="1.3"/>
+<ellipse cx="360" cy="120" rx="118" ry="27" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.4"/>
+<text x="360" y="124.375" text-anchor="middle" font-size="12.5" fill="#222">Register account</text>
+<ellipse cx="740" cy="120" rx="118" ry="27" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.4"/>
+<text x="740" y="116.875" text-anchor="middle" font-size="12.5" fill="#222">Approve / reject</text>
+<text x="740" y="131.875" text-anchor="middle" font-size="12.5" fill="#222">registrations</text>
+<ellipse cx="360" cy="202" rx="118" ry="27" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.4"/>
+<text x="360" y="198.875" text-anchor="middle" font-size="12.5" fill="#222">Send and receive</text>
+<text x="360" y="213.875" text-anchor="middle" font-size="12.5" fill="#222">messages</text>
+<ellipse cx="740" cy="202" rx="118" ry="27" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.4"/>
+<text x="740" y="206.375" text-anchor="middle" font-size="12.5" fill="#222">Manage user accounts</text>
+<ellipse cx="360" cy="284" rx="118" ry="27" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.4"/>
+<text x="360" y="288.375" text-anchor="middle" font-size="12.5" fill="#222">Create group chat</text>
+<ellipse cx="740" cy="284" rx="118" ry="27" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.4"/>
+<text x="740" y="280.875" text-anchor="middle" font-size="12.5" fill="#222">Deactivate user or</text>
+<text x="740" y="295.875" text-anchor="middle" font-size="12.5" fill="#222">sign out everywhere</text>
+<ellipse cx="360" cy="366" rx="118" ry="27" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.4"/>
+<text x="360" y="362.875" text-anchor="middle" font-size="12.5" fill="#222">Share files, images</text>
+<text x="360" y="377.875" text-anchor="middle" font-size="12.5" fill="#222">and voice messages</text>
+<ellipse cx="740" cy="366" rx="118" ry="27" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.4"/>
+<text x="740" y="370.375" text-anchor="middle" font-size="12.5" fill="#222">Remove group chats</text>
+<ellipse cx="360" cy="448" rx="118" ry="27" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.4"/>
+<text x="360" y="444.875" text-anchor="middle" font-size="12.5" fill="#222">Make one-to-one</text>
+<text x="360" y="459.875" text-anchor="middle" font-size="12.5" fill="#222">voice call</text>
+<ellipse cx="740" cy="448" rx="118" ry="27" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.4"/>
+<text x="740" y="444.875" text-anchor="middle" font-size="12.5" fill="#222">Broadcast</text>
+<text x="740" y="459.875" text-anchor="middle" font-size="12.5" fill="#222">announcements</text>
+<ellipse cx="360" cy="530" rx="118" ry="27" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.4"/>
+<text x="360" y="534.375" text-anchor="middle" font-size="12.5" fill="#222">Join group voice call</text>
+<ellipse cx="740" cy="530" rx="118" ry="27" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.4"/>
+<text x="740" y="526.875" text-anchor="middle" font-size="12.5" fill="#222">View statistics and</text>
+<text x="740" y="541.875" text-anchor="middle" font-size="12.5" fill="#222">audit log</text>
+<ellipse cx="360" cy="612" rx="118" ry="27" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.4"/>
+<text x="360" y="608.875" text-anchor="middle" font-size="12.5" fill="#222">Edit profile and</text>
+<text x="360" y="623.875" text-anchor="middle" font-size="12.5" fill="#222">password</text>
+<ellipse cx="740" cy="612" rx="118" ry="27" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.4"/>
+<text x="740" y="616.375" text-anchor="middle" font-size="12.5" fill="#222">View survey results</text>
+<ellipse cx="360" cy="694" rx="118" ry="27" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.4"/>
+<text x="360" y="690.875" text-anchor="middle" font-size="12.5" fill="#222">Answer evaluation</text>
+<text x="360" y="705.875" text-anchor="middle" font-size="12.5" fill="#222">survey</text>
+<ellipse cx="740" cy="694" rx="118" ry="27" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.4"/>
+<text x="740" y="698.375" text-anchor="middle" font-size="12.5" fill="#222">Back up database</text>
+<ellipse cx="550" cy="410" rx="58" ry="27" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.4"/>
+<text x="550" y="414.375" text-anchor="middle" font-size="12.5" fill="#222">Log in</text>
+<ellipse cx="550" cy="520" rx="66" ry="27" fill="#DCE6F4" stroke="#2F5597" stroke-width="1.4"/>
+<text x="550" y="524.375" text-anchor="middle" font-size="12.5" fill="#222">Verify credentials</text>
+<polyline points="550,437 550,493" fill="none" stroke="#333" stroke-width="1.3" stroke-dasharray="6 4" marker-end="url(#open)"/>
+<text x="556" y="469.85" text-anchor="start" font-size="11" fill="#666" font-style="italic">«include»</text>
+<circle cx="105" cy="372" r="11" fill="none" stroke="#333" stroke-width="1.6"/>
+<path d="M105,383 V415 M87,394 H123 M105,415 L90,440 M105,415 L120,440" stroke="#333" stroke-width="1.6" fill="none"/>
+<text x="105" y="460.9" text-anchor="middle" font-size="14" fill="#222" font-weight="700" stroke="#fff" stroke-width="5" paint-order="stroke">Campus User</text>
+<circle cx="45" cy="602" r="11" fill="none" stroke="#333" stroke-width="1.6"/>
+<path d="M45,613 V645 M27,624 H63 M45,645 L30,670 M45,645 L60,670" stroke="#333" stroke-width="1.6" fill="none"/>
+<text x="45" y="690.9" text-anchor="middle" font-size="14" fill="#222" font-weight="700" stroke="#fff" stroke-width="5" paint-order="stroke">Student</text>
+<circle cx="165" cy="602" r="11" fill="none" stroke="#333" stroke-width="1.6"/>
+<path d="M165,613 V645 M147,624 H183 M165,645 L150,670 M165,645 L180,670" stroke="#333" stroke-width="1.6" fill="none"/>
+<text x="165" y="690.9" text-anchor="middle" font-size="14" fill="#222" font-weight="700" stroke="#fff" stroke-width="5" paint-order="stroke">Faculty</text>
+<polyline points="45,594 99,474" fill="none" stroke="#333" stroke-width="1.3" marker-end="url(#tri)"/>
+<polyline points="165,594 111,474" fill="none" stroke="#333" stroke-width="1.3" marker-end="url(#tri)"/>
+<circle cx="995" cy="372" r="11" fill="none" stroke="#333" stroke-width="1.6"/>
+<path d="M995,383 V415 M977,394 H1013 M995,415 L980,440 M995,415 L1010,440" stroke="#333" stroke-width="1.6" fill="none"/>
+<text x="995" y="460.9" text-anchor="middle" font-size="14" fill="#222" font-weight="700" stroke="#fff" stroke-width="5" paint-order="stroke">Admin / Dean</text>
+</svg>

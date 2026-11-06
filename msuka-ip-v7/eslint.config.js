@@ -33,6 +33,11 @@ module.exports = [
     rules: { ...sharedRules },
   },
   {
+    // The service worker runs in the browser, not Node (self, caches, clients).
+    files: ['frontend/sw.js'],
+    languageOptions: { sourceType: 'script', globals: { ...globals.serviceworker } },
+  },
+  {
     files: ['**/*.html'],
     plugins: { html },
     languageOptions: {
@@ -42,6 +47,7 @@ module.exports = [
         ...globals.browser,
         io: 'readonly',
         Alpine: 'readonly',   // set by frontend/vendor/alpine-csp.min.js
+        qrcode: 'readonly',   // set by frontend/vendor/qrcode-generator.js (landing page)
       },
     },
     rules: {

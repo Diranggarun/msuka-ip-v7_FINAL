@@ -116,6 +116,43 @@ once `NODE_ENV=production` is set.
 If `JWT_SECRET` / `AES_SECRET` are missing, you'll see a warning telling you
 to set them — do not demo without setting real values.
 
+### 4a. Keep it running with PM2 (recommended for a real deployment)
+
+PM2 (a devDependency — keep dev deps installed, i.e. plain `npm install`)
+restarts the server if it crashes and writes logs to `msuka-ip-v7/logs/`.
+Settings live in `ecosystem.config.js`.
+
+```powershell
+npm run pm2:start    # starts app "msukaip" with NODE_ENV=production
+npm run pm2:status   # is it online? restarts? memory?
+npm run pm2:logs     # live log tail (Ctrl+C to leave)
+npm run pm2:restart  # after pulling new code
+npm run pm2:stop
+```
+
+`pm2:start` runs in **production mode**, so `.env` must hold real
+`JWT_SECRET` / `AES_SECRET` / `AES_SALT` values — the server refuses to boot on
+the dev defaults, and PM2 will show it as `errored` after `max_restarts`.
+Stop any `npm start` / `node backend/server.js` window first, or the ports clash.
+
+**Start on boot (Windows).** `pm2 startup` only supports Linux/macOS init
+systems. On Windows, save the process list once, then let Task Scheduler run
+`pm2 resurrect` at logon. This uses only built-in Windows tools; the
+`pm2-windows-startup` package was not used because it is unmaintained and edits
+the registry Run key instead of something visible in Task Scheduler.
+
+```powershell
+cd msuka-ip-v7
+npm run pm2:start
+npx pm2 save          # remembers the running list in %USERPROFILE%\.pm2\dump.pm2
+# Create the logon task (same Windows user that ran pm2 save; adjust the path):
+schtasks /Create /TN "MSUkaIP PM2" /SC ONLOGON /RL HIGHEST `
+  /TR "cmd /c cd /d C:\path\to\msuka-ip-v7 && npx pm2 resurrect"
+```
+
+Run `npx pm2 save` again whenever you change what PM2 runs. Remove the task
+with `schtasks /Delete /TN "MSUkaIP PM2" /F`.
+
 ---
 
 ## 5. Expose to the LAN
@@ -223,6 +260,14 @@ This writes a timestamped snapshot into `msuka-ip-v7/backups/`:
 - `db-<timestamp>.db` — the full SQLite database, taken with `VACUUM INTO` so
   it is a consistent copy **even while the server is running**
 - `uploads-<timestamp>.zip` — the encrypted uploads folder
+
+**Automatic daily backup.** While the server runs it also writes
+`auto-db-<timestamp>.db` (database only, like the dashboard's backup button)
+every day at 02:00 local time, keeps the newest 14 and deletes older `auto-`
+files — manual `db-*` backups are never deleted. Each run is recorded in the
+audit log as `BACKUP`. Set `BACKUP_HOUR=0`–`23` in `.env` to change the hour, or
+`AUTO_BACKUP=off` to disable. Uploads are not included — keep running
+`npm run backup` for those. (Timestamps in file names are UTC.)
 
 Restore is a file copy — stop the server first:
 

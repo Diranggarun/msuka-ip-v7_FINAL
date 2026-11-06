@@ -194,6 +194,8 @@ app.use(express.static(path.join(ROOT,'frontend'),{
   index:'landing.html',
   setHeaders:(res,filePath)=>{
     if(filePath.endsWith('.html')) res.setHeader('Cache-Control','no-store, no-cache, must-revalidate, max-age=0');
+    // The service worker must always be re-checked, or browsers keep an old version.
+    if(path.basename(filePath)==='sw.js') res.setHeader('Cache-Control','no-cache');
   }
 }));
 
@@ -411,8 +413,8 @@ async function setupDatabase() {
 // outstanding JWTs (logout, password change, reject, delete). RA 10173 Tier 2.
 async function tokenStillValid(payload) {
   try {
-    const [rows] = await db.query('SELECT token_version, account_status FROM users WHERE id=?',[payload.id]);
-    return rows.length > 0 && rows[0].account_status === 'approved'
+    const [rows] = await db.query('SELECT token_version, account_status, deactivated_at FROM users WHERE id=?',[payload.id]);
+    return rows.length > 0 && rows[0].account_status === 'approved' && !rows[0].deactivated_at
       && (rows[0].token_version||0) === (payload.tv||0);
   } catch { return false; }
 }
@@ -550,6 +552,7 @@ app.post('/api/login', async (req,res) => {
     if(user.account_status==='rejected') return res.status(403).json({error:'Account rejected. Contact admin.'});
     // Same rule tokenStillValid enforces — anything else (e.g. NULL from a migrated row) gets no token.
     if(user.account_status!=='approved') return res.status(403).json({error:'Account not approved.'});
+    if(user.deactivated_at) return res.status(403).json({error:'Account deactivated. Contact admin.'});
     // ADMIN accounts must use the Admin Dashboard — not the chat app
     if(user.role==='admin') return res.status(403).json({error:'Admin accounts must login at the Admin Dashboard. Please go to /admin.html'});
     const token=jwt.sign({id:user.id,email:user.email,name:user.name,role:user.role,tv:user.token_version||0},JWT_SECRET,JWT_SIGN_OPTS);
@@ -582,6 +585,7 @@ app.post('/api/admin/login', async (req,res) => {
     loginFailures.delete(rk);
     if(user.role!=='admin') { await logAudit(user.id,'LOGIN_FAILED',`Non-admin attempted Admin portal: ${user.email}`,req); return res.status(403).json({error:'Access denied. This portal is for Admin accounts only.'}); }
     if(user.account_status!=='approved') return res.status(403).json({error:'Account not approved.'});
+    if(user.deactivated_at) return res.status(403).json({error:'Account deactivated.'});
     const token=jwt.sign({id:user.id,email:user.email,name:user.name,role:user.role,tv:user.token_version||0},JWT_SECRET,JWT_SIGN_OPTS);
     await logAudit(user.id,'LOGIN',`${user.name} logged in via Admin Dashboard`,req);
     console.log(`🛡️   Admin Login: ${user.name}`);
@@ -820,7 +824,7 @@ app.delete('/api/admin/users/:id/reject',verifyToken,adminOnly,async(req,res)=>{
 });
 app.get('/api/admin/users',verifyToken,adminOnly,async(req,res)=>{
   try {
-    const [rows]=await db.query("SELECT id,name,email,role,account_status,status,created_at FROM users WHERE account_status!='pending' ORDER BY created_at DESC");
+    const [rows]=await db.query("SELECT id,name,email,role,account_status,status,deactivated_at,created_at FROM users WHERE account_status!='pending' ORDER BY created_at DESC");
     // Enrich with real-time online status from in-memory map
     const onlineEmails = new Set([...onlineUsers.values()].map(u=>u.email));
     const enriched = rows.map(u=>({
@@ -883,6 +887,34 @@ app.delete('/api/admin/users/:id',verifyToken,adminOnly,async(req,res)=>{
     res.json({message:'Deleted'});
   } catch(err){ res.status(500).json({error:'Server error: '+err.message}); }
 });
+// Deactivate / reactivate: switch an account off without deleting it, so its
+// messages and history stay. Deactivating also signs it out everywhere.
+app.put('/api/admin/users/:id/active',verifyToken,adminOnly,async(req,res)=>{
+  const userId=parseInt(req.params.id), active=req.body?.active;
+  if(typeof active!=='boolean') return res.status(400).json({error:'active must be true or false'});
+  if(userId===req.user.id) return res.status(400).json({error:'Cannot deactivate yourself'});
+  try {
+    const [r]=await db.query('SELECT email FROM users WHERE id=?',[userId]);
+    if(!r.length) return res.status(404).json({error:'User not found'});
+    await db.query(`UPDATE users SET deactivated_at=${active?'NULL':"datetime('now','localtime')"} WHERE id=?`,[userId]);
+    if(!active) await bumpTokenVersion(userId);
+    await logAudit(req.user.id,active?'REACTIVATE_USER':'DEACTIVATE_USER',`${active?'Reactivated':'Deactivated'}: ${r[0].email}`,req);
+    res.json({message:active?'Reactivated':'Deactivated'});
+  } catch { res.status(500).json({error:'Server error'}); }
+});
+// Sign a user out on every device right now (lost phone, shared computer).
+// The account stays active; they can sign in again with their password.
+app.post('/api/admin/users/:id/revoke-sessions',verifyToken,adminOnly,async(req,res)=>{
+  const userId=parseInt(req.params.id);
+  if(userId===req.user.id) return res.status(400).json({error:'Use Logout for your own account'});
+  try {
+    const [r]=await db.query('SELECT email FROM users WHERE id=?',[userId]);
+    if(!r.length) return res.status(404).json({error:'User not found'});
+    await bumpTokenVersion(userId);
+    await logAudit(req.user.id,'REVOKE_SESSIONS',`Signed out everywhere: ${r[0].email}`,req);
+    res.json({message:'Sessions revoked'});
+  } catch { res.status(500).json({error:'Server error'}); }
+});
 // Actions the log can be filtered by. An allow-list rather than passing the
 // query string into SQL: this route takes user input now, which it did not
 // before. VIEW_* are the admin's own reads and dominate the table (~70% of
@@ -890,6 +922,7 @@ app.delete('/api/admin/users/:id',verifyToken,adminOnly,async(req,res)=>{
 const AUDIT_ACTIONS = ['LOGIN','LOGIN_FAILED','LOGOUT','REGISTER','APPROVE','REJECT',
   'ADD_USER','EDIT_USER','DELETE_USER','PASSWORD_CHANGED','PASSWORD_CHANGE_FAILED',
   'PROFILE_UPDATED','ACCESS_DENIED','BROADCAST','DELETE_GROUP','BACKUP',
+  'DEACTIVATE_USER','REACTIVATE_USER','REVOKE_SESSIONS',
   'VIEW_USERS','VIEW_PENDING','VIEW_LOGS','VIEW_SURVEY','EXPORT_SURVEY_CSV',
   'VIEW_LOGIN_ACTIVITY','VIEW_LOGIN_SERIES','VIEW_MESSAGES','VIEW_GROUPS'];
 const AUDIT_VIEW_ACTIONS = AUDIT_ACTIONS.filter(a => a.startsWith('VIEW_') || a === 'EXPORT_SURVEY_CSV');
@@ -963,25 +996,74 @@ const BACKUP_DIR = path.join(ROOT, 'backups');
 // The one route here that serves a file by name, so the name is matched against
 // a strict shape and the resolved path is checked to be inside BACKUP_DIR.
 // Without both, this is a file-read primitive.
-const BACKUP_NAME = /^db-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.db$/;
+// Optional "auto-" prefix = written by the daily schedule below.
+const BACKUP_NAME = /^(auto-)?db-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.db$/;
+const AUTO_BACKUP_NAME = /^auto-db-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.db$/;
+const AUTO_BACKUP_KEEP = 14;   // retention: newest 14 automatic backups (two weeks)
 let _backupRunning = false;
+
+// One function for both the admin button and the schedule. Database only, same
+// as before — uploads are zipped by `npm run backup`. Returns { name, size }.
+// The file name is generated here (never from input), so the quoted path in
+// VACUUM INTO cannot be steered by a user.
+function createBackup(prefix = '') {
+  fs.mkdirSync(BACKUP_DIR,{recursive:true});
+  const ts = new Date().toISOString().slice(0,19).replace('T','_').replace(/:/g,'-');
+  const name = `${prefix}db-${ts}.db`;
+  const dest = path.join(BACKUP_DIR, name);
+  db.raw.exec(`VACUUM INTO '${dest.replace(/'/g,"''")}'`);
+  return { name, size: fs.statSync(dest).size };
+}
+
+// Delete all but the newest AUTO_BACKUP_KEEP automatic backups. Only names
+// matching AUTO_BACKUP_NAME are touched, so manual db-*.db files are never
+// deleted. The timestamp in the name sorts oldest → newest as plain text.
+function pruneAutoBackups() {
+  const autos = fs.readdirSync(BACKUP_DIR).filter(f => AUTO_BACKUP_NAME.test(f)).sort();
+  const old = autos.slice(0, Math.max(0, autos.length - AUTO_BACKUP_KEEP));
+  for (const f of old) fs.unlinkSync(path.join(BACKUP_DIR, f));
+  return old.length;
+}
 
 app.post('/api/admin/backup',verifyToken,adminOnly,async(req,res)=>{
   if (_backupRunning) return res.status(429).json({error:'A backup is already running'});
   _backupRunning = true;
   try {
-    fs.mkdirSync(BACKUP_DIR,{recursive:true});
-    const ts = new Date().toISOString().slice(0,19).replace('T','_').replace(/:/g,'-');
-    const name = `db-${ts}.db`;
-    const dest = path.join(BACKUP_DIR, name);
-    db.raw.exec(`VACUUM INTO '${dest.replace(/'/g,"''")}'`);
-    const { size } = fs.statSync(dest);
+    const { name, size } = createBackup();
     await logAudit(req.user.id,'BACKUP',`Created backup ${name} (${size} bytes)`,req);
     res.json({ name, size });
   }
   catch (e) { console.error('backup error:', e.message); res.status(500).json({error:'Backup failed'}); }
   finally { _backupRunning = false; }
 });
+
+// ── Daily automatic backup ──────────────────────────────────────────────────
+// No node-cron: one setTimeout computes the delay to the next BACKUP_HOUR:00,
+// runs the backup, then schedules itself again (a timer chain). unref() means
+// this timer alone never keeps the process alive. AUTO_BACKUP=off disables it;
+// BACKUP_TEST_DELAY_MS (only if set) makes the first run happen sooner, for testing.
+const BACKUP_HOUR = /^\d+$/.test(process.env.BACKUP_HOUR || '') && Number(process.env.BACKUP_HOUR) <= 23
+  ? Number(process.env.BACKUP_HOUR) : 2;   // default 02:00 local time
+function msUntilNextBackup() {
+  const next = new Date(); next.setHours(BACKUP_HOUR, 0, 0, 0);
+  // "now + 1 minute" so a timer that fires a few ms early can't schedule a second run at once
+  if (next <= new Date(Date.now() + 60000)) next.setDate(next.getDate() + 1);   // already past today → tomorrow
+  return next - Date.now();
+}
+async function runAutoBackup() {
+  if (_backupRunning) return;   // a manual backup is in progress; try again tomorrow
+  _backupRunning = true;
+  try {
+    const { name, size } = createBackup('auto-');
+    const removed = pruneAutoBackups();
+    await logAudit(null,'BACKUP',`Automatic backup ${name} (${size} bytes)${removed ? `, removed ${removed} old` : ''}`);
+  }
+  catch (e) { console.error('auto backup error:', e.message); }
+  finally { _backupRunning = false; }
+}
+function scheduleAutoBackup(delay = msUntilNextBackup()) {
+  setTimeout(async () => { await runAutoBackup(); scheduleAutoBackup(); }, delay).unref();
+}
 
 app.get('/api/admin/backup/:name',verifyToken,adminOnly,(req,res)=>{
   const name = String(req.params.name || '');
@@ -1255,6 +1337,34 @@ app.get('/api/admin/survey.csv', verifyToken, adminOnly, async (req, res) => {
 // Socket.IO
 const onlineUsers=new Map();
 const activeRooms=new Map();
+// Group call log: roomId ('group_<id>') -> its row id in `calls`. The row opens
+// when the first person joins and closes when the last one leaves. The map
+// holds the insert's promise, set before awaiting, so two people joining at
+// the same moment share one row instead of each creating one.
+const roomCalls=new Map();
+const reportedQuality=new Set(); // "callId:userId" pairs that already sent call:quality
+async function logRoomJoin(roomId, userId, size) {
+  try {
+    if(!roomCalls.has(roomId)) {
+      roomCalls.set(roomId, db.query("INSERT INTO calls (caller_id,group_id,status,started_at,participants) VALUES (?,?,'answered',datetime('now','localtime'),?)",
+        [userId, parseInt(roomId.slice('group_'.length))||null, size]).then(([r])=>r.insertId));
+      await roomCalls.get(roomId);
+    } else {
+      await db.query('UPDATE calls SET participants=MAX(participants,?) WHERE id=?',[size, await roomCalls.get(roomId)]);
+    }
+  } catch(e){ console.error('group call log failed:', e.message); }
+}
+async function logRoomEnd(roomId) {
+  const pending=roomCalls.get(roomId); if(!pending) return;
+  roomCalls.delete(roomId);
+  try {
+    const callId=await pending;
+    // Nobody else ever joined -> count it as missed, like an unanswered 1:1 call.
+    await db.query(`UPDATE calls SET ended_at=datetime('now','localtime'),
+      duration=CAST(strftime('%s',datetime('now','localtime')) AS INTEGER)-CAST(strftime('%s',started_at) AS INTEGER),
+      status=CASE WHEN participants<2 THEN 'missed' ELSE status END WHERE id=?`,[callId]);
+  } catch(e){ console.error('group call end failed:', e.message); }
+}
 
 io.use(async (socket,next)=>{
   const token=socket.handshake.auth?.token;
@@ -1489,26 +1599,78 @@ io.on('connection', async(socket)=>{
   });
 
   // VoIP
-  socket.on('call:initiate',async({targetSocketId})=>{
-    const target=onlineUsers.get(targetSocketId); if(!target)return;
+  // Ring every tab/device the person has open, found by email: the caller's copy
+  // of targetSocketId may be stale (phone reconnected) or a background tab.
+  // If they are not online, tell the caller instead of ignoring the call.
+  socket.on('call:initiate',async({targetEmail,targetSocketId}={})=>{
+    const email0 = typeof targetEmail==='string' ? targetEmail : onlineUsers.get(targetSocketId)?.email;
+    const sockets=[...onlineUsers.values()].filter(u=>u.email===email0 && u.socketId!==socket.id);
+    if(!sockets.length){ socket.emit('call:failed',{reason:'offline'}); return; }
+    const target=sockets[0];
     const [r]=await db.query('INSERT INTO calls (caller_id,receiver_id,status) VALUES (?,?,?)',[id,target.id,'missed']);
-    io.to(targetSocketId).emit('call:incoming',{callId:r.insertId,from:{socketId:socket.id,name,role}});
+    sockets.forEach(u=>io.to(u.socketId).emit('call:incoming',{callId:r.insertId,from:{socketId:socket.id,name,role}}));
     socket.emit('call:ringing',{callId:r.insertId,targetName:target.name});
   });
   socket.on('call:accept',async({callId,callerSocketId})=>{ await db.query("UPDATE calls SET status=?,started_at=datetime('now','localtime') WHERE id=?",['answered',callId]); io.to(callerSocketId).emit('call:accepted',{callId,answererSocketId:socket.id,answererName:name}); });
   socket.on('call:reject',async({callId,callerSocketId})=>{ await db.query('UPDATE calls SET status=? WHERE id=?',['rejected',callId]); io.to(callerSocketId).emit('call:rejected',{rejectedBy:name}); });
-  socket.on('call:end',async({callId,targetSocketId})=>{
-    let wasAnswered = false;
+  // A phone's socket reconnects (new socket id) whenever the screen locks or the
+  // browser is backgrounded, so the other person's saved targetSocketId can be
+  // stale. Look the other person up from the call row and tell every socket
+  // they have open (targetSocketId is no longer trusted for this).
+  socket.on('call:end',async({callId}={})=>{
+    let call = null;
     try {
-      const [rows] = await db.query('SELECT started_at FROM calls WHERE id=?',[callId]);
-      wasAnswered = !!(rows[0] && rows[0].started_at);
-    } catch {}
-    await db.query(`UPDATE calls SET ended_at=datetime('now','localtime'),
-      duration=CAST(strftime('%s',datetime('now','localtime')) AS INTEGER)-CAST(strftime('%s',COALESCE(started_at,datetime('now','localtime'))) AS INTEGER)
-      WHERE id=?`,[callId]);
-    if(targetSocketId){
-      io.to(targetSocketId).emit(wasAnswered ? 'call:ended' : 'call:cancelled', {endedBy:name, cancelledBy:name});
+      const [rows] = await db.query('SELECT caller_id,receiver_id,started_at FROM calls WHERE id=?',[callId]);
+      call = rows[0] || null;
+    } catch (e) { console.error('call:end lookup failed:', e.message); }
+    // Only someone in the call may end it.
+    if(!call || (call.caller_id!==id && call.receiver_id!==id)) return;
+    try {
+      await db.query(`UPDATE calls SET ended_at=datetime('now','localtime'),
+        duration=CAST(strftime('%s',datetime('now','localtime')) AS INTEGER)-CAST(strftime('%s',COALESCE(started_at,datetime('now','localtime'))) AS INTEGER)
+        WHERE id=?`,[callId]);
+    } catch (e) { console.error('call:end update failed:', e.message); }
+    const event = call.started_at ? 'call:ended' : 'call:cancelled';
+    const otherId = call.caller_id===id ? call.receiver_id : call.caller_id;
+    for(const u of onlineUsers.values()){
+      if(u.id===otherId) io.to(u.socketId).emit(event,{callId,endedBy:name,cancelledBy:name});
     }
+  });
+  // Call quality (getStats averages) sent by the browser when its call ends.
+  // Bad input is dropped silently. The row is never chosen by the client: it is
+  // the group call this socket is still in, or else this user's own latest 1:1
+  // call if it is still open or ended in the last 5 minutes — so nobody can
+  // write onto someone else's call. One report per user per call (the Set is
+  // shared by all sockets, so reconnecting or a second tab can't report again).
+  socket.on('call:quality',async(q={})=>{
+    const inRange=(v,max)=>typeof v==='number' && Number.isFinite(v) && v>=0 && v<=max;
+    if(!q || !inRange(q.lossPct,100) || !inRange(q.jitterMs,10000)) return;
+    if(q.rttMs!==null && !inRange(q.rttMs,10000)) return; // null = browser never reported RTT
+    if(!Number.isInteger(q.samples) || q.samples<1 || q.samples>100000) return;
+    try {
+      let callId=null;
+      for(const [roomId,members] of activeRooms.entries()){
+        if(members.has(socket.id) && roomCalls.has(roomId)) callId=await roomCalls.get(roomId);
+      }
+      if(!callId){
+        const [rows]=await db.query(`SELECT id FROM (SELECT id,status,ended_at FROM calls
+            WHERE group_id IS NULL AND (caller_id=? OR receiver_id=?) ORDER BY id DESC LIMIT 1)
+          WHERE status='answered' AND (ended_at IS NULL OR ended_at>=datetime('now','localtime','-5 minutes'))`,[id,id]);
+        callId=rows[0]?.id || null;
+      }
+      const key=`${callId}:${id}`;
+      if(!callId || reportedQuality.has(key)) return;
+      reportedQuality.add(key);
+      // Every participant reports once; each column keeps a running mean:
+      // new avg = (old avg × n + this report) / (n + 1), n = quality_reports.
+      // (RTT may be missing in some browsers; then RTT keeps its current value.)
+      await db.query(`UPDATE calls SET
+          avg_rtt_ms=CASE WHEN ? IS NULL THEN avg_rtt_ms WHEN avg_rtt_ms IS NULL THEN ? ELSE (avg_rtt_ms*quality_reports+?)/(quality_reports+1) END,
+          avg_jitter_ms=COALESCE((avg_jitter_ms*quality_reports+?)/(quality_reports+1),?),
+          packet_loss_pct=COALESCE((packet_loss_pct*quality_reports+?)/(quality_reports+1),?),
+          quality_reports=quality_reports+1
+        WHERE id=?`,[q.rttMs,q.rttMs,q.rttMs,q.jitterMs,q.jitterMs,q.lossPct,q.lossPct,callId]);
+    } catch (e) { console.error('call:quality save failed:', e.message); }
   });
   socket.on('webrtc:offer',        ({targetSocketId,offer})    =>io.to(targetSocketId).emit('webrtc:offer',        {offer,    fromSocketId:socket.id}));
   socket.on('webrtc:answer',       ({targetSocketId,answer})   =>io.to(targetSocketId).emit('webrtc:answer',       {answer}));
@@ -1534,15 +1696,15 @@ io.on('connection', async(socket)=>{
       await logAudit(id,'ACCESS_DENIED',`Blocked room:join on ${roomId}`,socket);
       return socket.emit('room:error',{reason:'You are not a member of this call.'});
     }
-    socket.join(roomId); if(!activeRooms.has(roomId))activeRooms.set(roomId,new Set()); activeRooms.get(roomId).add(socket.id); socket.to(roomId).emit('room:peer-joined',{socketId:socket.id,name,role}); const members=[...activeRooms.get(roomId)].filter(s=>s!==socket.id).map(s=>({socketId:s,...onlineUsers.get(s)})); socket.emit('room:members',{roomId,members});
+    socket.join(roomId); if(!activeRooms.has(roomId))activeRooms.set(roomId,new Set()); activeRooms.get(roomId).add(socket.id); logRoomJoin(roomId, id, activeRooms.get(roomId).size); socket.to(roomId).emit('room:peer-joined',{socketId:socket.id,name,role}); const members=[...activeRooms.get(roomId)].filter(s=>s!==socket.id).map(s=>({socketId:s,...onlineUsers.get(s)})); socket.emit('room:members',{roomId,members});
   });
-  socket.on('room:leave',({roomId})=>{ socket.leave(roomId); if(activeRooms.has(roomId)){activeRooms.get(roomId).delete(socket.id); if(activeRooms.get(roomId).size===0)activeRooms.delete(roomId);} socket.to(roomId).emit('room:peer-left',{socketId:socket.id,name}); });
+  socket.on('room:leave',({roomId})=>{ socket.leave(roomId); if(activeRooms.has(roomId)){activeRooms.get(roomId).delete(socket.id); if(activeRooms.get(roomId).size===0){activeRooms.delete(roomId); logRoomEnd(roomId);}} socket.to(roomId).emit('room:peer-left',{socketId:socket.id,name}); });
   socket.on('room:offer',        ({targetSocketId,offer})    =>io.to(targetSocketId).emit('room:offer',        {offer,    fromSocketId:socket.id}));
   socket.on('room:answer',       ({targetSocketId,answer})   =>io.to(targetSocketId).emit('room:answer',       {answer,   fromSocketId:socket.id}));
   socket.on('room:ice-candidate',({targetSocketId,candidate})=>io.to(targetSocketId).emit('room:ice-candidate',{candidate,fromSocketId:socket.id}));
 
   socket.on('disconnect',async()=>{
-    for(const [roomId,members] of activeRooms.entries()) { if(members.has(socket.id)){members.delete(socket.id); socket.to(roomId).emit('room:peer-left',{socketId:socket.id,name}); if(members.size===0)activeRooms.delete(roomId);} }
+    for(const [roomId,members] of activeRooms.entries()) { if(members.has(socket.id)){members.delete(socket.id); socket.to(roomId).emit('room:peer-left',{socketId:socket.id,name}); if(members.size===0){activeRooms.delete(roomId); logRoomEnd(roomId);}} }
     onlineUsers.delete(socket.id);
     // Only mark DB offline if this user has no other active sockets.
     if(!userHasOtherSockets(id, socket.id)){
@@ -1640,6 +1802,7 @@ const PORT=process.env.PORT||3000;
 setupDatabase().then(async ()=>{
   await setupHttps();
   startMdns();
+  if (process.env.AUTO_BACKUP !== 'off') scheduleAutoBackup(Number(process.env.BACKUP_TEST_DELAY_MS) || undefined);
   server.listen(PORT,'0.0.0.0',()=>{
     // With HTTPS up, the banner below leads with the name instead. Without it,
     // localhost is the only address where voice works, so print that.
