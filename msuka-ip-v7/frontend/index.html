@@ -2818,7 +2818,11 @@ function initSocket() {
   outbox = [];   // new session: never send a previous user's queued messages
 
   let everConnected = false;
-  socket.on('connect', () => { everConnected = true; initConversations(); flushOutbox(); });
+  let wasDropped = false;   // true after a connection loss, until we are back
+  socket.on('connect', () => {
+    if (wasDropped) showToast('system', 'Back online', 'Reconnected to the MSUkaIP server.');
+    everConnected = true; wasDropped = false; initConversations(); flushOutbox();
+  });
   socket.on('connect_error', err => {
     // The server's io.use rejects revoked/expired tokens with these messages.
     if (/revoked|Invalid token|Auth required/.test(err.message)) return handleAuthExpired();
@@ -2829,7 +2833,14 @@ function initSocket() {
   });
   // The server only force-disconnects a socket when it revokes the user's
   // tokens (logout elsewhere, password change, account removed).
-  socket.on('disconnect', reason => { if (reason === 'io server disconnect') handleAuthExpired(); });
+  socket.on('disconnect', reason => {
+    if (reason === 'io server disconnect') return handleAuthExpired();
+    // Wi-Fi drop or server restart: say so once (Socket.IO keeps retrying by itself).
+    if (reason !== 'io client disconnect' && !wasDropped) {
+      wasDropped = true;
+      showToast('system', 'Connection lost', 'Reconnecting… messages you type now will be sent when the connection is back.');
+    }
+  });
 
   socket.on('users:update', users => {
     // Exclude admin from online users list visible to others
@@ -2884,7 +2895,6 @@ function initSocket() {
       conversations[key].unread=(conversations[key].unread||0)+1;
     }
 
-    settleOutbox(msg);   // the server echoed a queued message: drop its "waiting" copy
     if (activeConvKey===key) appendMessage(msg,key,true);
     // Refresh correct section
     if (key === 'group_general') updateGlobalPreview();
@@ -2913,8 +2923,8 @@ function initSocket() {
 
   socket.on('message:error', ({ msgId, convKey, reason }) => {
     // If this error is for a pending optimistic delete, put the message back.
+    // (Queued outbox messages learn about errors from their own acknowledgement.)
     if (msgId != null) restorePendingDelete(msgId);
-    else failOutbox(convKey);   // a send error: a queued message was refused
     if (reason) showToast('msg', 'Message error', reason);
   });
 
@@ -2946,6 +2956,9 @@ function initSocket() {
 
   // VoIP
   socket.on('call:incoming',({callId,from})=>{
+    // Already in a group call: decline automatically, so two calls never share
+    // the microphone (or the call-quality monitor).
+    if (currentRoomId) { socket.emit('call:reject',{callId,callerSocketId:from.socketId}); showToast('call','Missed call',`${from.name} called while you were in a group call.`); return; }
     currentCallId=callId; currentCallTarget=from.socketId;
     document.getElementById('incoming-caller-name').textContent=`${from.name} is calling…`;
     document.getElementById('incoming-call').classList.add('show');
@@ -3638,36 +3651,41 @@ function appendOutboxRow(item) {
   row.querySelector('.msg-time').textContent = item.sent ? OUTBOX_LABEL.sending : OUTBOX_LABEL.waiting;
 }
 
-// On reconnect: emit each unsent message once, oldest first. Marking it sent
-// means a second reconnect never emits it again (no duplicates).
+// On reconnect: emit each unsent message once, oldest first, with an
+// acknowledgement callback. The server answers each one, so we know for
+// certain which message was saved — no guessing by matching text.
 function flushOutbox() {
   outbox = outbox.map(m => {
     if (m.sent) return m;
-    socket.emit('message:send', { text: m.text, convKey: m.convKey });
+    socket.timeout(15000).emit('message:send', { text: m.text, convKey: m.convKey }, (err, res) => settleOutbox(m.id, err, res));
     return { ...m, sent: true };
   });
   document.querySelectorAll('#messages-area .msg-row.pending .msg-time').forEach(t => { t.textContent = OUTBOX_LABEL.sending; });
 }
 
-// The server echoes every saved message back as message:new. The first sent
-// outbox item with the same conversation and text is that message, so its
-// pending copy is removed and the real one is drawn by the normal handler.
-function settleOutbox(msg) {
-  if (msg.sender !== currentUser?.name || msg.type !== 'chat') return;
-  const item = outbox.find(m => m.sent && m.convKey === msg.convKey && m.text === msg.text);
-  if (!item) return;
-  outbox = outbox.filter(m => m !== item);
-  document.querySelector(`#messages-area [data-outbox-id="${item.id}"]`)?.remove();
-}
-
-// The server refused a send (message:error without msgId): mark the oldest
-// sent item in that conversation as not sent; the toast says why.
-function failOutbox(convKey) {
-  const item = outbox.find(m => m.sent && m.convKey === convKey);
-  if (!item) return;
-  outbox = outbox.filter(m => m !== item);
-  const t = document.querySelector(`#messages-area [data-outbox-id="${item.id}"] .msg-time`);
-  if (t) t.textContent = 'Not sent';
+// The server's answer for one queued message:
+//  - no answer in 15 s (connection dropped again): back to "waiting", it is
+//    sent again on the next reconnect;
+//  - saved: remove the pending copy; draw the real message if the normal
+//    message:new echo did not already draw it (Socket.IO keeps order, so an
+//    echo always arrives before this answer);
+//  - refused: mark it "Not sent" (the server's toast says why).
+function settleOutbox(itemId, err, res) {
+  const row = document.querySelector(`#messages-area [data-outbox-id="${itemId}"]`);
+  if (err) {
+    outbox = outbox.map(m => m.id === itemId ? { ...m, sent: false } : m);
+    if (row) row.querySelector('.msg-time').textContent = OUTBOX_LABEL.waiting;
+    return;
+  }
+  const item = outbox.find(m => m.id === itemId);
+  outbox = outbox.filter(m => m.id !== itemId);
+  if (res?.ok) {
+    row?.remove();
+    if (item && activeConvKey === item.convKey && !document.querySelector(`#messages-area .msg-row[data-msg-id="${res.msg.id}"]`))
+      appendMessage(res.msg, item.convKey, true);
+  } else if (row) {
+    row.querySelector('.msg-time').textContent = 'Not sent';
+  }
 }
 
 // Files, photos and voice notes are not queued (they would need to be kept in
@@ -3998,6 +4016,7 @@ async function startGroupCall(){
   // old scheme left each caller alone). The server only lets group members join.
   if(!activeConvKey || !activeConvKey.startsWith('group_')){ alert('Open a group chat to start a group call.'); return; }
   if(activeConvKey === 'group_general'){ alert('CICS Chat does not support group calls. Start one from a group chat.'); return; }
+  if(peerConnection || currentCallId){ alert('Finish your current call before starting a group call.'); return; }
   groupStream=await getMic();
   if(!groupStream)return;
   currentRoomId=activeConvKey;

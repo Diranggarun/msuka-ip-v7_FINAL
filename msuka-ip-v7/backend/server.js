@@ -1073,6 +1073,8 @@ app.get('/api/admin/backup/:name',verifyToken,adminOnly,(req,res)=>{
   // really sits inside the backups directory before opening it.
   if (path.dirname(full) !== path.resolve(BACKUP_DIR)) return res.status(400).json({error:'Invalid backup name'});
   if (!fs.existsSync(full)) return res.status(404).json({error:'Backup not found'});
+  // A backup is the whole database, so downloading one is audited too (RA 10173).
+  logAudit(req.user.id,'BACKUP',`Downloaded backup ${name}`,req).catch(e=>console.error('audit failed:',e.message));
   res.download(full, name);
 });
 
@@ -1496,13 +1498,17 @@ io.on('connection', async(socket)=>{
   });
 
   // Send message — encrypted with AES-256-GCM
-  socket.on('message:send', async({text,convKey})=>{
-    const t=text?.trim(); if(!t||!convKey) return;
+  // `ack` is optional: the offline outbox passes a callback so it learns for
+  // certain whether each queued message was saved ({ok:true,msg} / {ok:false}).
+  socket.on('message:send', async({text,convKey}={},ack)=>{
+    const reply = r => { if (typeof ack === 'function') ack(r); };
+    const t=text?.trim(); if(!t||!convKey) return reply({ok:false,reason:'Empty message'});
     try {
       // Refuse posting into a conversation the caller is not part of (RA 10173).
       const realKey=await resolveConvKey(id, email, convKey);
       if(!realKey){
         await logAudit(id,'ACCESS_DENIED',`Blocked message:send to ${convKey}`,socket);
+        reply({ok:false,reason:'You are not a member of this conversation.'});
         return socket.emit('message:error',{convKey,reason:'You are not a member of this conversation.'});
       }
       // Encrypt before storing in database
@@ -1512,8 +1518,10 @@ io.on('connection', async(socket)=>{
       const msg={id:result.insertId,type:'chat',sender:name,role,text:t,timestamp:new Date().toISOString()};
 
       emitToConv(realKey,'message:new',msg);
+      reply({ok:true,msg});
     } catch(err){
       console.error('Send error:',err.message);
+      reply({ok:false,reason:'Failed to save message — please try again.'});
       socket.emit('message:error', { convKey, reason: 'Failed to save message — please try again.' });
     }
   });
