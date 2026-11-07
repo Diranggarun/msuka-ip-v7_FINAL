@@ -383,7 +383,8 @@ The capstone document's Chapter 3 still cites the original FastAPI/React stack; 
 
 The agreement used to be remembered in `sessionStorage`, which logout clears, so it reappeared at every login. It is now stored on the account: `users.agreed_at` (added with the guarded `addCol` migration), returned as `agreed` by `POST /api/login`, and set by `POST /api/agree` (audited as `TERMS_ACCEPTED`). The client skips the gate when `agreed` is true.
 
-Trade-off: a database column rather than `localStorage`, so the choice follows the account across browsers and devices and cannot be cleared by the user, at the cost of one extra endpoint. Tests clear the flag for the demo student before the gate tests (`resetAgreement()` in `msuka-ip.spec.js`).The chat header pattern is an image, not CSS: `header-pattern.png` was made once
+Trade-off: a database column rather than `localStorage`, so the choice follows the account across browsers and devices and cannot be cleared by the user, at the cost of one extra endpoint. Tests clear the flag for the demo student before the gate tests (`resetAgreement()` in `msuka-ip.spec.js`).
+The chat header pattern is an image, not CSS: `header-pattern.png` was made once
 from the supplied yellow textile band with a short Pillow script (yellow pixels
 dropped, red and black motifs both set to `--accent` at alpha 80/255, scaled to
 184px tall, twice the header height). A CSS tint over the original JPEG would
@@ -461,3 +462,24 @@ Choices inside that:
 - **Service worker caches only the static shell.** `/api/*` and `/uploads/*` hold private data (RA 10173) and token URLs, so they are never cached; admin and survey pages must always be live. Pages and `socket.io.js` are network-first so updates are not hidden behind a stale cache. Bump `CACHE_VERSION` in `sw.js` when a shell file changes.
 - **Plain `setTimeout` chain instead of node-cron.** One timer computes the delay to the next 02:00 run and re-arms itself — a few lines a student can explain, no dependency. Only `auto-db-*.db` files are pruned (keep 14); manual backups are never deleted.
 - **PM2 with production as the default environment.** A bare `pm2 start` must never boot in dev mode, because dev mode resets the demo passwords. Boot on Windows uses `pm2 save` + a Task Scheduler logon task (`pm2 resurrect`), not the unmaintained `pm2-windows-startup`.
+
+## 2026-11-07 — Fixes chosen from the evaluation survey
+
+**Context:** Testers' survey comments reported disappearing messages, unviewable images, voice messages that would not send, no way to add group members later, and asked for reactions, replies and a "forgot password" option. The team picked 14 of 16 listed items (logout placement and the Back-button behaviour were left as they are).
+
+**Decisions:**
+- **Reactions get their own table** (`message_reactions`, primary key `(message_id, user_id)`) instead of a JSON column on `messages`: one row per person makes "one reaction each, same emoji again removes it" a primary-key rule, two people reacting at once can't overwrite each other, and `ON DELETE CASCADE` removes reactions with their message. Only six emojis are accepted server-side.
+- **Replies store only `reply_to`** (the original's id). The quoted preview is built when history is read, and only from the same conversation, so a reply can never quote a message from a chat the reader is not in, and a deleted original simply shows no quote.
+- **"Forgot password" asks the admin** instead of emailing a link: the system runs on an offline LAN with no mail server. The endpoint answers the same whether or not the email exists (no account enumeration) and is rate-limited per IP; the admin's existing "set password" action clears the flag.
+- **Newest 100 messages per chat** (`HISTORY_LIMIT`), selected by `id DESC` then re-sorted ascending. Ordering by `id` rather than `created_at` because seeded demo rows have back-dated timestamps.
+- **Voice format follows the device** (`MediaRecorder.isTypeSupported`) rather than transcoding on the server: no ffmpeg dependency, and the server already maps `.m4a`/`.webm`/`.ogg` to the right content type.
+
+- **The member picker shows every approved classmate** (`users:directory`, name + email only, no role or status). Showing only online people made adding offline classmates impossible; a campus roster of name + school email among approved members is the same information the group-member list already reveals, so this was accepted as proportionate (RA 10173 data minimisation: no other fields are sent).
+- **A reset request proves nothing by itself.** Anyone can flag an account; the admin must check the student's school ID in person before setting and handing over a new password.
+
+**Trade-off:** Messages older than the newest 100 are not shown (no "load older" yet); a reply to one of them shows the quote but cannot jump to it.
+
+## 2026-11-07 — Files are visible only inside their conversation; "Seen" receipts
+
+- **`GET /uploads/:name` checks membership, not just login.** Before, any logged-in user who knew (or guessed) a file name could open any upload. Now the file must belong to a message in a conversation the requester is part of (same `resolveConvKey` gate as reading messages); admins may view any file for moderation. Every refusal is the same 404 and is audit-logged, so names can't be probed. RA 10173 access control; an index on `messages.file_url` keeps the lookup fast.
+- **"Seen" stores one number per person per chat** (`conv_reads.last_read_id`, the highest message id they have seen) instead of a row per message: constant size, and "seen" for any message is just `last_read_id >= id`. The client reports it only while the chat is actually on screen (open and tab visible). Private chats show "Seen"; groups show "Seen by N" with names on hover.

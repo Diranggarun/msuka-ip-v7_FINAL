@@ -427,7 +427,7 @@ button,label{touch-action:manipulation;}
   <!-- SUBMIT -->
   <div class="submit-section">
     <p>Thank you for rating <strong>MSUkaIP</strong>. Your answers go into the Chapter 4 results of the capstone study.</p>
-    <button class="btn-submit" @click="submit"style="display:inline-flex;align-items:center;gap:8px;"><svg style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Submit Feedback</button>
+    <button class="btn-submit" @click="submit" :disabled="saving" style="display:inline-flex;align-items:center;gap:8px;"><svg style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span x-text="saved ? 'Submitted — view result' : saving ? 'Submitting…' : 'Submit Feedback'">Submit Feedback</span></button>
   </div>
 
 </div>
@@ -584,6 +584,10 @@ document.addEventListener('alpine:init', () => {
     options:  OPTIONS,
     name: '', type: '', device: '', date: localToday(), note: '',
     answered: 0,
+    // saving: a request is in flight; saved: this visit already stored its
+    // answers. Together they stop the double/triple rows that came from
+    // tapping Submit again after closing the result window.
+    saving: false, saved: false,
     result: { open: false, overall: '0.00', level: '', interpretation: '—', rows: [] },
 
     // Getters are computed values: Alpine recalculates them when what they read changes.
@@ -599,6 +603,8 @@ document.addEventListener('alpine:init', () => {
     closeResult() { this.result.open = false; },
 
     async submit() {
+      if (this.saving) return;
+      if (this.saved) { this.result.open = true; return; } // already stored: just show it again
       if (!this.type)   return flagField(document.getElementById('resp-type'),   'Please select your respondent type before submitting.');
       if (!this.device) return flagField(document.getElementById('resp-device'), 'Please select the device you used for testing.');
 
@@ -637,6 +643,7 @@ document.addEventListener('alpine:init', () => {
       };
 
       // Persist to server (anonymous endpoint — no auth required)
+      this.saving = true;
       try {
         const resp = await fetch('/api/survey', {
           method: 'POST',
@@ -652,10 +659,10 @@ document.addEventListener('alpine:init', () => {
         if (!resp.ok) {
           const err = await resp.json().catch(()=>({}));
           console.warn('Survey save failed:', err.error || resp.statusText);
-        }
+        } else this.saved = true;
       } catch (e) {
         console.warn('Survey save network error:', e.message);
-      }
+      } finally { this.saving = false; }
     }
   }));
 });

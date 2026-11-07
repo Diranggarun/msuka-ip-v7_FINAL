@@ -590,7 +590,13 @@ test.describe('2. Messenger UI Tests', () => {
     const history = await page.evaluate((key) => new Promise(resolve => {
       /* eslint-disable no-undef -- evaluated in the browser page context */
       const t = setTimeout(() => resolve('(no reply)'), 4000);
-      socket.once('messages:history', ({ key, messages }) => { clearTimeout(t); resolve({ key, count: messages.length }); });
+      // Listen for THIS key's reply: CICS Chat's own history (loaded on
+      // connect) can arrive first and used to be mistaken for it.
+      const onHistory = ({ key: k, messages }) => {
+        if (k !== key) return;
+        clearTimeout(t); socket.off('messages:history', onHistory); resolve({ key: k, count: messages.length });
+      };
+      socket.on('messages:history', onHistory);
       socket.emit('messages:get', { key });
       /* eslint-enable no-undef */
     }), otherPair);
@@ -639,7 +645,10 @@ test.describe('2. Messenger UI Tests', () => {
       logoutAuth = route.request().headers()['authorization'];
       route.fulfill({ status: 200, contentType: 'application/json', body: '{"message":"Logged out"}' });
     });
-    await page.click('button[onclick="logout()"]');
+    await page.click('#rail-signout');
+    // Sign Out now asks first (app dialog) — confirm it.
+    await expect(page.locator('#app-dialog')).toBeVisible();
+    await page.click('#app-dialog-ok');
     await expect(page.locator('#auth-screen')).toBeVisible();
     await expect.poll(() => logoutAuth).toMatch(/^Bearer .+/);
     console.log('✅ Logout works — server revoke requested, back to login screen');

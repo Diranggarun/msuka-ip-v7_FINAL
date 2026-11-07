@@ -2163,13 +2163,15 @@ function filterApproved(role,btn){
 function renderUsers(users){
   const tbody=document.getElementById('users-tbody');
   if(!users.length){tbody.innerHTML='<tr><td colspan="8" class="empty">No approved users yet</td></tr>';return;}
+  // People waiting for a password reset go to the top so the admin sees them.
+  users=[...users].sort((a,b)=>(b.reset_requested_at?1:0)-(a.reset_requested_at?1:0));
   tbody.innerHTML=users.map((u,i)=>`
     <tr>
       <td style="color:var(--text-light);font-size:.8rem">${i+1}</td>
       <td><strong style="color:var(--maroon-dark)">${esc(u.name)}</strong></td>
       <td style="color:var(--text-mid);font-size:.82rem">${esc(u.email)}</td>
       <td><span class="badge ${esc(u.role)}">${esc(u.role)}</span></td>
-      <td>${u.deactivated_at?'<span class="badge rejected">deactivated</span>':`<span class="badge ${esc(u.account_status)}">${esc(u.account_status)}</span>`}</td>
+      <td>${u.deactivated_at?'<span class="badge rejected">deactivated</span>':`<span class="badge ${esc(u.account_status)}">${esc(u.account_status)}</span>`}${u.reset_requested_at?` <span class="badge pending" title="Asked for a password reset on ${esc(u.reset_requested_at)}. Click Edit and set a new password.">reset requested</span>`:''}</td>
       <td><span class="badge ${esc(u.status)}">${esc(u.status)}</span></td>
       <td style="color:var(--text-light);font-size:.78rem">${new Date(u.created_at).toLocaleDateString()}</td>
       <td style="display:flex;gap:5px;">

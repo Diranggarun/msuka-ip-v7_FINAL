@@ -9,7 +9,7 @@
 > diagrams below still hold.
 Generated from the actual running schema on 2026-05-14 (see `msuka-ip-v7/db-audit.js`).
 
-## Tables (7)
+## Tables (9)
 
 | Table | Rows it stores | FK relationships |
 |---|---|---|
@@ -20,6 +20,8 @@ Generated from the actual running schema on 2026-05-14 (see `msuka-ip-v7/db-audi
 | `calls` | VoIP call records | `caller_id → users`, `receiver_id → users` |
 | `audit_logs` | Admin action trail | `user_id → users` |
 | `survey_responses` | Anonymous capstone evaluation feedback | (none — public POST endpoint) |
+| `message_reactions` | One emoji reaction per person per message | `message_id → messages` (cascade), `user_id → users` (cascade) |
+| `conv_reads` | "Seen" receipts: newest message id each person has seen per chat | `user_id → users` (cascade) |
 
 ## Tables in detail
 
@@ -32,6 +34,7 @@ password_hash   VARCHAR(255)   NOT NULL                  -- bcryptjs (10 rounds)
 role            ENUM('student','faculty','admin')        DEFAULT 'student'
 account_status  ENUM('pending','approved','rejected')    DEFAULT 'pending'
 deactivated_at  TEXT NULL                                -- NULL = active; set = admin switched the account off
+reset_requested_at TEXT NULL                            -- "Forgot password" request waiting for the admin
 status          ENUM('online','offline')                 DEFAULT 'offline'
 created_at      TIMESTAMP                                DEFAULT CURRENT_TIMESTAMP
 ```
@@ -65,6 +68,7 @@ file_name    VARCHAR(255) NULL
 file_url     VARCHAR(500) NULL
 file_size    INT NULL
 file_type    VARCHAR(100) NULL
+reply_to     INT NULL                                   -- id of the message this one replies to (same conv_key)
 created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 -- Legacy columns left from prior schema (not read/written by server.js):
 receiver_id  INT NULL
@@ -119,6 +123,24 @@ overall           DECIMAL(4,2) NOT NULL            -- Weighted mean across all s
 created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ```
 Indexes: `PRIMARY(id)`, `idx_survey_created`.
+
+### message_reactions
+```
+message_id  INT NOT NULL      FK → messages(id) ON DELETE CASCADE
+user_id     INT NOT NULL      FK → users(id)    ON DELETE CASCADE
+emoji       TEXT NOT NULL     -- one of 👍 ❤️ 😂 😮 😢 🙏 (checked in server.js)
+created_at  TEXT DEFAULT (datetime('now','localtime'))
+PRIMARY KEY (message_id, user_id)   -- one reaction per person per message
+```
+
+### conv_reads
+```
+conv_key      TEXT NOT NULL     -- same form as messages.conv_key
+user_id       INT NOT NULL      FK → users(id) ON DELETE CASCADE
+last_read_id  INT NOT NULL      -- highest message id this person has seen (never goes backwards)
+updated_at    TEXT DEFAULT (datetime('now','localtime'))
+PRIMARY KEY (conv_key, user_id)
+```
 
 ## Seed data
 

@@ -256,7 +256,7 @@ footer a{color:var(--white);}
       <li><a href="#guide">Quick guide</a></li>
       <li><a href="#help">Help</a></li>
     </ul>
-    <a class="btn btn-gold" href="/index.html">Connect Now</a>
+    <a class="btn btn-gold" href="/index.html">Sign in or Register</a>
   </div>
 </nav>
 
@@ -272,8 +272,8 @@ footer a{color:var(--white);}
       <h1><span class="app">MSUkaIP:</span> <span class="line">Chat and Call Anyone on Campus,</span> <span class="box">No Internet Needed</span></h1>
       <p>It runs on the college's own network (the LAN), so messages and calls go straight from one device to another on campus.</p>
       <div class="hero-actions">
-        <a class="btn btn-gold" href="#connect">Get Started</a>
-        <a class="btn btn-outline" href="/index.html">Connect Now</a>
+        <a class="btn btn-gold" href="#connect">How to Connect</a>
+        <a class="btn btn-outline" href="/index.html">Sign in or Register</a>
       </div>
       <div class="hero-badge">
         <div><strong>Mindanao State University</strong><span>Main Campus · College of Information and Computing Sciences</span></div>
@@ -353,7 +353,7 @@ footer a{color:var(--white);}
         <p>Open your browser (Chrome, Edge or Firefox) and type this address:</p>
         <div class="addr">
           <code id="server-addr">https://&lt;server-address&gt;:3443</code>
-          <button class="btn btn-gold" type="button" id="copy-btn">Copy</button>
+          <button class="btn btn-gold" type="button" id="copy-btn">Copy address</button>
           <span class="copied" id="copy-msg" role="status" aria-live="polite"></span>
         </div>
         <p class="addr-note" id="addr-note"></p>
@@ -440,7 +440,7 @@ footer a{color:var(--white);}
   <div class="wrap">
     <h2>Ready to connect?</h2>
     <p>Sign in with your institutional email and start talking to your classmates and teachers.</p>
-    <a class="btn btn-gold" href="/index.html">Connect Now</a>
+    <a class="btn btn-gold" href="/index.html">Sign in or Register</a>
   </div>
 </section>
 </main>
@@ -513,6 +513,12 @@ function showQr(host, httpsPort, local) {
       msg.textContent = 'Selected. Press Ctrl+C to copy.';
     }
   });
+
+  // Still signed in (pressed Back out of the chat)? Say so on the buttons, so
+  // the way back to the chat is obvious. Same tab = same sessionStorage.
+  let signedIn = false;
+  try { signedIn = !!sessionStorage.getItem('msuka_user'); } catch { /* storage blocked */ }
+  if (signedIn) document.querySelectorAll('a.btn[href="/index.html"]').forEach(a => { a.textContent = 'Back to chat'; });
 })();
 </script>
 </body>

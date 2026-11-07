@@ -474,10 +474,24 @@ const UPLOAD_MIME = {
   '.docx':'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   '.webm':'audio/webm', '.ogg':'audio/ogg', '.mp3':'audio/mpeg', '.wav':'audio/wav', '.m4a':'audio/mp4'
 };
-app.get('/uploads/:name', verifyTokenAllowQuery, (req,res) => {
+app.get('/uploads/:name', verifyTokenAllowQuery, async (req,res) => {
   const name = path.basename(req.params.name); // strips any ../ traversal
   const fp = path.join(UPLOAD_DIR, name);
   if (!fs.existsSync(fp)) return res.status(404).json({error:'Not found'});
+  // Being logged in is not enough (RA 10173): the file must belong to a
+  // message in a conversation this user is part of. Admins may view any file
+  // (moderation). Every refusal is the same 404, so file names can't be probed.
+  if (req.user.role !== 'admin') {
+    try {
+      const [rows] = await db.query('SELECT conv_key FROM messages WHERE file_url=? LIMIT 1', ['/uploads/'+name]);
+      const convKey = rows[0]?.conv_key;
+      const clientKey = convKey?.startsWith('private_') ? 'private_'+privatePeer(convKey, req.user.email) : convKey;
+      if (!convKey || !privatePeerOk(convKey, req.user.email) || !await resolveConvKey(req.user.id, req.user.email, clientKey)) {
+        await logAudit(req.user.id,'ACCESS_DENIED',`Blocked file ${name}`,req);
+        return res.status(404).json({error:'Not found'});
+      }
+    } catch { return res.status(500).json({error:'Server error'}); }
+  }
   try {
     const buf = readFileDecrypted(fp);
     res.setHeader('Content-Type', UPLOAD_MIME[path.extname(name).toLowerCase()] || 'application/octet-stream');
@@ -568,6 +582,33 @@ app.post('/api/agree', verifyToken, async(req,res)=>{
     await db.query("UPDATE users SET agreed_at=datetime('now','localtime') WHERE id=? AND agreed_at IS NULL",[req.user.id]);
     await logAudit(req.user.id,'TERMS_ACCEPTED',`${req.user.name} accepted the Terms of Use`,req);
     res.json({agreed:true});
+  } catch { res.status(500).json({error:'Server error'}); }
+});
+
+// ── Forgot password — a request to the admin (no email on an offline LAN) ─────
+// Flags the account so the admin sees "Reset requested" and sets a new
+// password. The answer is the same whether or not the email exists, so this
+// can't be used to find out who has an account. Limited per IP+email like
+// login (behind a tunnel every request shares one IP, so per-IP alone would
+// let one visitor block everyone).
+const resetRequests = new Map(); // ip|email -> { count, firstAt }
+setInterval(() => {
+  for (const [k, e] of resetRequests.entries()) if (Date.now() - e.firstAt > RATE_WINDOW_MS) resetRequests.delete(k);
+}, 5*60*1000).unref();
+app.post('/api/forgot-password', async (req,res) => {
+  const email = String(req.body?.email||'').trim().toLowerCase();
+  if(!email) return res.status(400).json({error:'Enter your email first.'});
+  const ip = rateKey(req, email);
+  const e = resetRequests.get(ip);
+  if(e && Date.now()-e.firstAt < RATE_WINDOW_MS && e.count >= RATE_MAX) return res.status(429).json({error:'Too many requests. Try again in 15 minutes.'});
+  if(!e || Date.now()-e.firstAt >= RATE_WINDOW_MS) resetRequests.set(ip,{count:1,firstAt:Date.now()}); else e.count++;
+  try {
+    const [rows]=await db.query("SELECT id,email FROM users WHERE LOWER(email)=? AND role!='admin' AND account_status='approved'",[email]);
+    if(rows.length){
+      await db.query("UPDATE users SET reset_requested_at=datetime('now','localtime') WHERE id=?",[rows[0].id]);
+      await logAudit(rows[0].id,'PASSWORD_RESET_REQUEST',`Password reset requested for ${rows[0].email}`,req);
+    }
+    res.json({message:'Request sent. The admin will set a new password for you — ask them for it in person.'});
   } catch { res.status(500).json({error:'Server error'}); }
 });
 
@@ -824,7 +865,7 @@ app.delete('/api/admin/users/:id/reject',verifyToken,adminOnly,async(req,res)=>{
 });
 app.get('/api/admin/users',verifyToken,adminOnly,async(req,res)=>{
   try {
-    const [rows]=await db.query("SELECT id,name,email,role,account_status,status,deactivated_at,created_at FROM users WHERE account_status!='pending' ORDER BY created_at DESC");
+    const [rows]=await db.query("SELECT id,name,email,role,account_status,status,deactivated_at,reset_requested_at,created_at FROM users WHERE account_status!='pending' ORDER BY created_at DESC");
     // Enrich with real-time online status from in-memory map
     const onlineEmails = new Set([...onlineUsers.values()].map(u=>u.email));
     const enriched = rows.map(u=>({
@@ -861,7 +902,8 @@ app.put('/api/admin/users/:id',verifyToken,adminOnly,async(req,res)=>{
     const [before]=await db.query('SELECT role,email FROM users WHERE id=?',[req.params.id]);
     if(!before.length) return res.status(404).json({error:'User not found'});
     const passwordChanged=!!(password&&password.trim()!=='');
-    if(passwordChanged) { const h=await bcrypt.hash(password,12); await db.query('UPDATE users SET name=?,email=?,password_hash=?,role=? WHERE id=?',[name,email,h,role,req.params.id]); }
+    // Setting a new password also answers any pending "Forgot password" request.
+    if(passwordChanged) { const h=await bcrypt.hash(password,12); await db.query('UPDATE users SET name=?,email=?,password_hash=?,role=?,reset_requested_at=NULL WHERE id=?',[name,email,h,role,req.params.id]); }
     else await db.query('UPDATE users SET name=?,email=?,role=? WHERE id=?',[name,email,role,req.params.id]);
     // Password or role change revokes the user's existing sessions
     if(passwordChanged||(role&&role!==before[0].role)) await bumpTokenVersion(parseInt(req.params.id));
@@ -1406,6 +1448,15 @@ io.on('connection', async(socket)=>{
   console.log(`🟢  ${name} connected`);
   broadcastPresence();
 
+  // Everyone who can be added to a group: approved, active, non-admin accounts.
+  // Name + email only (what the member picker shows) — no roles or status.
+  socket.on('users:directory', async()=>{
+    try {
+      const [rows]=await db.query("SELECT name,email FROM users WHERE account_status='approved' AND role!='admin' AND deactivated_at IS NULL ORDER BY name");
+      socket.emit('users:directory',rows);
+    } catch(err){ console.error('Directory error:',err.message); }
+  });
+
   // Get groups for this user
   socket.on('groups:get', async()=>{
     try {
@@ -1487,22 +1538,28 @@ io.on('connection', async(socket)=>{
         await logAudit(id,'ACCESS_DENIED',`Blocked messages:get on ${key}`,socket);
         return socket.emit('messages:history',{key,messages:[]});
       }
-      const [rows]=await db.query(`SELECT m.id,m.conv_key,m.type,m.text,m.file_name,m.file_url,m.file_size,m.file_type,m.created_at AS timestamp,u.name AS sender,u.role FROM messages m LEFT JOIN users u ON m.sender_id=u.id WHERE m.conv_key=? ORDER BY m.created_at ASC LIMIT 100`,[realKey]);
-      // Decrypt text for chat/announcement messages
-      const decrypted = rows.map(m => ({
-        ...m,
-        text: (m.type==='chat'||m.type==='announcement'||m.type==='system') ? decryptMessage(m.text) : m.text
-      }));
-      socket.emit('messages:history',{key,messages:decrypted});
+      const messages=await loadHistory(realKey);
+      socket.emit('messages:history',{key,messages,hasMore:messages.length===HISTORY_LIMIT,reads:await readsFor(realKey,id)});
     } catch(err){ console.error('Messages get error:',err.message); }
+  });
+
+  // "Load older messages": the HISTORY_LIMIT messages before `beforeId`.
+  socket.on('messages:older', async({key,beforeId}={})=>{
+    if(!Number.isInteger(beforeId)) return;
+    try {
+      const realKey=await resolveConvKey(id, email, key);
+      if(!realKey) return;
+      const messages=await loadHistory(realKey, beforeId);
+      socket.emit('messages:older',{key,messages,hasMore:messages.length===HISTORY_LIMIT});
+    } catch(err){ console.error('Messages older error:',err.message); }
   });
 
   // Send message — encrypted with AES-256-GCM
   // `ack` is optional: the offline outbox passes a callback so it learns for
   // certain whether each queued message was saved ({ok:true,msg} / {ok:false}).
-  socket.on('message:send', async({text,convKey}={},ack)=>{
+  socket.on('message:send', async({text,convKey,replyTo}={},ack)=>{
     const reply = r => { if (typeof ack === 'function') ack(r); };
-    const t=text?.trim(); if(!t||!convKey) return reply({ok:false,reason:'Empty message'});
+    const t=typeof text==='string'?text.trim():''; if(!t||!convKey) return reply({ok:false,reason:'Empty message'});
     try {
       // Refuse posting into a conversation the caller is not part of (RA 10173).
       const realKey=await resolveConvKey(id, email, convKey);
@@ -1513,9 +1570,12 @@ io.on('connection', async(socket)=>{
       }
       // Encrypt before storing in database
       const encrypted = encryptMessage(t);
-      const [result]=await db.query('INSERT INTO messages (sender_id,conv_key,type,text) VALUES (?,?,?,?)',[id,realKey,'chat',encrypted]);
+      // A reply must point at a message in the SAME conversation; anything else
+      // (another chat's id, a deleted message, junk) is dropped, not trusted.
+      const preview = Number.isInteger(replyTo) ? await replyPreview(replyTo, realKey) : null;
+      const [result]=await db.query('INSERT INTO messages (sender_id,conv_key,type,text,reply_to) VALUES (?,?,?,?,?)',[id,realKey,'chat',encrypted,preview?replyTo:null]);
       // Send plain text to clients (decrypted in transit via Socket.IO over LAN)
-      const msg={id:result.insertId,type:'chat',sender:name,role,text:t,timestamp:new Date().toISOString()};
+      const msg={id:result.insertId,type:'chat',sender:name,role,text:t,timestamp:new Date().toISOString(),reply:preview,reactions:[]};
 
       emitToConv(realKey,'message:new',msg);
       reply({ok:true,msg});
@@ -1553,6 +1613,86 @@ io.on('connection', async(socket)=>{
     } catch(err){
       console.error('Delete message error:',err.message);
       socket.emit('message:error',{msgId,convKey,reason:'Failed to delete — please try again.'});
+    }
+  });
+
+  // "Seen": the client reports the newest message it has shown in an open chat.
+  // Stored as the highest id seen (it never goes backwards), then everyone in
+  // the chat learns it so the sender's "Seen" updates live.
+  socket.on('conv:read', async({key,lastId}={})=>{
+    if(!Number.isInteger(lastId) || lastId<1) return;
+    try {
+      const realKey=await resolveConvKey(id,email,key);
+      if(!realKey) return;
+      await db.query(`INSERT INTO conv_reads (conv_key,user_id,last_read_id) VALUES (?,?,?)
+        ON CONFLICT(conv_key,user_id) DO UPDATE SET last_read_id=MAX(last_read_id,excluded.last_read_id),updated_at=datetime('now','localtime')`,[realKey,id,lastId]);
+      const [r]=await db.query('SELECT last_read_id FROM conv_reads WHERE conv_key=? AND user_id=?',[realKey,id]);
+      emitToConv(realKey,'conv:read',{userId:id,name,lastId:r[0].last_read_id},email);
+    } catch(err){ console.error('Read receipt error:',err.message); }
+  });
+
+  // Per-connection speed limit for reactions and adding members: at most
+  // ACTION_MAX in ACTION_WINDOW_MS, so a script can't flood a whole group.
+  let actionTimes=[];
+  const tooFast=()=>{
+    const now=Date.now();
+    actionTimes=actionTimes.filter(t=>now-t<ACTION_WINDOW_MS);
+    if(actionTimes.length>=ACTION_MAX) return true;
+    actionTimes=[...actionTimes,now];
+    return false;
+  };
+
+  // Emoji reaction — one per person per message. Same emoji again removes it,
+  // a different one replaces it. Everyone in the chat gets the new totals.
+  socket.on('message:react', async({id:msgId,emoji}={})=>{
+    if(!Number.isInteger(msgId) || !REACTION_EMOJIS.includes(emoji) || tooFast()) return;
+    try {
+      const [rows]=await db.query('SELECT conv_key FROM messages WHERE id=?',[msgId]);
+      if(!rows.length) return;
+      const convKey=rows[0].conv_key;
+      // Same membership gate as reading: you can only react inside your own chats.
+      const clientKey=convKey.startsWith('private_') ? 'private_'+privatePeer(convKey,email) : convKey;
+      if(!privatePeerOk(convKey,email) || !await resolveConvKey(id,email,clientKey)) return;
+      const [mine]=await db.query('SELECT emoji FROM message_reactions WHERE message_id=? AND user_id=?',[msgId,id]);
+      if(mine.length && mine[0].emoji===emoji) await db.query('DELETE FROM message_reactions WHERE message_id=? AND user_id=?',[msgId,id]);
+      else await db.query("INSERT OR REPLACE INTO message_reactions (message_id,user_id,emoji,created_at) VALUES (?,?,?,datetime('now','localtime'))",[msgId,id,emoji]);
+      const all=await reactionsFor([msgId]);
+      emitToConv(convKey,'message:reactions',{id:msgId,reactions:all[msgId]||[]});
+    } catch(err){ console.error('React error:',err.message); }
+  });
+
+  // Add people to an existing group. Any member may add (same rule as creating
+  // a group with them); only approved, non-admin accounts can be added.
+  socket.on('group:add-members', async({groupId,members}={})=>{
+    if(!Number.isInteger(groupId) || !Array.isArray(members) || !members.length) return;
+    if(tooFast()) return socket.emit('group:error',{reason:'Too many requests — wait a few seconds and try again.'});
+    try {
+      if(!await resolveConvKey(id,email,'group_'+groupId)) return socket.emit('group:error',{reason:'You are not a member of this group.'});
+      const added=[];
+      for(const m of members.slice(0,50)){
+        if(typeof m!=='string') continue;
+        const [u]=await db.query("SELECT id,name,email FROM users WHERE LOWER(email)=LOWER(?) AND account_status='approved' AND role!='admin' AND deactivated_at IS NULL",[m]);
+        if(!u.length) continue;
+        const [r]=await db.query('INSERT OR IGNORE INTO group_members (group_id,user_id) VALUES (?,?)',[groupId,u[0].id]);
+        if(r.affectedRows) added.push(u[0]);
+      }
+      if(!added.length) return socket.emit('group:error',{reason:'Those people are already in the group.'});
+      const [g]=await db.query('SELECT g.id,g.name,g.created_at,g.created_by,u.name AS created_by_name FROM groups_table g LEFT JOIN users u ON g.created_by=u.id WHERE g.id=?',[groupId]);
+      const key='group_'+groupId;
+      // New members join the room live and see the group appear in their list.
+      const addedEmails=added.map(u=>u.email);
+      for(const [sid,u] of onlineUsers.entries()){
+        if(addedEmails.includes(u.email)){ io.to(sid).socketsJoin(key); io.to(sid).emit('groups:list',g); }
+      }
+      // A system line in the chat tells everyone who was added and by whom.
+      const note=`${name} added ${added.map(u=>u.name).join(', ')}`;
+      const [ins]=await db.query('INSERT INTO messages (sender_id,conv_key,type,text) VALUES (?,?,?,?)',[id,key,'system',encryptMessage(note)]);
+      emitToConv(key,'message:new',{id:ins.insertId,type:'system',sender:name,role,text:note,timestamp:new Date().toISOString(),reactions:[]});
+      await logAudit(id,'GROUP_ADD_MEMBERS',`${note} (group ${groupId})`,socket);
+      socket.emit('group:members-added',{groupId,names:added.map(u=>u.name)});
+    } catch(err){
+      console.error('Add members error:',err.message);
+      socket.emit('group:error',{reason:'Could not add members — please try again.'});
     }
   });
 
@@ -1771,6 +1911,78 @@ async function resolveConvKey(userId, myEmail, convKey) {
   }
   return null;
 }
+// A stored private key is usable by this user only if they are one side of it.
+function privatePeerOk(realKey, myEmail) {
+  return !realKey.startsWith('private_') || privatePeer(realKey, myEmail) !== null;
+}
+
+// ── Replies & reactions ───────────────────────────────────────────────────
+const HISTORY_LIMIT = 100;                                // newest N messages per chat
+const REACTION_EMOJIS = ['👍','❤️','😂','😮','😢','🙏']; // the only emojis accepted
+const REPLY_PREVIEW_LEN = 120;
+const ACTION_MAX = 10, ACTION_WINDOW_MS = 5000;           // reactions/add-members per socket
+
+// The short quote shown above a reply: who wrote the original and its start.
+// Returns null if that message is gone or belongs to another conversation.
+async function replyPreview(msgId, realKey) {
+  const [rows] = await db.query(
+    'SELECT m.id,m.type,m.text,m.file_name,u.name AS sender FROM messages m LEFT JOIN users u ON m.sender_id=u.id WHERE m.id=? AND m.conv_key=?',
+    [msgId, realKey]);
+  if (!rows.length) return null;
+  const m = rows[0];
+  const text = ['chat','announcement','system'].includes(m.type) ? decryptMessage(m.text)
+    : m.type==='image' ? '📷 Image' : m.type==='voice' ? '🎙️ Voice message' : '📎 '+(m.file_name||'File');
+  return { id:m.id, sender:m.sender||'Unknown', text:String(text).slice(0,REPLY_PREVIEW_LEN) };
+}
+
+// One page of a conversation, oldest-first: the newest HISTORY_LIMIT messages,
+// or the ones before `beforeId` for "Load older messages". (Ordering by id: the
+// old "ORDER BY created_at ASC LIMIT 100" returned the OLDEST 100, so newer
+// messages vanished once a chat passed 100 — the "messages disappear" report.)
+async function loadHistory(realKey, beforeId = null) {
+  const [rows] = await db.query(`SELECT * FROM (
+      SELECT m.id,m.conv_key,m.type,m.text,m.file_name,m.file_url,m.file_size,m.file_type,m.reply_to,m.created_at AS timestamp,u.name AS sender,u.role
+        FROM messages m LEFT JOIN users u ON m.sender_id=u.id
+       WHERE m.conv_key=? ${beforeId ? 'AND m.id<?' : ''} ORDER BY m.id DESC LIMIT ${HISTORY_LIMIT}
+    ) ORDER BY id ASC`, beforeId ? [realKey, beforeId] : [realKey]);
+  const reactions = await reactionsFor(rows.map(m => m.id));
+  const out = [];
+  for (const m of rows) {
+    out.push({
+      ...m,
+      text: ['chat','announcement','system'].includes(m.type) ? decryptMessage(m.text) : m.text,
+      reply: m.reply_to ? await replyPreview(m.reply_to, realKey) : null,
+      reactions: reactions[m.id] || []
+    });
+  }
+  return out;
+}
+
+// Who has seen how far in a chat (everyone except the asker): [{userId,name,lastId}].
+async function readsFor(realKey, exceptUserId) {
+  const [rows] = await db.query(
+    `SELECT r.user_id AS userId,u.name,r.last_read_id AS lastId FROM conv_reads r JOIN users u ON u.id=r.user_id
+      WHERE r.conv_key=? AND r.user_id!=?`, [realKey, exceptUserId]);
+  return rows;
+}
+
+// Reactions for many messages in one query: { msgId: [{emoji,count,names,ids}] }.
+// `ids` lets each viewer highlight THEIR reaction (names can repeat).
+async function reactionsFor(ids) {
+  if (!ids.length) return {};
+  const [rows] = await db.query(
+    `SELECT r.message_id,r.emoji,r.user_id,u.name FROM message_reactions r JOIN users u ON u.id=r.user_id
+      WHERE r.message_id IN (${ids.map(()=>'?').join(',')}) ORDER BY r.created_at`, ids);
+  const out = {};
+  for (const r of rows) {
+    const list = out[r.message_id] ||= [];
+    let e = list.find(x => x.emoji === r.emoji);
+    if (!e) list.push(e = { emoji:r.emoji, count:0, names:[], ids:[] });
+    e.count++; e.names.push(r.name); e.ids.push(r.user_id);
+  }
+  return out;
+}
+
 async function canAccessConv(userId, convKey, myEmail) {
   return (await resolveConvKey(userId, myEmail, convKey)) !== null;
 }

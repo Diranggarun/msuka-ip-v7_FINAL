@@ -1228,7 +1228,41 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
 .msg-actions{display:flex;gap:4px;opacity:0;transition:opacity .15s;flex-shrink:0;}
 .msg-row:hover .msg-actions,.msg-actions:focus-within{opacity:1;}
 .msg-action-btn{width:26px;height:26px;border:none;background:#fff;color:var(--text-mid);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.12);transition:color .15s,background .15s,transform .12s;padding:0;}
-.msg-action-btn:hover{color:#c93131;background:#fff;transform:scale(1.08);}
+.msg-action-btn:hover{color:var(--maroon);background:#fff;transform:scale(1.08);}
+.msg-action-btn.del:hover{color:#c93131;}
+.msg-row.show-actions .msg-actions{opacity:1;}
+@media (hover:none){ .msg-actions{pointer-events:none;} .msg-row.show-actions .msg-actions{pointer-events:auto;} .msg-action-btn{width:34px;height:34px;} }
+/* Reply quote above a bubble, and the bar above the composer while replying. */
+.reply-quote{display:flex;flex-direction:column;gap:1px;max-width:100%;text-align:left;font:inherit;cursor:pointer;margin:0 0 3px;padding:5px 10px;border:none;border-radius:10px;background:rgba(var(--primary-rgb),.07);box-shadow:inset 3px 0 0 var(--accent);color:var(--text-mid);font-size:.74rem;line-height:1.3;}
+.reply-quote b{color:var(--maroon);font-size:.7rem;}
+.reply-quote span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px;}
+#reply-bar{display:flex;align-items:center;gap:10px;margin:0 1rem;padding:8px 12px;background:#fff;border-radius:12px 12px 0 0;box-shadow:inset 3px 0 0 var(--accent),var(--shadow-sm);font-size:.8rem;}
+#reply-bar[hidden]{display:none;}
+#reply-bar .rb-text{flex:1;min-width:0;display:flex;flex-direction:column;}
+#reply-bar .rb-text b{color:var(--maroon);font-size:.74rem;}
+#reply-bar .rb-text span{color:var(--text-mid);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#reply-bar button{width:32px;height:32px;border:none;border-radius:50%;background:var(--bg-alt);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+#reply-bar button svg{width:16px;height:16px;stroke:var(--text-mid);fill:none;stroke-width:2.2;stroke-linecap:round;}
+/* Reactions: chips under the bubble; a small emoji row when picking. */
+.reactions{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px;}
+.reactions:empty{display:none;}
+.react-chip{font:inherit;font-size:.76rem;line-height:1;padding:4px 8px;border-radius:999px;border:1px solid var(--gray-200);background:#fff;color:var(--text);cursor:pointer;}
+.react-chip.mine{border-color:var(--maroon);background:rgba(var(--primary-rgb),.08);font-weight:700;}
+.react-pick{display:flex;gap:2px;margin-top:4px;padding:4px;background:#fff;border-radius:999px;box-shadow:var(--shadow-md);}
+.react-pick button{font-size:1.25rem;width:38px;height:38px;border:none;background:none;border-radius:50%;cursor:pointer;}
+.react-pick button:hover,.react-pick button:focus-visible{background:var(--bg-alt);}
+.msg-row.flash .bubble{animation:msgFlash 1.2s var(--ease-out);}
+@keyframes msgFlash{0%,40%{box-shadow:0 0 0 3px var(--accent);}100%{box-shadow:0 0 0 0 transparent;}}
+@media (prefers-reduced-motion:reduce){ .msg-row.flash .bubble{animation:none;outline:3px solid var(--accent);} }
+.mc-online{color:#1D7A55;font-weight:600;font-size:.7rem;}
+.msg-seen{font-size:.62rem;font-weight:700;color:var(--maroon);padding:0 6px;margin-top:1px;}
+.load-older{display:block;margin:.4rem auto 1rem;padding:.5rem 1.1rem;border:1px solid var(--gray-200);border-radius:999px;background:#fff;color:var(--maroon);font:inherit;font-size:.8rem;font-weight:700;cursor:pointer;}
+.load-older:hover{background:var(--bg-alt);}
+.load-older:disabled{opacity:.6;cursor:default;}
+.voice-dl{font-size:.8rem;font-weight:700;color:var(--maroon);text-decoration:underline;}
+.head-signout{display:none;width:40px;height:40px;border:none;border-radius:12px;background:rgba(255,255,255,.12);color:#fff;cursor:pointer;align-items:center;justify-content:center;flex-shrink:0;}
+.head-signout svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+@media (max-width:768px){ .head-signout{display:flex;} #rail-signout{display:none;} }
 .msg-action-btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
 .msg-action-btn svg{width:14px;height:14px;display:block;}
 
@@ -1497,8 +1531,20 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
 /* ── Create Group modal ──────────────────────────────────────────────────── */
 /* The blur drops the maroon page behind into soft focus so the cream card is the
    only thing that reads sharply. */
-#modal-overlay,#mic-help-overlay{display:none;position:fixed;inset:0;background:rgba(var(--primary-dark-rgb),.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:400;align-items:center;justify-content:center;padding:20px;}
-#modal-overlay.open,#mic-help-overlay.open{display:flex;}
+#modal-overlay,#mic-help-overlay,#app-dialog{display:none;position:fixed;inset:0;background:rgba(var(--primary-dark-rgb),.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:400;align-items:center;justify-content:center;padding:20px;}
+#modal-overlay.open,#mic-help-overlay.open,#app-dialog.open{display:flex;}
+/* App dialog: replaces the browser's alert()/confirm() boxes (U2). */
+#app-dialog{z-index:600;}
+#app-dialog .modal{max-width:380px;}
+#app-dialog-msg{white-space:pre-line;}
+#app-dialog .btn-confirm.danger{background:var(--primary);}
+/* In-app image viewer (B3): opens on the page instead of a new tab. */
+#img-viewer{display:none;position:fixed;inset:0;z-index:650;background:rgba(0,0,0,.88);align-items:center;justify-content:center;padding:16px;}
+#img-viewer.open{display:flex;}
+#img-viewer img{max-width:100%;max-height:calc(100% - 64px);object-fit:contain;border-radius:8px;}
+#img-viewer .iv-bar{position:absolute;top:12px;right:12px;display:flex;gap:8px;}
+#img-viewer .iv-bar a,#img-viewer .iv-bar button{width:44px;height:44px;border-radius:50%;border:none;background:rgba(255,255,255,.16);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+#img-viewer .iv-bar svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
 /* Numbered steps in the microphone help modal. */
 .mic-steps{margin:0 0 18px;padding-left:1.3rem;color:var(--text-mid);font-size:.9rem;line-height:1.65;}
 .mic-steps b{color:var(--maroon-dark);}
@@ -1863,6 +1909,18 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
   #emoji-btn{display:none;}
   #msg-input{min-width:0;padding:.5rem .55rem;}
 }
+/* Tablets (769–1100px, e.g. iPad Air at 820px): list + chat sit side by side,
+   and the desktop composer left the text field ~100–150px wide ("input not
+   clearly visible on tablet"). A narrower list, the phone-sized 44px buttons
+   and wider bubbles give the field ~280px+ while keeping both columns. */
+@media (min-width:769px) and (max-width:1100px){
+  .left-panel{width:250px;}
+  .input-row{margin:0 8px 8px;padding:6px 8px;gap:6px;min-height:0;border-radius:28px;}
+  .attach-btn,#ptt-btn{width:44px;height:44px;}
+  .send-btn{width:48px;height:48px;}
+  #emoji-btn{display:none;}
+  .msg-content{max-width:80%;}
+}
 </style>
 </head>
 <body>
@@ -1921,7 +1979,8 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
       </div>
       <button class="btn btn-login" onclick="login()"><span>Sign In</span><span class="btn-arrow"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></button>
       <div class="amsg" id="login-msg"></div>
-      <p class="adivider" style="margin-top:.8rem;">Don't have an account? <a href="#" onclick="switchAuthTab('register')">Register here</a></p>
+      <p class="adivider" style="margin-top:.6rem;"><a href="#" onclick="forgotPassword();return false;">Forgot password?</a></p>
+      <p class="adivider" style="margin-top:.4rem;">Don't have an account? <a href="#" onclick="switchAuthTab('register')">Register here</a></p>
     </div>
     <div class="tab-body" id="tab-register" style="display:none;">
       <div class="form-group">
@@ -2029,7 +2088,7 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
       <span class="ricon"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>
       <span class="rlabel">Feedback</span>
     </button>
-    <button class="rail-btn" onclick="logout()" title="Sign Out">
+    <button class="rail-btn" id="rail-signout" onclick="confirmSignOut()" title="Sign Out">
       <span class="ricon"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg></span>
       <span class="rlabel">Sign Out</span>
     </button>
@@ -2051,6 +2110,9 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
         <div class="left-header-titles">
           <h2>Messages</h2>
         </div>
+        <!-- Phones: Sign Out lives here, top right, away from the bottom tabs
+             where it was tapped by accident. Computers keep it in the rail. -->
+        <button class="head-signout" onclick="confirmSignOut()" title="Sign out" aria-label="Sign out"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg></button>
       </div>
       <div class="user-badge" id="user-badge-bar" style="display:none;">
         <div class="user-badge-avatar" id="user-badge-av">?</div>
@@ -2170,18 +2232,23 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
         </div>
         <div class="chat-header-actions">
           <button class="header-action-btn" id="call-btn" onclick="startCall(conversations[activeConvKey]?.email)" title="Voice Call" aria-label="Voice call" style="display:none;"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.34 1.9.65 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.31 1.85.53 2.81.65A2 2 0 0 1 22 16.92z"/></svg></button>
+          <button class="header-action-btn" id="add-members-btn" onclick="openAddMembersModal()" title="Add members" aria-label="Add members" style="display:none;"><svg viewBox="0 0 24 24"><path d="M15 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></button>
           <button class="header-action-btn" id="group-call-btn" onclick="startGroupCall()" title="Group Call" style="display:none;"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5"/><path d="M15 19c0-2 2-3.5 4-3.5"/></svg></button>
         </div>
       </div>
       <div id="messages-area"></div>
       <div id="typing-row"></div>
+      <div id="reply-bar" hidden>
+        <div class="rb-text"><b id="reply-to-name"></b><span id="reply-to-text"></span></div>
+        <button type="button" onclick="cancelReply()" title="Cancel reply" aria-label="Cancel reply"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
       <div class="input-row" style="position:relative;">
         <div class="emoji-picker" id="emoji-picker">
           <div class="emoji-search"><input type="text" id="emoji-search" aria-label="Search emoji" placeholder="Search emoji" oninput="renderEmojis()"/></div>
           <div class="emoji-grid" id="emoji-grid"></div>
           <div class="emoji-tabs" id="emoji-tabs"></div>
         </div>
-        <input type="file" id="file-input" aria-label="Attach a file or photo" accept="image/*,.pdf,.doc,.docx" style="display:none" onchange="uploadFile()"/>
+        <input type="file" id="file-input" aria-label="Attach a file or photo" accept="image/jpeg,image/png,image/gif,image/webp,.pdf,.doc,.docx" style="display:none" onchange="uploadFile()"/>
         <button class="attach-btn" id="attach-btn" onclick="document.getElementById('file-input').click()" title="Attach file or photo"><svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></button>
         <!-- The ONLY markup added in this pass: one wrapper so the textarea and
              the emoji button share a single inner pill, which is what makes the
@@ -2329,17 +2396,38 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
   </div>
 </div>
 
+<!-- APP DIALOG (replaces alert/confirm) -->
+<div id="app-dialog">
+  <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="app-dialog-title" aria-describedby="app-dialog-msg">
+    <h3 id="app-dialog-title"></h3>
+    <p class="modal-sub" id="app-dialog-msg"></p>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="app-dialog-cancel">Cancel</button>
+      <button class="btn-confirm" id="app-dialog-ok">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMAGE VIEWER -->
+<div id="img-viewer" role="dialog" aria-modal="true" aria-label="Image" onclick="if(event.target===this)closeImageViewer()">
+  <div class="iv-bar">
+    <a id="img-viewer-dl" download title="Download image" aria-label="Download image"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a>
+    <button onclick="closeImageViewer()" title="Close" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+  <img id="img-viewer-img" alt=""/>
+</div>
+
 <!-- NEW GROUP MODAL -->
 <div id="modal-overlay">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal-badge"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.5"/><path d="M2.5 19c0-3.2 3-5.2 6.5-5.2s6.5 2 6.5 5.2"/><path d="M16 19c0-2.1 2-3.7 4.2-3.7"/></svg></div>
     <button class="modal-close" onclick="closeModal()" title="Close" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3 id="modal-title">Create Group Chat</h3>
-    <p class="modal-sub">Start a new group conversation with your selected members.</p>
+    <p class="modal-sub" id="modal-sub">Start a new group conversation with your selected members.</p>
     <div class="modal-orn"><i>&#9670;</i></div>
 
-    <label class="field-label" for="group-name-input">Group name</label>
-    <div class="field-wrap">
+    <label class="field-label" for="group-name-input" id="group-name-label">Group name</label>
+    <div class="field-wrap" id="group-name-wrap">
       <svg class="field-ico" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.5"/><path d="M2.5 19c0-3.2 3-5.2 6.5-5.2s6.5 2 6.5 5.2"/><path d="M16 19c0-2.1 2-3.7 4.2-3.7"/></svg>
       <input type="text" id="group-name-input" placeholder="Enter group name (e.g. BSIT 3-A)"/>
     </div>
@@ -2354,13 +2442,13 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
          syncMemberChips() rebuilds this from whatever is currently checked. -->
     <div class="chip-row" id="member-chips"></div>
     <div class="members-list" id="members-checklist"></div>
-    <div class="modal-hint">
+    <div class="modal-hint" id="modal-hint">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>
-      You can add members later after creating the group.
+      You can add members later from the group chat's header.
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-      <button class="btn-confirm" onclick="createGroup()"><svg viewBox="0 0 24 24"><path d="M15 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>Create Group</button>
+      <button class="btn-confirm" onclick="createGroup()"><svg viewBox="0 0 24 24"><path d="M15 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg><span id="modal-confirm-text">Create Group</span></button>
     </div>
   </div>
 </div>
@@ -2489,6 +2577,19 @@ function showAuthMsg(id, type, text) {
   el.className=`amsg ${type}`; el.textContent=text; el.style.display='block';
 }
 
+// "Forgot password": the app has no email on an offline LAN, so this flags the
+// account for the admin, who sets a new password and tells the student.
+async function forgotPassword() {
+  const email = document.getElementById('login-email').value.trim();
+  if (!email) return showAuthMsg('login-msg','error','Type your school email above first, then tap "Forgot password?".');
+  if (!await appDialog({ title:'Reset your password?', message:`We will ask the admin to set a new password for ${email}. You will get it from them in person.`, ok:'Send request', cancel:'Cancel' })) return;
+  try {
+    const res = await fetch('/api/forgot-password', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email }) });
+    const data = await res.json().catch(() => ({}));
+    showAuthMsg('login-msg', res.ok ? 'success' : 'error', data.message || data.error || 'Request failed.');
+  } catch { showAuthMsg('login-msg','error','Cannot connect to the server. Check your connection and try again.'); }
+}
+
 async function login() {
   const email    = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
@@ -2501,7 +2602,7 @@ async function login() {
     currentUser = { token:data.token, name:data.name, role:data.role, email, agreed:data.agreed };
     try{ sessionStorage.setItem('msuka_user', JSON.stringify(currentUser)); }catch{}
     launchApp(currentUser);
-  } catch { showAuthMsg('login-msg','error','Cannot connect to server. Is XAMPP running?'); }
+  } catch { showAuthMsg('login-msg','error','Cannot connect to the server. Check your connection and try again.'); }
 }
 
 // ══════════════════════════════════════════
@@ -2735,6 +2836,7 @@ document.addEventListener('keydown',e=>{
 // ══════════════════════════════════════════
 let socket, currentUser = null;
 let onlineUsers = [], conversations = {}, activeConvKey = null, typingTimeout;
+let drafts = {}; // convKey -> unsent text, so switching chats never carries text over
 let localStream=null, peerConnection=null, currentCallId=null, currentCallTarget=null;
 let callTimerInterval=null, callSeconds=0, isMuted=false;
 let groupStream=null, groupPeers={}, currentRoomId=null, isGroupMuted=false;
@@ -2751,6 +2853,42 @@ function fileSrc(u){return u&&u.startsWith('/uploads/')?`${u}?token=${encodeURIC
 // recipient's browser (stored XSS — OWASP A03). Applied to message text, sender
 // names, and uploaded file names throughout appendMessage.
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+// ── App dialog: our own styled replacement for alert() and confirm() ───────
+// Returns a Promise: appConfirm resolves true/false, appAlert resolves when
+// closed. Uses textContent, so messages can never inject HTML.
+function appDialog({title, message, ok='OK', cancel=null, danger=false}){
+  return new Promise(resolve=>{
+    const box=document.getElementById('app-dialog');
+    const okBtn=document.getElementById('app-dialog-ok'), noBtn=document.getElementById('app-dialog-cancel');
+    document.getElementById('app-dialog-title').textContent=title;
+    document.getElementById('app-dialog-msg').textContent=message||'';
+    okBtn.textContent=ok; okBtn.classList.toggle('danger',danger);
+    noBtn.style.display=cancel?'':'none'; noBtn.textContent=cancel||'';
+    const done=answer=>{ box.classList.remove('open'); okBtn.onclick=noBtn.onclick=box.onkeydown=null; resolve(answer); };
+    okBtn.onclick=()=>done(true);
+    noBtn.onclick=()=>done(false);
+    box.onkeydown=e=>{ if(e.key==='Escape') done(false); };
+    box.classList.add('open');
+    (cancel?noBtn:okBtn).focus(); // safe default: Cancel for risky actions
+  });
+}
+const appAlert  =(message,title='Notice')=>appDialog({title,message});
+const appConfirm=(message,title,ok)=>appDialog({title,message,ok,cancel:'Cancel',danger:true});
+
+// ── Image viewer: full-screen on the page (a new tab could land on a
+// warning page or lose the login in installed/in-app browsers). ──────────
+function openImageViewer(src,name){
+  document.getElementById('img-viewer-img').src=src;
+  document.getElementById('img-viewer-img').alt=name||'Image';
+  const dl=document.getElementById('img-viewer-dl'); dl.href=src; dl.download=name||'image';
+  document.getElementById('img-viewer').classList.add('open');
+}
+function closeImageViewer(){
+  document.getElementById('img-viewer').classList.remove('open');
+  document.getElementById('img-viewer-img').removeAttribute('src');
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeImageViewer(); });
 
 /* ── Sound notifications (Web Audio API — no external files) ─────────── */
 let _audioCtx = null;
@@ -2829,7 +2967,7 @@ function initSocket() {
     // After a Wi-Fi drop Socket.IO retries every few seconds; an alert per retry
     // would block the page. The outbox already shows "Waiting for connection…".
     if (everConnected) return;
-    alert('Connection error: '+err.message);
+    appAlert('Connection error: '+err.message,'Connection problem');
   });
   // The server only force-disconnects a socket when it revokes the user's
   // tokens (logout elsewhere, password change, account removed).
@@ -2856,13 +2994,39 @@ function initSocket() {
     if (conversations[activeConvKey]?.type === 'private') setPrivateSubtitle(conversations[activeConvKey]);
   });
 
-  socket.on('messages:history', ({key, messages}) => {
+  socket.on('messages:history', ({key, messages, hasMore, reads}) => {
     if (!conversations[key]) return;
     conversations[key].messages = messages;
-    if (activeConvKey===key) renderMessages(key);
+    conversations[key].hasMore = !!hasMore;
+    conversations[key].reads = Object.fromEntries((reads||[]).map(r => [r.userId, r]));
+    if (activeConvKey===key) { renderMessages(key); markRead(key); }
     if (key==='group_general') updateGlobalPreview();
     else if (key.startsWith('group_')) { if(currentNav==='groups') renderGroupsList(); }
     else { if(currentNav==='private') renderPrivateList(); }
+  });
+
+  // "Load older messages": put the older page in front and keep the reader's
+  // place (the scroll position is measured from the bottom, which doesn't move).
+  socket.on('messages:older', ({key, messages, hasMore}) => {
+    const conv = conversations[key];
+    if (!conv) return;
+    const have = new Set(conv.messages.map(m => m.id));
+    conv.messages = [...messages.filter(m => !have.has(m.id)), ...conv.messages];
+    conv.hasMore = !!hasMore;
+    conv.loadingOlder = false;
+    if (activeConvKey !== key) return;
+    const area = document.getElementById('messages-area');
+    const fromBottom = area.scrollHeight - area.scrollTop;
+    renderMessages(key, true);
+    area.scrollTop = area.scrollHeight - fromBottom;
+  });
+
+  // Someone else in a chat has seen up to message `lastId`.
+  socket.on('conv:read', ({convKey, userId, name, lastId}) => {
+    const conv = conversations[convKey];
+    if (!conv || userId === myUserId()) return;
+    conv.reads = { ...(conv.reads||{}), [userId]: { userId, name, lastId } };
+    if (activeConvKey === convKey) updateSeen(convKey);
   });
 
   socket.on('message:new', msg => {
@@ -2880,22 +3044,26 @@ function initSocket() {
     if (!isFromMe && msg.type !== 'system') {
       if (!isActive) {
         // Show toast popup
-        const preview  =msg.type==='image'?'📷 Sent an image':msg.type==='file'?`📎 ${msg.file_name}`:msg.type==='voice'?'🎙️ Voice message':msg.text;
-        const toastType = msg.type==='announcement' ? 'announce' : msg.type==='image' ? 'image' : msg.type==='file' ? 'file' : msg.type==='voice' ? 'voice' : 'msg';
-        const title    = msg.type==='announcement' ? `📢 Announcement from ${msg.sender}` : `${msg.sender}`;
-        showToast(toastType, title, preview, () => openConversation(key));
-        // Browser notification
-        showBrowserNotif(`MSUkaIP — ${msg.sender}`, preview, () => openConversation(key));
+        // ONE notification per chat, not one per message/photo/voice clip:
+        // in a group the title is the group and the line says who sent what,
+        // and a newer message updates that chat's toast/entry instead of stacking.
+        const what     =msg.type==='image'?'📷 Sent an image':msg.type==='file'?`📎 ${msg.file_name}`:msg.type==='voice'?'🎙️ Voice message':msg.text;
+        const isGroupChat = !key.startsWith('private_');
+        const preview  = isGroupChat ? `${msg.sender}: ${what}` : what;
+        const toastType = msg.type==='announcement' ? 'announce' : 'msg';
+        const title    = msg.type==='announcement' ? `📢 Announcement from ${msg.sender}` : isGroupChat ? conversations[key].name : msg.sender;
+        showToast(toastType, title, preview, () => openConversation(key), key);
+        // Browser notification (tag = chat, so the phone replaces it, too)
+        showBrowserNotif(`MSUkaIP — ${title}`, preview, () => openConversation(key), key);
         playNotifSound();
         refreshUnreadIndicator();
         // Add to notifications list (clickable history)
-        const icon = msg.type==='announcement'?'📢':msg.type==='image'?'📷':msg.type==='file'?'📎':msg.type==='voice'?'🎙️':'💬';
-        pushNotif({ icon, title, msg: preview, convKey: key });
+        pushNotif({ icon: msg.type==='announcement'?'📢':'💬', title, msg: preview, convKey: key });
       }
       conversations[key].unread=(conversations[key].unread||0)+1;
     }
 
-    if (activeConvKey===key) appendMessage(msg,key,true);
+    if (activeConvKey===key) { appendMessage(msg,key,true); updateSeen(key); markRead(key); }
     // Refresh correct section
     if (key === 'group_general') updateGlobalPreview();
     else if (key.startsWith('group_')) { if (currentNav==='groups') renderGroupsList(); }
@@ -2928,6 +3096,20 @@ function initSocket() {
     if (reason) showToast('msg', 'Message error', reason);
   });
 
+  socket.on('users:directory', list => {
+    directory = Array.isArray(list) ? list : [];
+    if (document.getElementById('modal-overlay').classList.contains('open')) renderMemberChecklist();
+  });
+  socket.on('group:members-added', ({names}) => showToast('system','Members added',`${names.join(', ')} can now see this group.`));
+  socket.on('group:error', ({reason}) => appAlert(reason||'Something went wrong.','Group'));
+  socket.on('message:reactions', ({id, convKey, reactions}) => {
+    const m = conversations[convKey]?.messages?.find(x => x.id === id);
+    if (m) m.reactions = reactions;
+    if (activeConvKey === convKey) {
+      const row = document.querySelector(`#messages-area .msg-row[data-msg-id="${id}"]`);
+      if (row) renderReactions(row, reactions);
+    }
+  });
   socket.on('groups:list', groups => {
     groups.forEach(g=>{
       const key='group_'+g.id;
@@ -2980,7 +3162,7 @@ function initSocket() {
   socket.on('webrtc:offer', async({offer,fromSocketId})=>{ await startWebRTC(fromSocketId,false); await peerConnection.setRemoteDescription(offer); const a=await peerConnection.createAnswer(); await peerConnection.setLocalDescription(a); socket.emit('webrtc:answer',{targetSocketId:fromSocketId,answer:a}); });
   socket.on('webrtc:answer',       async({answer})=>await peerConnection?.setRemoteDescription(answer));
   socket.on('webrtc:ice-candidate',({candidate})=>peerConnection?.addIceCandidate(candidate));
-  socket.on('room:error',      ({reason})=>{ alert(reason||'Cannot join this call.'); leaveGroupCall(); });
+  socket.on('room:error',      ({reason})=>{ appAlert(reason||'Cannot join this call.','Group call'); leaveGroupCall(); });
   socket.on('room:members',    async({members})=>{ for(const m of members) await createGroupPeer(m.socketId,m.name,true); });
   socket.on('room:peer-joined',async({socketId,name})=>{ addPeerCard(socketId,name); await createGroupPeer(socketId,name,false); });
   socket.on('room:peer-left',  ({socketId})=>{ groupPeers[socketId]?.close(); delete groupPeers[socketId]; document.getElementById(`peer-${socketId}`)?.remove(); });
@@ -3442,14 +3624,14 @@ function updateGlobalPreview() {
 // ── Delete group ──────────────────────────────────────────────────────────────
 async function deleteGroup(e, key, groupId) {
   e.stopPropagation();
-  if (!confirm('Delete this group? This cannot be undone.')) return;
+  if (!await appConfirm('This cannot be undone.','Delete this group?','Delete')) return;
   try {
     const res = await fetch(`/api/groups/${groupId}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${currentUser.token}` }
     });
     const d = await res.json();
-    if (!res.ok) return alert(d.error);
+    if (!res.ok) return appAlert(d.error,'Could not delete group');
     delete conversations[key];
     if (activeConvKey === key) {
       activeConvKey = null;
@@ -3457,7 +3639,7 @@ async function deleteGroup(e, key, groupId) {
       document.getElementById('empty-state').style.display = 'flex';
     }
     renderGroupsList();
-  } catch { alert('Server error'); }
+  } catch { appAlert('Server error — please try again.','Could not delete group'); }
 }
 
 // ══════════════════════════════════════════
@@ -3468,7 +3650,14 @@ async function deleteGroup(e, key, groupId) {
 // desktop widths — the CSS that reads it lives inside the ≤768px query.
 function closeConversation(){
   document.getElementById('app').classList.remove('chat-open');
+  // Drop the "chat open" history entry's meaning (see openConversation).
+  if (history.state?.chat) history.replaceState({ app:true }, '');
 }
+// Phone Back: an open chat goes back to the list instead of leaving the app
+// for the landing page. openConversation() adds a history entry for this.
+window.addEventListener('popstate', () => {
+  if (document.getElementById('app')?.classList.contains('chat-open')) closeConversation();
+});
 
 function openConversation(key) {
   // A private chat with someone you have never messaged has no entry yet.
@@ -3477,6 +3666,17 @@ function openConversation(key) {
   if (!conversations[key] && key && key.startsWith('private_')) conversations[key] = newPrivateConv(key.slice('private_'.length));
   const conv=conversations[key];
   if (!conv) return;
+  // Each chat keeps its own unsent text: park the old chat's draft, bring
+  // back this chat's (before, the text box carried over to the next chat).
+  const input=document.getElementById('msg-input');
+  if (activeConvKey && activeConvKey!==key) {
+    if (input.value.trim()) drafts[activeConvKey]=input.value; else delete drafts[activeConvKey];
+    cancelReply();
+  }
+  if (activeConvKey!==key) input.value=drafts[key]||'';
+  // One history entry while a chat is open, so the phone's Back closes it.
+  if (history.state?.chat) history.replaceState({ chat:key }, '');
+  else history.pushState({ chat:key }, '');
   activeConvKey=key;
   document.getElementById('app').classList.add('chat-open');
   conv.unread=0;
@@ -3504,10 +3704,12 @@ function openConversation(key) {
   // CICS Chat is a group by key but is not callable — see the room:join
   // guard in server.js for why (mesh WebRTC does not scale to everyone).
   document.getElementById('group-call-btn').style.display=(isGroup && !isGlobal)?'flex':'none';
+  document.getElementById('add-members-btn').style.display=(isGroup && !isGlobal)?'flex':'none';
   document.getElementById('empty-state').style.display='none';
   document.getElementById('chat-panel').classList.add('active');
   if(!conv.messages||conv.messages.length===0) socket.emit('messages:get',{key});
   renderMessages(key);
+  markRead(key);
   // Refresh the correct section
   if (isGlobal) updateGlobalPreview();
   else if (isGroup) renderGroupsList();
@@ -3515,12 +3717,57 @@ function openConversation(key) {
   document.getElementById('msg-input').focus();
 }
 
-function renderMessages(key) {
+function renderMessages(key, keepScroll) {
   const area=document.getElementById('messages-area');
   area.innerHTML='';
+  // Only the newest 100 are loaded at first; older ones come on request.
+  if (conversations[key]?.hasMore) {
+    const more=document.createElement('button');
+    more.type='button'; more.className='load-older'; more.textContent='Load older messages';
+    more.onclick=()=>loadOlder(key, more);
+    area.appendChild(more);
+  }
   (conversations[key]?.messages||[]).forEach(msg=>appendMessage(msg,key));
   outbox.filter(m=>m.convKey===key).forEach(appendOutboxRow); // still-waiting messages go last
-  area.scrollTop=area.scrollHeight;
+  updateSeen(key);
+  if (!keepScroll) area.scrollTop=area.scrollHeight;
+}
+
+// ── "Seen" receipts ──────────────────────────────────────────────────────
+// Tell the server how far I have seen — only while the chat is really on
+// screen (open, tab visible), and only when that moves forward.
+function markRead(key) {
+  const conv = conversations[key];
+  if (key !== activeConvKey || document.hidden || !socket?.connected || !conv) return;
+  const last = [...(conv.messages||[])].reverse().find(m => m.id);
+  if (!last || last.id <= (conv.myLastRead||0)) return;
+  conv.myLastRead = last.id;
+  socket.emit('conv:read', { key, lastId: last.id });
+}
+// Under MY newest message: "Seen" (private chat) or "Seen by N" (group, names
+// on hover), counting the people whose last-seen id has reached it.
+function updateSeen(key) {
+  const area = document.getElementById('messages-area');
+  area.querySelectorAll('.msg-seen').forEach(el => el.remove());
+  const rows = area.querySelectorAll('.msg-row.mine[data-msg-id]');
+  const row = rows[rows.length-1];
+  if (!row) return;
+  const id = Number(row.dataset.msgId);
+  const readers = Object.values(conversations[key]?.reads||{}).filter(r => r.lastId >= id);
+  if (!readers.length) return;
+  const seen = document.createElement('span');
+  seen.className = 'msg-seen';
+  seen.textContent = key.startsWith('private_') ? 'Seen' : `Seen by ${readers.length}`;
+  seen.title = readers.map(r => r.name).join(', ');
+  row.querySelector('.msg-content').appendChild(seen);
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden && activeConvKey) markRead(activeConvKey); });
+function loadOlder(key, btn) {
+  const conv=conversations[key];
+  if (!conv || conv.loadingOlder || !conv.messages.length || !requireConnection('Older messages')) return;
+  conv.loadingOlder=true;
+  btn.textContent='Loading…'; btn.disabled=true;
+  socket.emit('messages:older', { key, beforeId: conv.messages[0].id });
 }
 
 // isNew=true only for messages arriving live over the socket. History rendering
@@ -3552,29 +3799,85 @@ function appendMessage(msg,key,isNew) {
     const timeHtml=`<span class="msg-time">${formatTime(msg.timestamp)}</span>`;
     if(msg.type==='image') {
       const src=fileSrc(msg.file_url);
-      bubbleHtml=`<div class="bubble img-bubble"><img src="${src}" alt="${fname}" onclick="window.open('${src}','_blank')"/><div class="img-caption"><span class="img-caption-text">${fname} · ${formatFileSize(msg.file_size)}</span><a href="${src}" download="${fnameAttr}" class="img-dl" title="Download image" aria-label="Download image"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a></div></div>`;
+      bubbleHtml=`<div class="bubble img-bubble"><img src="${src}" alt="${fname}" loading="lazy" data-name="${fname}" onclick="openImageViewer(this.src,this.dataset.name)"/><div class="img-caption"><span class="img-caption-text">${fname} · ${formatFileSize(msg.file_size)}</span><a href="${src}" download="${fnameAttr}" class="img-dl" title="Download image" aria-label="Download image"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a></div></div>`;
     } else if(msg.type==='voice') {
-      bubbleHtml=`<div class="bubble voice-bubble"><span class="voice-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></span><div class="voice-body"><audio controls src="${fileSrc(msg.file_url)}"></audio><div class="voice-size">${formatFileSize(msg.file_size)}</div></div></div>`;
+      bubbleHtml=`<div class="bubble voice-bubble"><span class="voice-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></span><div class="voice-body"><audio controls preload="metadata" src="${fileSrc(msg.file_url)}" onerror="voiceUnplayable(this)"></audio><div class="voice-size">${formatFileSize(msg.file_size)}</div></div></div>`;
     } else if(msg.type==='file') {
       const icon=msg.file_type?.includes('pdf')?'📄':'📝';
       bubbleHtml=`<div class="bubble file-bubble"><span class="file-icon">${icon}</span><div class="file-info"><div class="fname">${fname}</div><div class="fsize">${formatFileSize(msg.file_size)}</div></div><a href="${fileSrc(msg.file_url)}" download="${fnameAttr}" class="file-dl" title="Download" aria-label="Download file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a></div>`;
     } else {
       bubbleHtml=`<div class="bubble">${esc(msg.text)}</div>`;
     }
-    const canDelete = msg.id && isMine;
-    const actionsHtml = canDelete ? `<div class="msg-actions"><button class="msg-action-btn" title="Delete message" aria-label="Delete message" onclick="deleteMessage(${msg.id}, this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></div>` : '';
-    row.innerHTML=`${avatarHtml}<div class="msg-content">${nameHtml}<div class="bubble-row">${bubbleHtml}${actionsHtml}</div>${timeHtml}</div>`;
+    // Actions: react + reply on every saved message, delete only on your own.
+    const deleteBtn = isMine ? `<button class="msg-action-btn del" title="Delete message" aria-label="Delete message" onclick="deleteMessage(${msg.id}, this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>` : '';
+    const actionsHtml = msg.id ? `<div class="msg-actions"><button class="msg-action-btn" title="React" aria-label="React" onclick="toggleReactPicker(this, ${msg.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button><button class="msg-action-btn" title="Reply" aria-label="Reply" onclick="startReply(${msg.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg></button>${deleteBtn}</div>` : '';
+    // The quoted message this one replies to (tap it to jump there).
+    const replyHtml = msg.reply ? `<button type="button" class="reply-quote" onclick="jumpToMessage(${Number(msg.reply.id)})"><b>${esc(msg.reply.sender)}</b><span>${esc(msg.reply.text)}</span></button>` : '';
+    row.innerHTML=`${avatarHtml}<div class="msg-content">${nameHtml}${replyHtml}<div class="bubble-row">${bubbleHtml}${actionsHtml}</div><div class="reactions"></div>${timeHtml}</div>`;
+    renderReactions(row, msg.reactions);
   }
   area.appendChild(row);
   area.scrollTop=area.scrollHeight;
   return row;   // the outbox marks its rows as pending
 }
 
+// ── Reactions ─────────────────────────────────────────────────────────────
+// The six emojis the server accepts (REACTION_EMOJIS in server.js).
+const REACTION_EMOJIS = ['👍','❤️','😂','😮','😢','🙏'];
+// My account id, read from my own login token (its middle part is plain JSON).
+function myUserId() {
+  try { return JSON.parse(atob(currentUser.token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))).id; }
+  catch { return null; }
+}
+function renderReactions(row, list) {
+  const box = row.querySelector('.reactions');
+  if (!box) return;
+  box.innerHTML = (list||[]).map(r => `<button type="button" class="react-chip${(r.ids||[]).includes(myUserId())?' mine':''}" data-emoji="${esc(r.emoji)}" title="${esc(r.names.join(', '))}" onclick="reactTo(${Number(row.dataset.msgId)}, this.dataset.emoji)">${esc(r.emoji)} ${Number(r.count)}</button>`).join('');
+}
+function toggleReactPicker(btn, msgId) {
+  const row = btn.closest('.msg-row');
+  const open = row.querySelector('.react-pick');
+  document.querySelectorAll('#messages-area .react-pick').forEach(p => p.remove());
+  if (open) return; // second tap closes it
+  const pick = document.createElement('div');
+  pick.className = 'react-pick';
+  pick.innerHTML = REACTION_EMOJIS.map(e => `<button type="button" data-emoji="${e}" aria-label="React ${e}">${e}</button>`).join('');
+  pick.onclick = e => { const b = e.target.closest('button'); if (b) { reactTo(msgId, b.dataset.emoji); pick.remove(); } };
+  row.querySelector('.bubble-row').after(pick);
+}
+function reactTo(msgId, emoji) {
+  if (!requireConnection('Reactions')) return;
+  socket.emit('message:react', { id: msgId, emoji });
+}
+
+// ── Reply to a specific message ─────────────────────────────────────────
+let replyingTo = null; // { id, sender, text } while the reply bar is showing
+function startReply(msgId) {
+  const m = conversations[activeConvKey]?.messages?.find(x => x.id === msgId);
+  if (!m) return;
+  const text = m.type==='image' ? '📷 Image' : m.type==='voice' ? '🎙️ Voice message' : m.type==='file' ? '📎 '+(m.file_name||'File') : m.text;
+  replyingTo = { id: m.id, sender: m.sender, text: String(text||'').slice(0,120) };
+  document.getElementById('reply-to-name').textContent = 'Replying to ' + (m.sender === currentUser?.name ? 'yourself' : m.sender);
+  document.getElementById('reply-to-text').textContent = replyingTo.text;
+  document.getElementById('reply-bar').hidden = false;
+  document.getElementById('msg-input').focus();
+}
+function cancelReply() {
+  replyingTo = null;
+  document.getElementById('reply-bar').hidden = true;
+}
+function jumpToMessage(msgId) {
+  const row = document.querySelector(`#messages-area .msg-row[data-msg-id="${msgId}"]`);
+  if (!row) return showToast('system','Older message','That message is too far back to show here.');
+  row.scrollIntoView({ behavior:'smooth', block:'center' });
+  row.classList.remove('flash'); void row.offsetWidth; row.classList.add('flash');
+}
+
 const pendingDeletes = new Map(); // msgId -> { convKey, original, originalIndex }
 
-function deleteMessage(msgId, btn) {
+async function deleteMessage(msgId, btn) {
   if (!msgId || !socket) return;
-  if (!confirm('Delete this message? This cannot be undone.')) return;
+  if (!await appConfirm('It will be removed for everyone. This cannot be undone.','Delete this message?','Delete')) return;
   if (btn) btn.disabled = true;
   const key = activeConvKey;
   const conv = conversations[key];
@@ -3614,9 +3917,11 @@ function sendMessage() {
   const text=input.value.trim();
   if(!text||!socket||!activeConvKey)return;
   // Offline: hold the message in the outbox instead of emitting into the void.
-  if(!socket.connected){ if(queueMessage(text,activeConvKey)) input.value=''; return; }
-  socket.emit('message:send',{text,convKey:activeConvKey});
+  if(!socket.connected){ if(queueMessage(text,activeConvKey,replyingTo)){ input.value=''; delete drafts[activeConvKey]; cancelReply(); } return; }
+  socket.emit('message:send',{text,convKey:activeConvKey,replyTo:replyingTo?.id});
   input.value='';
+  delete drafts[activeConvKey];
+  cancelReply();
   socket.emit('typing:stop',{convKey:activeConvKey});
 }
 
@@ -3632,12 +3937,12 @@ let outbox = [];      // [{ id, convKey, text, sent }] — sent = emitted, waiti
 let outboxSeq = 0;
 const OUTBOX_LABEL = { waiting:'Waiting for connection…', sending:'Sending…' };
 
-function queueMessage(text, convKey) {
+function queueMessage(text, convKey, reply = null) {
   if (outbox.filter(m => !m.sent).length >= OUTBOX_MAX) {
     showToast('system', 'Still offline', `Only ${OUTBOX_MAX} messages can wait for the connection. Please try again once you are back online.`);
     return false;
   }
-  const item = { id: ++outboxSeq, convKey, text, sent: false };
+  const item = { id: ++outboxSeq, convKey, text, reply, sent: false };
   outbox = [...outbox, item];
   if (activeConvKey === convKey) appendOutboxRow(item);
   return true;
@@ -3645,7 +3950,7 @@ function queueMessage(text, convKey) {
 
 // Draw a queued message with the normal bubble, then mark it as pending.
 function appendOutboxRow(item) {
-  const row = appendMessage({ type:'chat', sender:currentUser.name, text:item.text, timestamp:new Date().toISOString() }, item.convKey, true);
+  const row = appendMessage({ type:'chat', sender:currentUser.name, text:item.text, reply:item.reply, timestamp:new Date().toISOString() }, item.convKey, true);
   row.classList.add('pending');
   row.dataset.outboxId = item.id;
   row.querySelector('.msg-time').textContent = item.sent ? OUTBOX_LABEL.sending : OUTBOX_LABEL.waiting;
@@ -3657,7 +3962,7 @@ function appendOutboxRow(item) {
 function flushOutbox() {
   outbox = outbox.map(m => {
     if (m.sent) return m;
-    socket.timeout(15000).emit('message:send', { text: m.text, convKey: m.convKey }, (err, res) => settleOutbox(m.id, err, res));
+    socket.timeout(15000).emit('message:send', { text: m.text, convKey: m.convKey, replyTo: m.reply?.id }, (err, res) => settleOutbox(m.id, err, res));
     return { ...m, sent: true };
   });
   document.querySelectorAll('#messages-area .msg-row.pending .msg-time').forEach(t => { t.textContent = OUTBOX_LABEL.sending; });
@@ -3775,7 +4080,7 @@ async function uploadFile() {
   const input=fileInput;
   const file=input.files[0];
   if(!file||!activeConvKey)return;
-  if(file.size>5*1024*1024){alert('Max file size is 5MB!');input.value='';return;}
+  if(file.size>5*1024*1024){appAlert('The file is larger than 5 MB. Please choose a smaller one.','File too large');input.value='';return;}
   if(!requireConnection('Files and photos')){input.value='';return;}
   const btn=document.getElementById('attach-btn');
   const ATTACH_SVG = '<svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>';
@@ -3784,14 +4089,26 @@ async function uploadFile() {
   const fd=new FormData(); fd.append('file',file); fd.append('convKey',activeConvKey);
   try {
     const res=await fetch('/api/upload',{method:'POST',headers:{Authorization:`Bearer ${currentUser.token}`},body:fd});
-    const d=await res.json(); if(!res.ok)alert(d.error||'Upload failed');
-  } catch{alert('Upload failed');}
+    const d=await res.json(); if(!res.ok)appAlert(d.error||'Upload failed','File not sent');
+  } catch{appAlert('Connection problem — please try again.','File not sent');}
   finally{btn.innerHTML = ATTACH_SVG;btn.disabled=false;input.value='';}
 }
 
+const IS_TOUCH = matchMedia('(hover: none) and (pointer: coarse)').matches;
 document.addEventListener('DOMContentLoaded',()=>{
+  // Phones: tapping a message shows its React/Reply/Delete buttons (there is no
+  // hover). Hidden buttons can't be tapped by accident (pointer-events in CSS).
+  document.getElementById('messages-area').addEventListener('click',e=>{
+    if(e.target.closest('button,a,audio,img,.react-pick')) return;
+    const row=e.target.closest('.msg-row');
+    document.querySelectorAll('#messages-area .msg-row.show-actions').forEach(r=>{ if(r!==row) r.classList.remove('show-actions'); });
+    if(row&&row.querySelector('.msg-actions')) row.classList.toggle('show-actions');
+  });
   document.getElementById('msg-input').addEventListener('keydown',e=>{
-    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();return;}
+    // Computer: Enter sends, Shift+Enter = new line. Phone/tablet: Enter is a
+    // new line and only the send button sends (people kept sending half-typed lines).
+    if(e.key==='Enter'&&!e.shiftKey&&!IS_TOUCH){e.preventDefault();sendMessage();return;}
+    if(e.key==='Escape'&&replyingTo){cancelReply();return;}
     if(socket&&activeConvKey){socket.emit('typing:start',{convKey:activeConvKey});clearTimeout(typingTimeout);typingTimeout=setTimeout(()=>socket.emit('typing:stop',{convKey:activeConvKey}),2000);}
   });
 });
@@ -3799,14 +4116,40 @@ document.addEventListener('DOMContentLoaded',()=>{
 // ══════════════════════════════════════════
 //  GROUP CREATION
 // ══════════════════════════════════════════
-function openNewGroupModal() {
-  // data-search carries name+email lowercased so filterMembers() can match either
-  // without re-reading the DOM text on every keystroke.
-  document.getElementById('members-checklist').innerHTML=onlineUsers.map(u=>`<label class="member-check" data-search="${esc((u.name+' '+u.email).toLowerCase())}"><input type="checkbox" value="${esc(u.email)}" data-name="${esc(u.name)}" onchange="syncMemberChips()"/><div class="avatar-circle ${colorFor(u.name)}" style="width:32px;height:32px;font-size:.72rem;">${esc(initials(u.name))}</div><span class="mc-text"><b>${esc(u.name)}</b><em>${esc(u.email)}</em></span></label>`).join('');
+// The member picker lists EVERY approved classmate (from the server), not only
+// the ones online right now — before, offline people could never be added.
+let addMembersTo = null; // null = creating a group; a group id = adding to it
+let directory = [];
+function setGroupModalMode(adding){
+  const conv = adding ? conversations['group_'+addMembersTo] : null;
+  document.getElementById('modal-title').textContent = adding ? `Add members to ${conv?.name||'group'}` : 'Create Group Chat';
+  document.getElementById('modal-sub').textContent = adding ? 'Pick the people to add. They will see the group right away.' : 'Start a new group conversation with your selected members.';
+  ['group-name-label','group-name-wrap','modal-hint'].forEach(id=>{ document.getElementById(id).style.display = adding ? 'none' : ''; });
+  document.getElementById('modal-confirm-text').textContent = adding ? 'Add Members' : 'Create Group';
+}
+function openAddMembersModal(){
+  const conv=conversations[activeConvKey];
+  if(!conv||conv.type!=='group'||activeConvKey==='group_general') return;
+  addMembersTo=conv.id ?? parseInt(activeConvKey.slice('group_'.length));
+  openNewGroupModal(true);
+}
+function openNewGroupModal(adding=false) {
+  if(!adding) addMembersTo=null;
+  setGroupModalMode(adding);
+  if(socket) socket.emit('users:directory');
+  renderMemberChecklist();
   document.getElementById('member-search').value='';
   filterMembers();
   syncMemberChips();
   document.getElementById('modal-overlay').classList.add('open');
+}
+function renderMemberChecklist(){
+  const ticked=new Set([...document.querySelectorAll('#members-checklist input:checked')].map(c=>c.value));
+  const online=new Set(onlineUsers.map(u=>u.email));
+  // Directory when it has arrived; online users as the fallback until then.
+  const people=(directory.length?directory:onlineUsers).filter(u=>u.email!==currentUser?.email);
+  document.getElementById('members-checklist').innerHTML=people.map(u=>`<label class="member-check" data-search="${esc((u.name+' '+u.email).toLowerCase())}"><input type="checkbox" value="${esc(u.email)}" data-name="${esc(u.name)}" ${ticked.has(u.email)?'checked':''} onchange="syncMemberChips()"/><div class="avatar-circle ${colorFor(u.name)}" style="width:32px;height:32px;font-size:.72rem;">${esc(initials(u.name))}</div><span class="mc-text"><b>${esc(u.name)}${online.has(u.email)?' <span class="mc-online">● online</span>':''}</b><em>${esc(u.email)}</em></span></label>`).join('');
+  filterMembers();
 }
 // Hide non-matching rows rather than re-rendering the list, so a checkbox ticked
 // before searching stays ticked (and still counts) while it is filtered out.
@@ -3831,9 +4174,16 @@ function removeMemberChip(email){
 }
 function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
 function createGroup(){
-  const name=document.getElementById('group-name-input').value.trim();
-  if(!name){alert('Enter a group name');return;}
   const members=[...document.querySelectorAll('#members-checklist input:checked')].map(c=>({email:c.value,name:c.dataset.name}));
+  if(addMembersTo!=null){   // the same modal, in "add members" mode
+    if(!members.length){appAlert('Tick at least one person to add.','No one selected');return;}
+    if(!requireConnection('Adding members')) return;
+    socket.emit('group:add-members',{groupId:addMembersTo,members:members.map(m=>m.email)});
+    closeModal();
+    return;
+  }
+  const name=document.getElementById('group-name-input').value.trim();
+  if(!name){appAlert('Please enter a name for the group.','Group name needed');return;}
   socket.emit('group:create',{name,members});
   document.getElementById('group-name-input').value='';
   closeModal();
@@ -3899,7 +4249,7 @@ async function retryMic(){
 }
 async function startCall(email){
   const target=onlineUsers.find(u=>u.email===email);
-  if(!target)return alert('User is offline');
+  if(!target)return appAlert('This person is offline right now.','Cannot call');
   localStream=await getMic();
   if(!localStream)return;
   currentCallTarget = target.socketId; // remember target so cancel-while-ringing works
@@ -4014,9 +4364,9 @@ async function startGroupCall(){
   // The call room IS the group's conversation key, so everyone in the group
   // joins the same room (a random per-caller id could never be shared, so the
   // old scheme left each caller alone). The server only lets group members join.
-  if(!activeConvKey || !activeConvKey.startsWith('group_')){ alert('Open a group chat to start a group call.'); return; }
-  if(activeConvKey === 'group_general'){ alert('CICS Chat does not support group calls. Start one from a group chat.'); return; }
-  if(peerConnection || currentCallId){ alert('Finish your current call before starting a group call.'); return; }
+  if(!activeConvKey || !activeConvKey.startsWith('group_')){ appAlert('Open a group chat to start a group call.','Group call'); return; }
+  if(activeConvKey === 'group_general'){ appAlert('CICS Chat does not support group calls. Start one from a group chat.','Group call'); return; }
+  if(peerConnection || currentCallId){ appAlert('Finish your current call before starting a group call.','Group call'); return; }
   groupStream=await getMic();
   if(!groupStream)return;
   currentRoomId=activeConvKey;
@@ -4050,6 +4400,10 @@ let pttStream = null, pttRecorder = null, pttChunks = [];
 let pttActive = false;       // user is currently holding the button
 let pttStarting = false;     // getUserMedia in flight — prevents double-entry
 let pttMaxTimer = null;
+
+// First recording format this browser supports (null = let it choose).
+const PTT_MIME = ['audio/webm;codecs=opus','audio/mp4','audio/ogg;codecs=opus','audio/webm']
+  .find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t)) || null;
 
 function pttSetUIRecording(on) {
   const btn = document.getElementById('ptt-btn');
@@ -4089,13 +4443,16 @@ async function startPTT(e) {
     }
     pttStream  = stream;
     pttChunks  = [];
-    pttRecorder = new MediaRecorder(pttStream);
+    // Record in a format THIS browser supports: iPhones record MP4/AAC, most
+    // others WebM/Opus. The blob and file name below follow what was recorded,
+    // so the server serves it with the right type and phones can play it.
+    pttRecorder = PTT_MIME ? new MediaRecorder(pttStream,{mimeType:PTT_MIME}) : new MediaRecorder(pttStream);
     pttRecorder.ondataavailable = ev => { if (ev.data && ev.data.size > 0) pttChunks.push(ev.data); };
     pttRecorder.onstop = async () => {
       const chunks = pttChunks; pttChunks = [];
       pttCleanupStream();
-      const blob = new Blob(chunks, { type:'audio/webm' });
-      if (blob.size < 1000) return; // too short, ignore
+      const blob = new Blob(chunks, { type: pttRecorder?.mimeType || PTT_MIME || 'audio/webm' });
+      if (blob.size < 1000) { showToast('voice','Hold to record','Press and HOLD the mic button while you talk, then let go to send.'); return; }
       await sendVoiceMessage(blob);
     };
     pttRecorder.start();
@@ -4104,7 +4461,7 @@ async function startPTT(e) {
     pttActive = false;
     pttSetUIRecording(false);
     pttCleanupStream();
-    alert('Could not start voice recording.');
+    showToast('voice','Voice message','Could not start voice recording on this device.');
   } finally {
     pttStarting = false;
   }
@@ -4138,14 +4495,28 @@ function stopPTT(e) {
   btn.addEventListener('pointercancel', end);
   btn.addEventListener('lostpointercapture', end);
   // Stop on Escape / window blur as last-resort safeties.
-  window.addEventListener('blur', () => { if (pttActive) stopPTT(); });
+  // Not while the mic permission prompt is open — that prompt itself blurs the
+  // window on phones and used to cancel the very first recording.
+  window.addEventListener('blur', () => { if (pttActive && !pttStarting) stopPTT(); });
   window.addEventListener('keydown', e => { if (e.key === 'Escape' && pttActive) stopPTT(); });
 })();
+
+// A voice clip this browser can't play (e.g. an old WebM clip on an iPhone):
+// swap the dead player for a download link instead of a silent, broken control.
+function voiceUnplayable(audio) {
+  const body = audio.closest('.voice-body');
+  if (!body || body.querySelector('.voice-dl')) return;
+  const a = document.createElement('a');
+  a.className = 'voice-dl'; a.href = audio.src; a.download = 'voice-message';
+  a.textContent = 'Can’t play here — download the clip';
+  audio.replaceWith(a);
+}
 
 async function sendVoiceMessage(blob) {
   if (!requireConnection('Voice messages')) return;
   const fd = new FormData();
-  const filename = `voice_${Date.now()}.webm`;
+  const ext = blob.type.includes('mp4') ? 'm4a' : blob.type.includes('ogg') ? 'ogg' : 'webm';
+  const filename = `voice_${Date.now()}.${ext}`;
   fd.append('file', blob, filename);
   fd.append('convKey', activeConvKey);
   try {
@@ -4154,9 +4525,10 @@ async function sendVoiceMessage(blob) {
       headers:{ Authorization:`Bearer ${currentUser.token}` },
       body: fd
     });
-    const d = await res.json();
-    if (!res.ok) console.error('Voice upload failed:', d.error);
-  } catch(err) { console.error('Voice send error:', err); }
+    const d = await res.json().catch(() => ({}));
+    // Tell the sender when it failed — before, it only went to the console.
+    if (!res.ok) showToast('voice','Voice message not sent', d.error || 'Upload failed — please try again.');
+  } catch { showToast('voice','Voice message not sent','Connection problem — please try again.'); }
 }
 
 // ══════════════════════════════════════════
@@ -4170,14 +4542,17 @@ function requestNotifPermission() {
   }
 }
 
-function showToast(type, title, message, onClick) {
+function showToast(type, title, message, onClick, key) {
   const container = document.getElementById('toast-container');
   if (!container) return;
+  // A toast for the same chat is replaced, not stacked under the old one.
+  if (key) container.querySelectorAll('.toast').forEach(t => { if (t.dataset.key === key) t.remove(); });
   const icons = { msg:'💬', call:'📞', system:'ℹ️', voice:'🎙️', file:'📎', image:'🖼️', announce:'📢' };
   const id    = 'toast-' + Date.now() + Math.random().toString(36).slice(2);
   const toast = document.createElement('div');
   toast.className = `toast ${type}-toast`;
   toast.id = id;
+  if (key) toast.dataset.key = key;
   toast.innerHTML = `
     <span class="toast-icon">${icons[type]||'🔔'}</span>
     <div class="toast-body">
@@ -4201,9 +4576,9 @@ function dismissToast(id) {
   setTimeout(() => el.remove(), 300);
 }
 
-function showBrowserNotif(title, body, onClick) {
+function showBrowserNotif(title, body, onClick, key) {
   if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
-    const n = new Notification(title, { body, icon:'/icon-192.png', tag:'msuka-notif' });
+    const n = new Notification(title, { body, icon:'/icon-192.png', tag: key ? 'msuka-'+key : 'msuka-notif' });
     if (onClick) n.onclick = () => { window.focus(); onClick(); n.close(); };
     setTimeout(() => n.close(), 6000);
   }
@@ -4233,6 +4608,16 @@ function loadNotifList() {
 }
 
 function pushNotif(entry) {
+  // Same chat still unread: update that one entry ("3 new messages") and move
+  // it to the top, instead of adding a line per message.
+  const same = entry.convKey ? notifList.findIndex(n => !n.read && n.convKey === entry.convKey) : -1;
+  if (same >= 0) {
+    const old = notifList.splice(same, 1)[0];
+    const count = (old.count || 1) + 1;
+    notifList.unshift({ ...old, ...entry, count, title: `${entry.title} · ${count} new`, time: Date.now() });
+    saveNotifList(); renderNotifList();
+    return;
+  }
   notifList.unshift({ id: 'n_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), read: false, time: Date.now(), ...entry });
   if (notifList.length > 50) notifList.length = 50;   // cap memory
   saveNotifList();
@@ -4310,6 +4695,11 @@ function handleAuthExpired(){
   else showAuthMsg('login-msg','error','You were signed out. Please sign in again.');
 }
 
+// Every Sign Out button asks first (it used to log out on a single tap).
+async function confirmSignOut(){
+  if (await appDialog({ title:'Sign out?', message:'You will need your password to sign in again.', ok:'Sign out', cancel:'Cancel', danger:true })) logout();
+}
+
 function logout({ skipServer=false }={}){
   if(!currentUser) return; // already signed out (e.g. revoked, then the password-change timer fires)
   const token=currentUser.token;
@@ -4324,7 +4714,7 @@ function logout({ skipServer=false }={}){
   // they'll be reloaded on next login for the same account.
   saveNotifList();
   try{ sessionStorage.removeItem('msuka_user'); }catch{}
-  currentUser=null; conversations={}; onlineUsers=[]; activeConvKey=null; currentNav='global';
+  currentUser=null; conversations={}; drafts={}; directory=[]; onlineUsers=[]; activeConvKey=null; replyingTo=null; currentNav='global';
   notifList = [];
   refreshUnreadIndicator(); // zeroes the count, hides the badge, resets the title
   renderNotifList();

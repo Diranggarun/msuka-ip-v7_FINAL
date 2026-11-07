@@ -347,6 +347,20 @@ messages", which read as "nobody has chatted".
 **Worth remembering:** a route that returns a non-array on purpose will break any
 code that assumes the happy shape. The 403 was correct; the caller was not.
 
+## Survey-reported issues (2026-11-07)
+
+### Messages / images "suddenly disappear" after reload or reconnect
+**Root cause:** `messages:get` used `ORDER BY created_at ASC LIMIT 100` — the OLDEST 100 rows. Once a chat had more than 100 messages, everything newer was missing from the history every reconnect loads. No data was lost.
+**Fix:** select `ORDER BY id DESC LIMIT HISTORY_LIMIT` in a subquery, then `ORDER BY id ASC`.
+
+### Voice message "doesn't work" on iPhone
+**Root cause:** every recording was labelled `audio/webm` and saved as `.webm`, but Safari records MP4/AAC; with `nosniff` the browser refused to play it. Upload errors only went to `console.error`, and the window `blur` from the mic permission prompt stopped the first recording.
+**Fix:** `PTT_MIME` picks a supported type, the blob and file extension follow it (`.m4a`/`.ogg`/`.webm`), failures show a toast, and `blur` is ignored while the mic is starting.
+
+### "Can't add members" after creating a group
+**Root cause:** the create-group dialog promised "add members later" but no such feature existed, and its picker listed only people online at that moment.
+**Fix:** `group:add-members` socket event + header button; the picker loads all approved classmates (`users:directory`).
+
 ## Adding new entries
 
 When you hit a new error and solve it, add a section using this format:

@@ -150,6 +150,28 @@ function ensureSchema() {
       created_at TEXT DEFAULT (datetime('now','localtime'))
     );
 
+    -- One emoji reaction per person per message (reacting again replaces it).
+    CREATE TABLE IF NOT EXISTS message_reactions (
+      message_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      emoji TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now','localtime')),
+      PRIMARY KEY (message_id, user_id),
+      FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    -- "Seen" receipts: the newest message id each person has seen per chat.
+    CREATE TABLE IF NOT EXISTS conv_reads (
+      conv_key TEXT NOT NULL,
+      user_id INTEGER NOT NULL,
+      last_read_id INTEGER NOT NULL,
+      updated_at TEXT DEFAULT (datetime('now','localtime')),
+      PRIMARY KEY (conv_key, user_id),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_messages_file_url ON messages (file_url);
+
     CREATE INDEX IF NOT EXISTS idx_messages_conv_created ON messages (conv_key, created_at);
     CREATE INDEX IF NOT EXISTS idx_messages_created ON messages (created_at);
     CREATE INDEX IF NOT EXISTS idx_calls_created ON calls (created_at);
@@ -184,6 +206,11 @@ function ensureSchema() {
   addCol('calls', 'avg_jitter_ms REAL');
   addCol('calls', 'packet_loss_pct REAL');
   addCol('calls', 'quality_reports INTEGER NOT NULL DEFAULT 0'); // how many reports were averaged in
+  // Reply-to: the id of the message this one answers (NULL = not a reply).
+  addCol('messages', 'reply_to INTEGER');
+  // "Forgot password": there is no email on an offline LAN, so the request is
+  // flagged here for the admin, who sets a new password (which clears it).
+  addCol('users', 'reset_requested_at TEXT');
 }
 
 module.exports = { query, getConnection, ensureSchema, raw, DB_PATH };

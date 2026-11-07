@@ -17,12 +17,12 @@ test.describe('15. Landing page', () => {
     console.log('✅ Landing page is the default route');
   });
 
-  test('15.2 Connect Now opens the chat login at /index.html', async ({ page }) => {
+  test('15.2 Sign in or Register opens the chat login at /index.html', async ({ page }) => {
     await page.goto(BASE_URL);
-    await page.locator('.hero .btn-outline', { hasText: 'Connect Now' }).click();
+    await page.locator('.hero .btn-outline', { hasText: 'Sign in or Register' }).click();
     await expect(page).toHaveURL(/\/index\.html$/);
     await expect(page.locator('#login-email')).toBeVisible();
-    console.log('✅ Connect Now reaches the login');
+    console.log('✅ Sign in or Register reaches the login');
   });
 
   test('15.3 the tutorial has five steps and shows this server\'s address', async ({ page }) => {

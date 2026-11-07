@@ -44,7 +44,7 @@ The database may hold **real** user accounts and survey responses. Read `CLAUDE.
 ## Docs map
 
 `README.md` setup · `DESIGN.md` UI design system (kept at root for the impeccable skill)
-- `docs/project/` — `PROGRESS.md` phase checklist · `DECISIONS.md` why-choices · `DEBUGGING.md` known errors · `ERD.md` schema (7 tables) · `DEFENSE.md` oral-defense prep · `AUDIT.md`
+- `docs/project/` — `PROGRESS.md` phase checklist · `DECISIONS.md` why-choices · `DEBUGGING.md` known errors · `ERD.md` schema (9 tables) · `DEFENSE.md` oral-defense prep · `AUDIT.md`
 - `docs/guides/` — `DEPLOYMENT.md` LAN deploy · setup, LAN/CICS-wifi and faculty test guides
 - `docs/paper/` — capstone paper chapters, revisions, Word exports (`word/`)
 - `docs/prompts/` — build spec and reusable prompts (historical)
