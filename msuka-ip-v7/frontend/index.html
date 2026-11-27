@@ -17,6 +17,7 @@
   <link rel="icon" type="image/png" sizes="64x64" href="/tab-icon-64.png"/>
   <link rel="icon" type="image/png" sizes="192x192" href="/tab-icon-192.png"/>
   <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <meta name="apple-mobile-web-app-title" content="MSUkaIP"/>
@@ -93,7 +94,8 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
     scroll-behavior:auto!important;
   }
 }
-button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulation;}
+/* html + [onclick] reach every tap target, incl. chat rows (divs). Pinch-zoom still works. */
+html,[onclick],button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{touch-action:manipulation;}
 @media (max-width:768px){
   button,.nav-btn,.icon-btn,a.file-dl,a.img-dl,.pw-toggle{min-height:44px;min-width:44px;}
 }
@@ -877,6 +879,12 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
    "reached". Placed after :hover so it wins while the pointer is down. */
 .conv-item:active,.user-card:active{
   transform:translateY(0);transition-duration:var(--dur-fast);}
+/* Touchscreens: a phone keeps the last-tapped row in :hover, so the lift stuck
+   after going back. Drop it there and show the press as the selected fill. */
+@media (hover:none){
+  .conv-item:hover,.user-card:hover{transform:none;}
+  .conv-item:active,.user-card:active{background:var(--chrome-sel);transition-duration:0s;}
+}
 /* Selected conversation: the lighter maroon fill, plus a gold left edge drawn
    as a pseudo-element (not an inset shadow) so it can be inset from the rounded
    corners. --ink measures 11.04:1 on this fill, --ink-mut 6.68:1. */
@@ -2260,7 +2268,7 @@ html:not(:has(#auth-screen[style*="none"])){background:#2A0005;}
           <button class="attach-btn" id="emoji-btn" onclick="insertEmoji()" title="Emoji"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
         </div>
         <button id="ptt-btn" title="Hold to talk" type="button"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></button>
-        <button class="send-btn" onclick="sendMessage()" title="Send"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+        <button class="send-btn" onmousedown="event.preventDefault()" onclick="sendMessage()" title="Send"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
       </div>
     </div>
   </div>

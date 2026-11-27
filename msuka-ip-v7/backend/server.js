@@ -33,6 +33,11 @@ const ROOT = path.join(__dirname, '..');
 })();
 
 const app = express();
+// Behind a local reverse proxy every request arrives from 127.0.0.1 and the real
+// client is in X-Forwarded-For. Trust that header only when the peer is
+// loopback (a proxy on this PC): a LAN device never connects over
+// loopback, so it cannot forge an address to dodge the login limiter.
+app.set('trust proxy', 'loopback');
 const server = http.createServer(app);
 const io = new Server(server, { cors:{ origin:'*' } });
 
@@ -454,13 +459,22 @@ async function verifyTokenAllowQuery(req,res,next) {
   catch { res.status(401).json({error:'Invalid token'}); }
 }
 
+// Socket.IO ignores Express's trust proxy, so apply the same rule by hand:
+// only a loopback peer (the proxy) may supply a forwarded address, and the
+// LAST entry is used because that is the one the proxy itself appended.
+function socketIp(socket) {
+  const addr = socket.handshake.address || '';
+  const fwd = String(socket.handshake.headers['x-forwarded-for'] || '').split(',').pop().trim();
+  return /^(127\.|::1$|::ffff:127\.)/.test(addr) && fwd ? fwd : (addr || null);
+}
+
 // ── Audit logging (RA 10173 §21 accountability) ──────────────────────────────
 // Central helper: every security-relevant event lands in audit_logs with actor,
 // source IP and user agent. `req` may be an Express request or a Socket.IO
 // socket. Failures are logged to console — never silently swallowed.
 async function logAudit(userId, action, details, req) {
   try {
-    const ip = req?.ip || req?.handshake?.address || req?.socket?.remoteAddress || null;
+    const ip = req?.handshake ? socketIp(req) : (req?.ip || req?.socket?.remoteAddress || null);
     const ua = req?.headers?.['user-agent'] || req?.handshake?.headers?.['user-agent'] || null;
     await db.query('INSERT INTO audit_logs (user_id,action,details,ip,user_agent) VALUES (?,?,?,?,?)',[userId,action,details,ip,ua]);
   } catch (e) { console.warn('audit log failed:', e.message); }
