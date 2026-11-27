@@ -69,6 +69,61 @@ screens narrower than 768 pixels the interface switches to a single-pane layout
 with the navigation rail relocated to a bottom tab bar, and all interactive
 targets meet the 44-pixel minimum recommended for touch input.
 
+### 4.1.2 Alpha Testing on the CICS Network (LinkCode)
+
+Alpha testing was first attempted on the college's student wireless network,
+LinkCode, operated by the CICS LinkCode Student Council. The network is built
+around a managed (smart) switch carrying several VLANs: two ports receive the
+internet service provider uplinks, one port connects an OpenWrt-based
+captive-portal gateway that authenticates users by voucher, and the remaining
+ports connect the access points, each placed on its own VLAN. All client
+traffic is therefore routed through the gateway.
+
+**Table 4.2 — Alpha test results on LinkCode**
+
+| Test | Result |
+|---|---|
+| Server laptop joins LinkCode and reaches the gateway | Pass |
+| Server answers requests on the laptop itself (ports 3000/3443) | Pass |
+| Phone on LinkCode opens the server's address | Fail — no response |
+| Server laptop reaches other LinkCode clients (ping) | Fail — no response |
+
+The failures were traced to **client isolation**, a policy on the access points
+and the gateway firewall that blocks traffic between connected devices so that
+each device can reach only the gateway and the internet. Firewall settings on
+the server laptop were ruled out, since its listeners answered locally and no
+rule refused the connections. Isolation is a reasonable default for a shared
+public network, but it prevents any LAN-hosted application from operating:
+messaging requires every client to reach the server, and voice calls
+additionally require clients to reach one another directly, because the system
+deliberately uses no relay (TURN) server.
+
+Alpha testing was therefore moved to an isolated wireless network (a mobile
+hotspot with mobile data disabled), which reproduces the intended offline LAN
+conditions. ‹FILL: results from docs/guides/ALPHA-TEST-PLAN.md — date, devices,
+passed/total per area› On LinkCode itself, the system can operate in either of two
+configurations, both of which require the network administrator:
+
+1. **A dedicated VLAN** — one switch port and one access point or SSID without
+   the captive portal and without client isolation, used for the system only.
+   This supports messaging, file transfer and voice calls while leaving the
+   rest of LinkCode isolated.
+2. **A gateway firewall exception** — a reserved address for the server that
+   bypasses the voucher, with all client VLANs permitted to reach it on TCP
+   ports 3000 and 3443. This supports messaging, file transfer and the
+   evaluation form, but not voice calls, since client-to-client traffic stays
+   blocked.
+
+Of the two, the dedicated VLAN is the recommended configuration, with the
+server connected to the switch by cable and given a fixed address through a
+DHCP reservation on the gateway. The fixed address does not remove isolation
+on its own; it keeps the server's address, and therefore the users' bookmarks
+and the server's HTTPS certificate, unchanged between sessions.
+
+This finding indicates that deploying MSUkaIP on an institutional network is a
+network-configuration decision as much as a software one, and is carried into
+the recommendations in Chapter 5.
+
 ## 4.2 Security Testing Results
 
 Security testing was adversarial rather than confirmatory: each control was
@@ -116,7 +171,7 @@ as SQL.
 
 ### 4.2.4 Summary of Implemented Controls
 
-**Table 4.2 — Security controls verified**
+**Table 4.3 — Security controls verified**
 
 | Control | Implementation | Verified by |
 |---|---|---|
@@ -138,7 +193,7 @@ as SQL.
 A total of **‹FILL: N›** respondents from the College of Information and Computing
 Sciences participated in the evaluation.
 
-**Table 4.3 — Respondents by group**
+**Table 4.4 — Respondents by group**
 
 | Respondent group | Frequency | Percentage |
 |---|---|---|
@@ -148,7 +203,7 @@ Sciences participated in the evaluation.
 | CICS Network Administrator | ‹FILL› | ‹FILL› |
 | **Total** | **‹FILL›** | **100%** |
 
-**Table 4.4 — Respondents by device used**
+**Table 4.5 — Respondents by device used**
 
 | Device | Frequency | Percentage |
 |---|---|---|
@@ -165,7 +220,7 @@ Sciences participated in the evaluation.
 
 Weighted means were interpreted using the following scale.
 
-**Table 4.5 — Likert interpretation**
+**Table 4.6 — Likert interpretation**
 
 | Range | Interpretation |
 |---|---|
@@ -177,7 +232,7 @@ Weighted means were interpreted using the following scale.
 
 ### 4.3.3 Results by Section
 
-**Table 4.6 — Weighted means by evaluation section**
+**Table 4.7 — Weighted means by evaluation section**
 
 | Section | Area | Weighted Mean | Interpretation |
 |---|---|---|---|
@@ -302,6 +357,9 @@ functional testing alone.
 
 1. Deploy MSUkaIP on a dedicated machine within the CICS network rather than a
    staff workstation, so availability does not depend on one person's laptop.
+   Place it on a dedicated VLAN without client isolation, coordinated with the
+   LinkCode administrator, so that messaging and voice calls work across the
+   college's access points (Section 4.1.2).
 2. Assign a member of staff to the administrator role for account approval and
    periodic review of the audit log.
 3. Schedule regular database backups. The system provides a one-click backup from
@@ -338,4 +396,7 @@ functional testing alone.
    database file or its backups. It is not end-to-end, and the study did not
    assess resistance to an attacker holding server-level access.
 6. **Single deployment.** The system was evaluated on one network. Behaviour on a
-   differently configured LAN was not assessed.
+   differently configured LAN was not assessed. The college's student network,
+   LinkCode, enforces client isolation, so testing used an isolated wireless
+   network instead (Section 4.1.2). Operation on LinkCode depends on its
+   administrator providing a dedicated VLAN or a firewall exception.

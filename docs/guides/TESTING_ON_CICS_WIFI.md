@@ -116,6 +116,79 @@ For the Likert survey with 30 respondents:
 
 ---
 
+## Testing on LinkCode (CICS student Wi-Fi)
+
+LinkCode is run by the LinkCode Student Council, not by the project. Do not
+change its switch or gateway yourself — ask its administrator.
+
+**How it is built**
+
+| Smart-switch port | Connected to |
+| --- | --- |
+| 1–2 | Internet uplinks (ISP 1, ISP 2) |
+| 3 | OpenWrt captive-portal gateway (voucher login; routes all traffic) |
+| 4–8 | Access points, each on its own VLAN |
+
+**Why MSUkaIP fails there:** LinkCode enforces **client isolation** on the
+access points and the gateway firewall. Each device can reach only the gateway
+and the internet, so phones cannot reach the server laptop, and phones cannot
+reach each other (which voice calls need — there is no TURN relay by design).
+Confirmed 2026-08-11: the laptop reached the gateway, but no other client
+answered.
+
+**What to ask the LinkCode administrator for**
+
+| Request | Chat, files, survey | Voice calls |
+| --- | --- | --- |
+| A. Dedicated VLAN: one switch port + one AP/SSID, no captive portal, no client isolation | Yes | Yes |
+| B. Firewall exception: reserved IP for the server laptop, voucher bypass (MAC whitelist), all client VLANs allowed to reach it on TCP 3000 and 3443 | Yes | No |
+
+Give them the laptop's Wi-Fi MAC address (`getmac /v`). Once it is set up,
+restart the server so the HTTPS certificate covers the new IP, then open
+`https://<server-ip>:3443` from a phone on LinkCode.
+
+**Recommended: wired server on a dedicated VLAN + DHCP reservation**
+
+Plugging the laptop into a switch port does nothing by itself — the port's
+VLAN decides what it joins. An AP VLAN port keeps the captive portal and
+isolation; ports 1–3 (uplinks, gateway) must never be used, as that breaks
+LinkCode for everyone. All 8 ports are in use, so the admin must free one or
+add a small switch.
+
+Admin steps (example VLAN 50 "MSUkaIP"):
+
+1. Create VLAN 50 on the smart switch.
+2. Laptop port: VLAN 50 untagged (access). Gateway port 3 and one AP port:
+   VLAN 50 tagged, alongside the existing VLANs.
+3. OpenWrt gateway: new VLAN 50 interface with DHCP, no captive portal, and
+   forwarding allowed within the zone.
+4. That AP: new SSID (e.g. "MSUkaIP-Demo") on VLAN 50, client isolation OFF.
+5. DHCP reservation: bind the laptop's Ethernet MAC to one fixed IP.
+
+Then: plug in by Ethernet cable, run `ipconfig` (Ethernet IPv4), restart the
+server (`npx pm2 restart msukaip`), and have phones join MSUkaIP-Demo and open
+`https://<that-ip>:3443`. Test a message, a file, and a call between two phones.
+
+**Static IP — what it does and does not fix**
+
+| | Dedicated VLAN | Static IP (DHCP reservation) |
+| --- | --- | --- |
+| Removes client isolation | Yes | No |
+| Address never changes (bookmarks, HTTPS cert stay valid) | No | Yes |
+| Needed for the system to work | Yes | No, convenience |
+
+Do both. If only one is possible, choose the VLAN — a static IP alone changes
+nothing while isolation is on. Prefer a DHCP reservation set by the admin over
+a manually typed static IP on the laptop: a guessed address can clash with
+another device, and the voucher system may still block it. On the laptop's
+Windows Mobile hotspot the address is already fixed at `192.168.137.1`.
+
+**If neither is possible:** use the laptop's Windows Mobile hotspot
+(phones join it and open `https://192.168.137.1:3443`) or a phone hotspot with
+mobile data off. Both give a true offline LAN with no isolation.
+
+---
+
 ## Tips
 
 - Set the host laptop's power plan to **Never sleep** while plugged in.
